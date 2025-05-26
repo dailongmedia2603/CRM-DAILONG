@@ -126,6 +126,48 @@ class CRMAPITester:
             print(f"❌ Manager registration error: {e}")
             return False
     
+    def test_existing_user_login(self):
+        """Test login with existing system users"""
+        print("\n=== Testing Existing User Login ===")
+        
+        # Test admin login with existing credentials
+        login_data = {
+            "login": "admin",
+            "password": "admin123"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data["access_token"]
+                self.admin_user = data["user"]
+                print(f"✅ Admin login successful: {self.admin_user['username']}")
+                
+                # Test sales user login
+                sales_login = {
+                    "login": "yenvi",
+                    "password": "yenvi123"
+                }
+                sales_response = self.session.post(f"{API_BASE}/auth/login", json=sales_login)
+                if sales_response.status_code == 200:
+                    sales_data = sales_response.json()
+                    self.sales_token = sales_data["access_token"]
+                    self.sales_user = sales_data["user"]
+                    print(f"✅ Sales user login successful: {self.sales_user['username']}")
+                else:
+                    print(f"⚠️ Sales user login failed, using admin for all tests")
+                    self.sales_token = self.admin_token
+                    self.sales_user = self.admin_user
+                
+                return True
+            else:
+                print(f"❌ Admin login failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin login error: {e}")
+            return False
+    
     def test_user_login(self):
         """Test user login functionality"""
         print("\n=== Testing User Login ===")
