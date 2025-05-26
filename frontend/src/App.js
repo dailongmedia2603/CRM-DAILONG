@@ -5682,6 +5682,9 @@ const AccountManagement = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchAccounts();
