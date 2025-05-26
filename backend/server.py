@@ -130,6 +130,7 @@ class Project(BaseModel):
     status: ProjectStatus = ProjectStatus.ACTIVE             # Trạng thái
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
+    created_by: Optional[str] = None       # User who created the project
     notes: Optional[str] = None
 
 class ProjectCreate(BaseModel):
