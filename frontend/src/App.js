@@ -47,8 +47,8 @@ const ClientsPage = () => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState(null);
-  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchUsers = async () => {
     try {
