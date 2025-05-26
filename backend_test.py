@@ -1,596 +1,993 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for CRM System
-Tests all modules after GitHub import to ensure functionality is working correctly.
+Comprehensive Backend API Testing for CRM System Phase 1
+Tests all authentication, user management, customer management, and analytics APIs
 """
 
 import requests
 import json
-import time
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
 
-# Configuration
-BACKEND_URL = "https://33831ab9-c861-4051-ab2d-853ef3d8563d.preview.emergentagent.com/api"
-TEST_USER_CREDENTIALS = {
-    "login": "admin",
-    "password": "admin123"
-}
+# Load environment variables
+load_dotenv('/app/frontend/.env')
 
-class CRMBackendTester:
+# Get backend URL from environment
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'http://localhost:8001')
+API_BASE = f"{BACKEND_URL}/api"
+
+print(f"Testing backend at: {API_BASE}")
+
+class CRMAPITester:
     def __init__(self):
-        self.base_url = BACKEND_URL
-        self.token = None
-        self.test_results = []
-        self.test_data = {}
+        self.session = requests.Session()
+        self.admin_token = None
+        self.sales_token = None
+        self.manager_token = None
+        self.admin_user = None
+        self.sales_user = None
+        self.manager_user = None
+        self.test_customer_id = None
+        self.test_interaction_id = None
+        self.test_client_ids = []
         
-    def log_test(self, test_name, success, message="", data=None):
-        """Log test results"""
-        result = {
-            "test": test_name,
-            "success": success,
-            "message": message,
-            "timestamp": datetime.now().isoformat(),
-            "data": data
-        }
-        self.test_results.append(result)
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {test_name} - {message}")
-        
-    def make_request(self, method, endpoint, data=None, headers=None):
-        """Make HTTP request with error handling"""
-        url = f"{self.base_url}{endpoint}"
-        
-        if headers is None:
-            headers = {}
-        
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-            
+    def test_health_check(self):
+        """Test basic health check endpoint"""
+        print("\n=== Testing Health Check ===")
         try:
-            if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=30)
-            elif method.upper() == "POST":
-                headers["Content-Type"] = "application/json"
-                response = requests.post(url, json=data, headers=headers, timeout=30)
-            elif method.upper() == "PUT":
-                headers["Content-Type"] = "application/json"
-                response = requests.put(url, json=data, headers=headers, timeout=30)
-            elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=30)
+            response = self.session.get(f"{API_BASE}/health")
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Health check passed: {data}")
+                return True
             else:
-                raise ValueError(f"Unsupported method: {method}")
-                
-            return response
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e}")
-            return None
-
-    def test_authentication_system(self):
-        """Test JWT Authentication System"""
-        print("\n=== Testing JWT Authentication System ===")
-        
-        # Test 1: User Login
-        login_data = TEST_USER_CREDENTIALS
-        response = self.make_request("POST", "/auth/login", login_data)
-        
-        if response and response.status_code == 200:
-            data = response.json()
-            if "access_token" in data and "user" in data:
-                self.token = data["access_token"]
-                self.test_data["current_user"] = data["user"]
-                self.log_test("User Login", True, f"Successfully logged in as {data['user'].get('username', 'unknown')}")
-            else:
-                self.log_test("User Login", False, "Login response missing required fields")
-        else:
-            self.log_test("User Login", False, f"Login failed with status: {response.status_code if response else 'No response'}")
+                print(f"❌ Health check failed: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Health check error: {e}")
             return False
-            
-        # Test 2: Get Current User Profile
-        response = self.make_request("GET", "/auth/me")
-        if response and response.status_code == 200:
-            user_data = response.json()
-            self.log_test("Get User Profile", True, f"Retrieved profile for user: {user_data.get('username')}")
-        else:
-            self.log_test("Get User Profile", False, f"Failed to get user profile: {response.status_code if response else 'No response'}")
-            
-        # Test 3: Test Protected Endpoint Access
-        response = self.make_request("GET", "/users")
-        if response and response.status_code == 200:
-            self.log_test("Protected Endpoint Access", True, "Successfully accessed protected endpoint")
-        else:
-            self.log_test("Protected Endpoint Access", False, f"Failed to access protected endpoint: {response.status_code if response else 'No response'}")
-            
-        return True
-
-    def test_user_management_api(self):
-        """Test User Management API"""
-        print("\n=== Testing User Management API ===")
+    
+    def test_user_registration(self):
+        """Test user registration for different roles"""
+        print("\n=== Testing User Registration ===")
         
-        # Test 1: Get All Users
-        response = self.make_request("GET", "/users")
-        if response and response.status_code == 200:
-            users = response.json()
-            self.test_data["users"] = users
-            self.log_test("Get All Users", True, f"Retrieved {len(users)} users")
-        else:
-            self.log_test("Get All Users", False, f"Failed to get users: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Get User Roles List
-        response = self.make_request("GET", "/users/roles/list")
-        if response and response.status_code == 200:
-            roles = response.json()
-            self.log_test("Get User Roles", True, f"Retrieved {len(roles)} available roles")
-        else:
-            self.log_test("Get User Roles", False, f"Failed to get roles: {response.status_code if response else 'No response'}")
-            
-        # Test 3: Create New User (if admin)
-        if self.test_data.get("current_user", {}).get("role") == "admin":
-            test_user_data = {
-                "username": f"test_user_{int(time.time())}",
-                "password": "testpass123",
-                "email": f"test_{int(time.time())}@example.com",
-                "full_name": "Test User",
-                "role": "sales",
-                "position": "Sales Executive"
-            }
-            
-            response = self.make_request("POST", "/users", test_user_data)
-            if response and response.status_code == 200:
-                created_user = response.json()
-                self.test_data["created_user"] = created_user
-                self.log_test("Create User", True, f"Created user: {created_user.get('username')}")
-            else:
-                self.log_test("Create User", False, f"Failed to create user: {response.status_code if response else 'No response'}")
-
-    def test_customer_management_api(self):
-        """Test Customer Management API"""
-        print("\n=== Testing Customer Management API ===")
-        
-        # Test 1: Get All Customers
-        response = self.make_request("GET", "/customers")
-        if response and response.status_code == 200:
-            customers = response.json()
-            self.test_data["customers"] = customers
-            self.log_test("Get All Customers", True, f"Retrieved {len(customers)} customers")
-        else:
-            self.log_test("Get All Customers", False, f"Failed to get customers: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Create New Customer
-        current_user_id = self.test_data.get("current_user", {}).get("id")
-        if current_user_id:
-            customer_data = {
-                "name": f"Test Customer {int(time.time())}",
-                "email": f"customer_{int(time.time())}@example.com",
-                "phone": "+1234567890",
-                "company": "Test Company",
-                "status": "lead",
-                "assigned_sales_id": current_user_id,
-                "potential_value": 50000.0,
-                "notes": "Test customer for API testing"
-            }
-            
-            response = self.make_request("POST", "/customers", customer_data)
-            if response and response.status_code == 200:
-                created_customer = response.json()
-                self.test_data["created_customer"] = created_customer
-                self.log_test("Create Customer", True, f"Created customer: {created_customer.get('name')}")
-                
-                # Test 3: Get Customer by ID
-                customer_id = created_customer.get("id")
-                response = self.make_request("GET", f"/customers/{customer_id}")
-                if response and response.status_code == 200:
-                    self.log_test("Get Customer by ID", True, "Successfully retrieved customer by ID")
-                else:
-                    self.log_test("Get Customer by ID", False, f"Failed to get customer by ID: {response.status_code if response else 'No response'}")
-            else:
-                self.log_test("Create Customer", False, f"Failed to create customer: {response.status_code if response else 'No response'}")
-
-    def test_client_management_api(self):
-        """Test Client Management API"""
-        print("\n=== Testing Client Management API ===")
-        
-        # Test 1: Get All Clients
-        response = self.make_request("GET", "/clients")
-        if response and response.status_code == 200:
-            clients = response.json()
-            self.test_data["clients"] = clients
-            self.log_test("Get All Clients", True, f"Retrieved {len(clients)} clients")
-        else:
-            self.log_test("Get All Clients", False, f"Failed to get clients: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Get Client Statistics
-        response = self.make_request("GET", "/clients/statistics")
-        if response and response.status_code == 200:
-            stats = response.json()
-            self.log_test("Get Client Statistics", True, f"Retrieved statistics: {stats.get('totalClients', 0)} total clients")
-        else:
-            self.log_test("Get Client Statistics", False, f"Failed to get client statistics: {response.status_code if response else 'No response'}")
-            
-        # Test 3: Create New Client
-        client_data = {
-            "name": f"Test Client {int(time.time())}",
-            "company": "Test Company Ltd",
-            "contact_person": "John Doe",
-            "email": f"client_{int(time.time())}@example.com",
+        # Test admin registration
+        admin_data = {
+            "email": f"admin_{uuid.uuid4().hex[:8]}@test.com",
+            "password": "admin123",
+            "full_name": "Test Admin",
+            "role": "admin",
             "phone": "+1234567890",
-            "contract_value": 100000.0,
-            "contract_link": "https://example.com/contract",
-            "address": "123 Test Street",
-            "notes": "Test client for API testing",
-            "invoice_email": f"invoice_{int(time.time())}@example.com",
-            "client_type": "business",
-            "source": "referral"
+            "target_monthly": 0.0
         }
         
-        response = self.make_request("POST", "/clients", client_data)
-        if response and response.status_code == 200:
-            created_client = response.json()
-            self.test_data["created_client"] = created_client
-            self.log_test("Create Client", True, f"Created client: {created_client.get('name')}")
-            
-            # Test 4: Get Client Detail
-            client_id = created_client.get("id")
-            response = self.make_request("GET", f"/clients/{client_id}")
-            if response and response.status_code == 200:
-                client_detail = response.json()
-                # Verify new fields are present
-                if "invoice_email" in client_detail and "client_type" in client_detail and "source" in client_detail:
-                    self.log_test("Get Client Detail with New Fields", True, "Client detail includes all new fields")
+        try:
+            response = self.session.post(f"{API_BASE}/auth/register", json=admin_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data["access_token"]
+                self.admin_user = data["user"]
+                print(f"✅ Admin registration successful: {self.admin_user['email']}")
+            else:
+                print(f"❌ Admin registration failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin registration error: {e}")
+            return False
+        
+        # Test sales registration
+        sales_data = {
+            "email": f"sales_{uuid.uuid4().hex[:8]}@test.com",
+            "password": "sales123",
+            "full_name": "Test Sales Person",
+            "role": "sales",
+            "phone": "+1234567891",
+            "target_monthly": 10000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/register", json=sales_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.sales_token = data["access_token"]
+                self.sales_user = data["user"]
+                print(f"✅ Sales registration successful: {self.sales_user['email']}")
+            else:
+                print(f"❌ Sales registration failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales registration error: {e}")
+            return False
+        
+        # Test manager registration
+        manager_data = {
+            "email": f"manager_{uuid.uuid4().hex[:8]}@test.com",
+            "password": "manager123",
+            "full_name": "Test Manager",
+            "role": "manager",
+            "phone": "+1234567892",
+            "target_monthly": 0.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/register", json=manager_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.manager_token = data["access_token"]
+                self.manager_user = data["user"]
+                print(f"✅ Manager registration successful: {self.manager_user['email']}")
+                return True
+            else:
+                print(f"❌ Manager registration failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Manager registration error: {e}")
+            return False
+    
+    def test_user_login(self):
+        """Test user login functionality"""
+        print("\n=== Testing User Login ===")
+        
+        # Test admin login
+        login_data = {
+            "email": self.admin_user["email"],
+            "password": "admin123"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Admin login successful")
+                # Verify token is different (new login)
+                if data["access_token"] != self.admin_token:
+                    print("✅ New token generated on login")
+                return True
+            else:
+                print(f"❌ Admin login failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin login error: {e}")
+            return False
+    
+    def test_invalid_login(self):
+        """Test login with invalid credentials"""
+        print("\n=== Testing Invalid Login ===")
+        
+        invalid_data = {
+            "email": "nonexistent@test.com",
+            "password": "wrongpassword"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/login", json=invalid_data)
+            if response.status_code == 400:
+                print("✅ Invalid login correctly rejected")
+                return True
+            else:
+                print(f"❌ Invalid login should return 400, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Invalid login test error: {e}")
+            return False
+    
+    def test_protected_endpoint_access(self):
+        """Test access to protected endpoints with and without tokens"""
+        print("\n=== Testing Protected Endpoint Access ===")
+        
+        # Test without token
+        try:
+            response = self.session.get(f"{API_BASE}/auth/me")
+            if response.status_code == 403:
+                print("✅ Protected endpoint correctly rejects requests without token")
+            else:
+                print(f"❌ Expected 403 for no token, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ No token test error: {e}")
+            return False
+        
+        # Test with valid token
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/auth/me", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Protected endpoint access with valid token successful: {data['email']}")
+                return True
+            else:
+                print(f"❌ Protected endpoint access failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Valid token test error: {e}")
+            return False
+    
+    def test_customer_management(self):
+        """Test customer CRUD operations"""
+        print("\n=== Testing Customer Management ===")
+        
+        # Test customer creation
+        customer_data = {
+            "name": "Test Customer",
+            "email": "customer@test.com",
+            "phone": "+1234567893",
+            "company": "Test Company",
+            "position": "CEO",
+            "status": "lead",
+            "assigned_sales_id": self.sales_user["id"],
+            "potential_value": 50000.0,
+            "notes": "Test customer for API testing",
+            "address": "123 Test St, Test City",
+            "source": "website"
+        }
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=customer_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.test_customer_id = data["id"]
+                print(f"✅ Customer creation successful: {data['name']}")
+            else:
+                print(f"❌ Customer creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer creation error: {e}")
+            return False
+        
+        # Test customer retrieval
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Customer retrieval successful: {data['name']}")
+            else:
+                print(f"❌ Customer retrieval failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer retrieval error: {e}")
+            return False
+        
+        # Test customer update
+        update_data = {
+            "status": "prospect",
+            "potential_value": 75000.0,
+            "notes": "Updated notes for testing"
+        }
+        
+        try:
+            response = self.session.put(f"{API_BASE}/customers/{self.test_customer_id}", json=update_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Customer update successful: status={data['status']}, value={data['potential_value']}")
+            else:
+                print(f"❌ Customer update failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer update error: {e}")
+            return False
+        
+        # Test customer list retrieval
+        try:
+            response = self.session.get(f"{API_BASE}/customers", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Customer list retrieval successful: {len(data)} customers found")
+                return True
+            else:
+                print(f"❌ Customer list retrieval failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer list retrieval error: {e}")
+            return False
+    
+    def test_role_based_access_control(self):
+        """Test role-based access control for customers"""
+        print("\n=== Testing Role-Based Access Control ===")
+        
+        # Test sales person can only see their customers
+        sales_headers = {"Authorization": f"Bearer {self.sales_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/customers", headers=sales_headers)
+            if response.status_code == 200:
+                data = response.json()
+                # Should only see customers assigned to them
+                assigned_customers = [c for c in data if c["assigned_sales_id"] == self.sales_user["id"]]
+                if len(assigned_customers) == len(data):
+                    print(f"✅ Sales person correctly sees only assigned customers: {len(data)}")
                 else:
-                    self.log_test("Get Client Detail with New Fields", False, "Client detail missing new fields")
+                    print(f"❌ Sales person sees unassigned customers")
+                    return False
             else:
-                self.log_test("Get Client Detail", False, f"Failed to get client detail: {response.status_code if response else 'No response'}")
-        else:
-            self.log_test("Create Client", False, f"Failed to create client: {response.status_code if response else 'No response'}")
-
-    def test_client_documents_api(self):
-        """Test Client Documents CRUD API"""
-        print("\n=== Testing Client Documents API ===")
+                print(f"❌ Sales customer access failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales customer access error: {e}")
+            return False
         
-        client_id = self.test_data.get("created_client", {}).get("id")
-        if not client_id:
-            self.log_test("Client Documents Test", False, "No test client available for documents testing")
-            return
-            
-        # Test 1: Get Client Documents (should be empty initially)
-        response = self.make_request("GET", f"/clients/{client_id}/documents")
-        if response and response.status_code == 200:
-            documents = response.json()
-            self.log_test("Get Client Documents", True, f"Retrieved {len(documents)} documents")
-        else:
-            self.log_test("Get Client Documents", False, f"Failed to get documents: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Create Client Document
-        document_data = {
-            "name": "Test Contract Document",
-            "link": "https://example.com/contract.pdf",
-            "status": "pending"
-        }
-        
-        response = self.make_request("POST", f"/clients/{client_id}/documents", document_data)
-        if response and response.status_code == 200:
-            created_document = response.json()
-            self.test_data["created_document"] = created_document
-            self.log_test("Create Client Document", True, f"Created document: {created_document.get('name')}")
-            
-            # Test 3: Update Client Document
-            document_id = created_document.get("id")
-            update_data = {
-                "name": "Updated Contract Document",
-                "status": "signed"
-            }
-            
-            response = self.make_request("PUT", f"/clients/{client_id}/documents/{document_id}", update_data)
-            if response and response.status_code == 200:
-                self.log_test("Update Client Document", True, "Successfully updated document")
+        # Test sales person cannot access other's customers directly
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}", headers=sales_headers)
+            if response.status_code == 200:
+                # This should work since the customer is assigned to this sales person
+                print("✅ Sales person can access assigned customer")
+                return True
             else:
-                self.log_test("Update Client Document", False, f"Failed to update document: {response.status_code if response else 'No response'}")
-        else:
-            self.log_test("Create Client Document", False, f"Failed to create document: {response.status_code if response else 'No response'}")
-
-    def test_projects_management_api(self):
-        """Test Projects Management Module"""
-        print("\n=== Testing Projects Management API ===")
+                print(f"❌ Sales person cannot access assigned customer: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales customer direct access error: {e}")
+            return False
+    
+    def test_interaction_tracking(self):
+        """Test interaction tracking functionality"""
+        print("\n=== Testing Interaction Tracking ===")
         
-        # Test 1: Get All Projects
-        response = self.make_request("GET", "/projects")
-        if response and response.status_code == 200:
-            projects = response.json()
-            self.test_data["projects"] = projects
-            self.log_test("Get All Projects", True, f"Retrieved {len(projects)} projects")
-        else:
-            self.log_test("Get All Projects", False, f"Failed to get projects: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Get Project Statistics
-        response = self.make_request("GET", "/projects/statistics")
-        if response and response.status_code == 200:
-            stats = response.json()
-            self.log_test("Get Project Statistics", True, f"Retrieved statistics: {stats.get('total_projects', 0)} total projects")
-        else:
-            self.log_test("Get Project Statistics", False, f"Failed to get project statistics: {response.status_code if response else 'No response'}")
-            
-        # Test 3: Get Project Options
-        response = self.make_request("GET", "/projects/progress-options")
-        if response and response.status_code == 200:
-            options = response.json()
-            self.log_test("Get Project Progress Options", True, f"Retrieved {len(options)} progress options")
-        else:
-            self.log_test("Get Project Progress Options", False, f"Failed to get progress options: {response.status_code if response else 'No response'}")
-            
-        # Test 4: Create New Project
-        client_id = self.test_data.get("created_client", {}).get("id")
-        project_data = {
-            "client_id": client_id,
-            "name": f"Test Project {int(time.time())}",
-            "work_file_link": "https://example.com/project-files",
-            "start_date": datetime.now().isoformat(),
-            "end_date": (datetime.now() + timedelta(days=30)).isoformat(),
-            "contract_value": 75000.0,
-            "debt": 0.0,
-            "progress": "in_progress",
-            "status": "active",
-            "notes": "Test project for API testing"
-        }
-        
-        response = self.make_request("POST", "/projects", project_data)
-        if response and response.status_code == 200:
-            created_project = response.json()
-            self.test_data["created_project"] = created_project
-            self.log_test("Create Project", True, f"Created project: {created_project.get('name')}")
-        else:
-            self.log_test("Create Project", False, f"Failed to create project: {response.status_code if response else 'No response'}")
-
-    def test_task_management_api(self):
-        """Test Task Management with Feedback System"""
-        print("\n=== Testing Task Management API ===")
-        
-        # Test 1: Get All Tasks
-        response = self.make_request("GET", "/tasks")
-        if response and response.status_code == 200:
-            tasks = response.json()
-            self.test_data["tasks"] = tasks
-            self.log_test("Get All Tasks", True, f"Retrieved {len(tasks)} tasks")
-        else:
-            self.log_test("Get All Tasks", False, f"Failed to get tasks: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Get Task Statistics
-        response = self.make_request("GET", "/tasks/statistics")
-        if response and response.status_code == 200:
-            stats = response.json()
-            self.log_test("Get Task Statistics", True, f"Retrieved task statistics: {stats.get('todo', 0)} todo tasks")
-        else:
-            self.log_test("Get Task Statistics", False, f"Failed to get task statistics: {response.status_code if response else 'No response'}")
-            
-        # Test 3: Get Task Comment Counts
-        response = self.make_request("GET", "/tasks/comment-counts")
-        if response and response.status_code == 200:
-            comment_counts = response.json()
-            self.log_test("Get Task Comment Counts", True, f"Retrieved comment counts for {len(comment_counts)} tasks")
-        else:
-            self.log_test("Get Task Comment Counts", False, f"Failed to get comment counts: {response.status_code if response else 'No response'}")
-            
-        # Test 4: Create New Task
-        task_data = {
-            "title": f"Test Task {int(time.time())}",
-            "description": "Test task for API testing",
-            "priority": "medium",
-            "deadline": (datetime.now() + timedelta(days=7)).isoformat(),
-            "assigned_to": "Test User"
-        }
-        
-        response = self.make_request("POST", "/tasks", task_data)
-        if response and response.status_code == 200:
-            created_task = response.json()
-            self.test_data["created_task"] = created_task
-            self.log_test("Create Task", True, f"Created task: {created_task.get('title')}")
-            
-            # Test 5: Get Task Comments
-            task_id = created_task.get("id")
-            response = self.make_request("GET", f"/tasks/{task_id}/comments")
-            if response and response.status_code == 200:
-                comments = response.json()
-                self.log_test("Get Task Comments", True, f"Retrieved {len(comments)} comments for task")
-            else:
-                self.log_test("Get Task Comments", False, f"Failed to get task comments: {response.status_code if response else 'No response'}")
-                
-            # Test 6: Create Task Comment
-            comment_data = {
-                "message": "This is a test comment for the task"
-            }
-            
-            response = self.make_request("POST", f"/tasks/{task_id}/comments", comment_data)
-            if response and response.status_code == 200:
-                created_comment = response.json()
-                self.log_test("Create Task Comment", True, f"Created comment: {created_comment.get('message')[:30]}...")
-            else:
-                self.log_test("Create Task Comment", False, f"Failed to create comment: {response.status_code if response else 'No response'}")
-        else:
-            self.log_test("Create Task", False, f"Failed to create task: {response.status_code if response else 'No response'}")
-
-    def test_interaction_tracking_api(self):
-        """Test Interaction Tracking API"""
-        print("\n=== Testing Interaction Tracking API ===")
-        
-        customer_id = self.test_data.get("created_customer", {}).get("id")
-        if not customer_id:
-            self.log_test("Interaction Tracking Test", False, "No test customer available for interaction testing")
-            return
-            
-        # Test 1: Get Customer Interactions
-        response = self.make_request("GET", f"/customers/{customer_id}/interactions")
-        if response and response.status_code == 200:
-            interactions = response.json()
-            self.log_test("Get Customer Interactions", True, f"Retrieved {len(interactions)} interactions")
-        else:
-            self.log_test("Get Customer Interactions", False, f"Failed to get interactions: {response.status_code if response else 'No response'}")
-            
-        # Test 2: Create New Interaction
+        # Create an interaction
         interaction_data = {
-            "customer_id": customer_id,
+            "customer_id": self.test_customer_id,
             "type": "call",
-            "title": "Follow-up Call",
-            "description": "Discussed project requirements and timeline",
+            "title": "Initial Sales Call",
+            "description": "Discussed product requirements and pricing",
             "revenue_generated": 5000.0,
             "next_action": "Send proposal",
-            "next_action_date": (datetime.now() + timedelta(days=3)).isoformat()
+            "next_action_date": (datetime.utcnow() + timedelta(days=3)).isoformat()
         }
         
-        response = self.make_request("POST", "/interactions", interaction_data)
-        if response and response.status_code == 200:
-            created_interaction = response.json()
-            self.test_data["created_interaction"] = created_interaction
-            self.log_test("Create Interaction", True, f"Created interaction: {created_interaction.get('title')}")
-        else:
-            self.log_test("Create Interaction", False, f"Failed to create interaction: {response.status_code if response else 'No response'}")
-
-    def test_sales_team_management_api(self):
-        """Test Sales Team Management API"""
-        print("\n=== Testing Sales Team Management API ===")
-        
-        # Test 1: Get Sales Team (requires admin/manager role)
-        current_user_role = self.test_data.get("current_user", {}).get("role")
-        if current_user_role in ["admin", "manager"]:
-            response = self.make_request("GET", "/sales")
-            if response and response.status_code == 200:
-                sales_team = response.json()
-                self.log_test("Get Sales Team", True, f"Retrieved {len(sales_team)} sales team members")
-                
-                # Test 2: Get Sales Analytics for first sales person
-                if sales_team:
-                    sales_id = sales_team[0].get("id")
-                    response = self.make_request("GET", f"/sales/{sales_id}/analytics")
-                    if response and response.status_code == 200:
-                        analytics = response.json()
-                        self.log_test("Get Sales Analytics", True, f"Retrieved analytics for sales person: {analytics.get('total_customers', 0)} customers")
-                    else:
-                        self.log_test("Get Sales Analytics", False, f"Failed to get sales analytics: {response.status_code if response else 'No response'}")
+        headers = {"Authorization": f"Bearer {self.sales_token}"}
+        try:
+            response = self.session.post(f"{API_BASE}/interactions", json=interaction_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.test_interaction_id = data["id"]
+                print(f"✅ Interaction creation successful: {data['title']}")
             else:
-                self.log_test("Get Sales Team", False, f"Failed to get sales team: {response.status_code if response else 'No response'}")
-        else:
-            self.log_test("Sales Team Management", False, f"Current user role '{current_user_role}' not authorized for sales team management")
-
-    def test_analytics_dashboard_api(self):
-        """Test Analytics Dashboard API - This would be implemented based on specific dashboard endpoints"""
-        print("\n=== Testing Analytics Dashboard API ===")
+                print(f"❌ Interaction creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Interaction creation error: {e}")
+            return False
         
-        # Note: The analytics dashboard would typically have specific endpoints
-        # For now, we test the statistics endpoints we've already covered
+        # Get customer interactions
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}/interactions", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Customer interactions retrieval successful: {len(data)} interactions")
+                return True
+            else:
+                print(f"❌ Customer interactions retrieval failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer interactions retrieval error: {e}")
+            return False
+    
+    def test_sales_team_management(self):
+        """Test sales team management APIs"""
+        print("\n=== Testing Sales Team Management ===")
         
-        # Test overall system health by checking if all statistics endpoints work
-        endpoints_tested = [
-            ("/clients/statistics", "Client Statistics"),
-            ("/projects/statistics", "Project Statistics"), 
-            ("/tasks/statistics", "Task Statistics")
+        # Test getting sales team (admin/manager access)
+        admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/sales", headers=admin_headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Sales team retrieval successful: {len(data)} sales persons")
+            else:
+                print(f"❌ Sales team retrieval failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales team retrieval error: {e}")
+            return False
+        
+        # Test sales person analytics
+        try:
+            response = self.session.get(f"{API_BASE}/sales/{self.sales_user['id']}/analytics", headers=admin_headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Sales analytics successful: {data['total_customers']} customers, ${data['total_revenue']} revenue")
+                return True
+            else:
+                print(f"❌ Sales analytics failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales analytics error: {e}")
+            return False
+    
+    def test_dashboard_analytics(self):
+        """Test dashboard analytics for different user roles"""
+        print("\n=== Testing Dashboard Analytics ===")
+        
+        # Test admin dashboard analytics
+        admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/dashboard/analytics", headers=admin_headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Admin dashboard analytics successful:")
+                print(f"   - Total customers: {data['total_customers']}")
+                print(f"   - Total revenue: ${data['total_revenue']}")
+                print(f"   - Sales team size: {data['total_sales_team']}")
+                print(f"   - Customer status distribution: {data['customers_by_status']}")
+            else:
+                print(f"❌ Admin dashboard analytics failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin dashboard analytics error: {e}")
+            return False
+        
+        # Test sales person dashboard analytics
+        sales_headers = {"Authorization": f"Bearer {self.sales_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/dashboard/analytics", headers=sales_headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Sales dashboard analytics successful:")
+                print(f"   - Personal customers: {data['total_customers']}")
+                print(f"   - Personal revenue: ${data['total_revenue']}")
+                print(f"   - Personal interactions: {data['total_interactions']}")
+                return True
+            else:
+                print(f"❌ Sales dashboard analytics failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales dashboard analytics error: {e}")
+            return False
+    
+    def test_data_consistency(self):
+        """Test data consistency across related entities"""
+        print("\n=== Testing Data Consistency ===")
+        
+        # Verify customer revenue was updated after interaction
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}", headers=headers)
+            if response.status_code == 200:
+                customer = response.json()
+                if customer["total_revenue"] > 0:
+                    print(f"✅ Customer revenue updated correctly: ${customer['total_revenue']}")
+                else:
+                    print(f"❌ Customer revenue not updated after interaction")
+                    return False
+                
+                if customer["last_contact"]:
+                    print(f"✅ Customer last contact updated: {customer['last_contact']}")
+                    return True
+                else:
+                    print(f"❌ Customer last contact not updated")
+                    return False
+            else:
+                print(f"❌ Customer data consistency check failed: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Data consistency check error: {e}")
+            return False
+    
+    def test_search_and_filtering(self):
+        """Test customer search and filtering capabilities"""
+        print("\n=== Testing Search and Filtering ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test filtering by status
+        try:
+            response = self.session.get(f"{API_BASE}/customers?status=prospect", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                prospect_customers = [c for c in data if c["status"] == "prospect"]
+                if len(prospect_customers) == len(data):
+                    print(f"✅ Status filtering works correctly: {len(data)} prospect customers")
+                else:
+                    print(f"❌ Status filtering failed")
+                    return False
+            else:
+                print(f"❌ Status filtering request failed: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Status filtering error: {e}")
+            return False
+        
+        # Test filtering by sales person
+        try:
+            response = self.session.get(f"{API_BASE}/customers?sales_id={self.sales_user['id']}", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                assigned_customers = [c for c in data if c["assigned_sales_id"] == self.sales_user["id"]]
+                if len(assigned_customers) == len(data):
+                    print(f"✅ Sales person filtering works correctly: {len(data)} assigned customers")
+                    return True
+                else:
+                    print(f"❌ Sales person filtering failed")
+                    return False
+            else:
+                print(f"❌ Sales person filtering request failed: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Sales person filtering error: {e}")
+            return False
+    
+    def test_client_management_create(self):
+        """Test client creation with all required fields"""
+        print("\n=== Testing Client Creation ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test creating a client with all fields
+        client_data = {
+            "name": "Test Client Corp",
+            "contact_person": "John Doe",
+            "email": "john.doe@testclient.com",
+            "contract_value": 150000.50,
+            "company": "Test Client Corporation",
+            "phone": "+1-555-0123",
+            "contract_link": "https://example.com/contract/123",
+            "address": "123 Business Ave, Suite 100, Business City, BC 12345",
+            "notes": "High-value client with potential for expansion"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/clients", json=client_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.test_client_ids.append(data["id"])
+                print(f"✅ Client creation successful: {data['name']} (ID: {data['id']})")
+                
+                # Verify all fields are set correctly
+                if (data["status"] == "active" and 
+                    data["contract_value"] == 150000.50 and
+                    data["contact_person"] == "John Doe"):
+                    print("✅ Client data fields set correctly")
+                    return True
+                else:
+                    print(f"❌ Client data fields incorrect")
+                    return False
+            else:
+                print(f"❌ Client creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Client creation error: {e}")
+            return False
+    
+    def test_client_management_edge_cases(self):
+        """Test client creation with edge cases"""
+        print("\n=== Testing Client Creation Edge Cases ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test with minimal required fields
+        minimal_client = {
+            "name": "Minimal Client",
+            "contact_person": "Jane Smith",
+            "email": "jane@minimal.com",
+            "contract_value": 0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/clients", json=minimal_client, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.test_client_ids.append(data["id"])
+                print(f"✅ Minimal client creation successful: {data['name']}")
+            else:
+                print(f"❌ Minimal client creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Minimal client creation error: {e}")
+            return False
+        
+        # Test with decimal contract value
+        decimal_client = {
+            "name": "Decimal Value Client",
+            "contact_person": "Bob Wilson",
+            "email": "bob@decimal.com",
+            "contract_value": 99999.99
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/clients", json=decimal_client, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.test_client_ids.append(data["id"])
+                print(f"✅ Decimal contract value client creation successful: ${data['contract_value']}")
+                return True
+            else:
+                print(f"❌ Decimal contract value client creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Decimal contract value client creation error: {e}")
+            return False
+    
+    def test_client_management_get_all(self):
+        """Test getting all clients with status filtering"""
+        print("\n=== Testing Get All Clients ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test getting all clients
+        try:
+            response = self.session.get(f"{API_BASE}/clients", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Get all clients successful: {len(data)} clients found")
+                
+                # Verify no MongoDB ObjectIDs in response
+                for client in data:
+                    if "_id" in client:
+                        print(f"❌ MongoDB ObjectID found in response")
+                        return False
+                print("✅ No MongoDB ObjectIDs in response")
+                
+            else:
+                print(f"❌ Get all clients failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Get all clients error: {e}")
+            return False
+        
+        # Test status filtering
+        try:
+            response = self.session.get(f"{API_BASE}/clients?status=active", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                active_clients = [c for c in data if c["status"] == "active"]
+                if len(active_clients) == len(data):
+                    print(f"✅ Status filtering works correctly: {len(data)} active clients")
+                    return True
+                else:
+                    print(f"❌ Status filtering failed - found non-active clients")
+                    return False
+            else:
+                print(f"❌ Status filtering failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Status filtering error: {e}")
+            return False
+    
+    def test_client_statistics(self):
+        """Test client statistics endpoint"""
+        print("\n=== Testing Client Statistics ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        try:
+            response = self.session.get(f"{API_BASE}/clients/statistics", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify required fields are present
+                required_fields = ["totalClients", "totalContractValue", "clientsThisMonth", "contractValueThisMonth"]
+                for field in required_fields:
+                    if field not in data:
+                        print(f"❌ Missing required field in statistics: {field}")
+                        return False
+                
+                print(f"✅ Client statistics successful:")
+                print(f"   - Total clients: {data['totalClients']}")
+                print(f"   - Total contract value: ${data['totalContractValue']}")
+                print(f"   - Clients this month: {data['clientsThisMonth']}")
+                print(f"   - Contract value this month: ${data['contractValueThisMonth']}")
+                
+                # Verify calculations make sense
+                if data['totalClients'] >= 0 and data['totalContractValue'] >= 0:
+                    print("✅ Statistics calculations appear correct")
+                    return True
+                else:
+                    print(f"❌ Statistics calculations appear incorrect")
+                    return False
+            else:
+                print(f"❌ Client statistics failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Client statistics error: {e}")
+            return False
+    
+    def test_client_management_update(self):
+        """Test client update functionality"""
+        print("\n=== Testing Client Update ===")
+        
+        if not self.test_client_ids:
+            print("❌ No test clients available for update")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        client_id = self.test_client_ids[0]
+        
+        # Test updating client data
+        update_data = {
+            "name": "Updated Client Name",
+            "contract_value": 200000.00,
+            "notes": "Updated notes for testing",
+            "phone": "+1-555-9999"
+        }
+        
+        try:
+            response = self.session.put(f"{API_BASE}/clients/{client_id}", json=update_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Client update successful: {data['message']}")
+                
+                # Verify the update by getting the client
+                get_response = self.session.get(f"{API_BASE}/clients", headers=headers)
+                if get_response.status_code == 200:
+                    clients = get_response.json()
+                    updated_client = next((c for c in clients if c["id"] == client_id), None)
+                    if updated_client and updated_client["contract_value"] == 200000.00:
+                        print("✅ Client update verification successful")
+                        return True
+                    else:
+                        print("❌ Client update verification failed")
+                        return False
+                else:
+                    print("❌ Could not verify client update")
+                    return False
+            else:
+                print(f"❌ Client update failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Client update error: {e}")
+            return False
+    
+    def test_client_management_delete(self):
+        """Test client deletion"""
+        print("\n=== Testing Client Deletion ===")
+        
+        if len(self.test_client_ids) < 2:
+            print("❌ Not enough test clients for deletion test")
+            return False
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        client_id = self.test_client_ids[-1]  # Delete the last one
+        
+        try:
+            response = self.session.delete(f"{API_BASE}/clients/{client_id}", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Client deletion successful: {data['message']}")
+                
+                # Verify deletion by trying to get all clients
+                get_response = self.session.get(f"{API_BASE}/clients", headers=headers)
+                if get_response.status_code == 200:
+                    clients = get_response.json()
+                    deleted_client = next((c for c in clients if c["id"] == client_id), None)
+                    if deleted_client is None:
+                        print("✅ Client deletion verification successful")
+                        self.test_client_ids.remove(client_id)
+                        return True
+                    else:
+                        print("❌ Client deletion verification failed - client still exists")
+                        return False
+                else:
+                    print("❌ Could not verify client deletion")
+                    return False
+            else:
+                print(f"❌ Client deletion failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Client deletion error: {e}")
+            return False
+    
+    def test_client_bulk_actions(self):
+        """Test bulk actions on clients"""
+        print("\n=== Testing Client Bulk Actions ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Create additional clients for bulk testing
+        bulk_test_clients = []
+        for i in range(2):
+            client_data = {
+                "name": f"Bulk Test Client {i+1}",
+                "contact_person": f"Contact {i+1}",
+                "email": f"bulk{i+1}@test.com",
+                "contract_value": 10000 * (i+1)
+            }
+            
+            try:
+                response = self.session.post(f"{API_BASE}/clients", json=client_data, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    bulk_test_clients.append(data["id"])
+                    print(f"✅ Bulk test client {i+1} created: {data['id']}")
+                else:
+                    print(f"❌ Failed to create bulk test client {i+1}")
+                    return False
+            except Exception as e:
+                print(f"❌ Error creating bulk test client {i+1}: {e}")
+                return False
+        
+        # Test bulk archive
+        archive_data = {
+            "action": "archive",
+            "client_ids": bulk_test_clients
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/clients/bulk-action", json=archive_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Bulk archive successful: {data['message']}")
+            else:
+                print(f"❌ Bulk archive failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Bulk archive error: {e}")
+            return False
+        
+        # Test bulk delete
+        delete_data = {
+            "action": "delete",
+            "client_ids": bulk_test_clients
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/clients/bulk-action", json=delete_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Bulk delete successful: {data['message']}")
+                return True
+            else:
+                print(f"❌ Bulk delete failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Bulk delete error: {e}")
+            return False
+    
+    def test_client_authentication_required(self):
+        """Test that all client endpoints require authentication"""
+        print("\n=== Testing Client Authentication Requirements ===")
+        
+        # Test without authentication
+        endpoints_to_test = [
+            ("GET", f"{API_BASE}/clients"),
+            ("GET", f"{API_BASE}/clients/statistics"),
+            ("POST", f"{API_BASE}/clients"),
+            ("PUT", f"{API_BASE}/clients/test-id"),
+            ("DELETE", f"{API_BASE}/clients/test-id"),
+            ("POST", f"{API_BASE}/clients/bulk-action")
         ]
         
-        all_working = True
-        for endpoint, name in endpoints_tested:
-            response = self.make_request("GET", endpoint)
-            if response and response.status_code == 200:
-                self.log_test(f"Dashboard - {name}", True, f"{name} endpoint working")
-            else:
-                self.log_test(f"Dashboard - {name}", False, f"{name} endpoint failed")
-                all_working = False
+        for method, url in endpoints_to_test:
+            try:
+                if method == "GET":
+                    response = self.session.get(url)
+                elif method == "POST":
+                    response = self.session.post(url, json={})
+                elif method == "PUT":
+                    response = self.session.put(url, json={})
+                elif method == "DELETE":
+                    response = self.session.delete(url)
                 
-        if all_working:
-            self.log_test("Analytics Dashboard Integration", True, "All dashboard statistics endpoints working")
-        else:
-            self.log_test("Analytics Dashboard Integration", False, "Some dashboard endpoints failed")
+                if response.status_code == 403:
+                    print(f"✅ {method} {url.split('/')[-1]} correctly requires authentication")
+                else:
+                    print(f"❌ {method} {url.split('/')[-1]} should require authentication, got: {response.status_code}")
+                    return False
+            except Exception as e:
+                print(f"❌ Error testing {method} {url}: {e}")
+                return False
+        
+        return True
+    
+    def test_client_error_handling(self):
+        """Test error handling for client endpoints"""
+        print("\n=== Testing Client Error Handling ===")
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test updating non-existent client
+        try:
+            response = self.session.put(f"{API_BASE}/clients/non-existent-id", 
+                                      json={"name": "Test"}, headers=headers)
+            if response.status_code == 404:
+                print("✅ Update non-existent client correctly returns 404")
+            else:
+                print(f"❌ Update non-existent client should return 404, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing update non-existent client: {e}")
+            return False
+        
+        # Test deleting non-existent client
+        try:
+            response = self.session.delete(f"{API_BASE}/clients/non-existent-id", headers=headers)
+            if response.status_code == 404:
+                print("✅ Delete non-existent client correctly returns 404")
+            else:
+                print(f"❌ Delete non-existent client should return 404, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing delete non-existent client: {e}")
+            return False
+        
+        # Test bulk action with empty client IDs
+        try:
+            response = self.session.post(f"{API_BASE}/clients/bulk-action", 
+                                       json={"action": "delete", "client_ids": []}, headers=headers)
+            if response.status_code == 400:
+                print("✅ Bulk action with empty IDs correctly returns 400")
+            else:
+                print(f"❌ Bulk action with empty IDs should return 400, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing bulk action with empty IDs: {e}")
+            return False
+        
+        # Test bulk action with invalid action
+        try:
+            response = self.session.post(f"{API_BASE}/clients/bulk-action", 
+                                       json={"action": "invalid", "client_ids": ["test"]}, headers=headers)
+            if response.status_code == 400:
+                print("✅ Bulk action with invalid action correctly returns 400")
+                return True
+            else:
+                print(f"❌ Bulk action with invalid action should return 400, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing bulk action with invalid action: {e}")
+            return False
 
-    def run_comprehensive_test(self):
+    def run_all_tests(self):
         """Run all tests in sequence"""
-        print("🚀 Starting Comprehensive CRM Backend Testing")
-        print(f"Testing against: {self.base_url}")
-        print("=" * 60)
+        print("🚀 Starting CRM Backend API Testing...")
         
-        start_time = time.time()
+        test_results = []
         
-        # Run all test modules
-        if self.test_authentication_system():
-            self.test_user_management_api()
-            self.test_customer_management_api()
-            self.test_client_management_api()
-            self.test_client_documents_api()
-            self.test_projects_management_api()
-            self.test_task_management_api()
-            self.test_interaction_tracking_api()
-            self.test_sales_team_management_api()
-            self.test_analytics_dashboard_api()
+        # Core functionality tests
+        test_results.append(("Health Check", self.test_health_check()))
+        test_results.append(("User Registration", self.test_user_registration()))
+        test_results.append(("User Login", self.test_user_login()))
+        test_results.append(("Invalid Login", self.test_invalid_login()))
+        test_results.append(("Protected Endpoint Access", self.test_protected_endpoint_access()))
+        test_results.append(("Customer Management", self.test_customer_management()))
+        test_results.append(("Role-Based Access Control", self.test_role_based_access_control()))
+        test_results.append(("Interaction Tracking", self.test_interaction_tracking()))
+        test_results.append(("Sales Team Management", self.test_sales_team_management()))
+        test_results.append(("Dashboard Analytics", self.test_dashboard_analytics()))
+        test_results.append(("Data Consistency", self.test_data_consistency()))
+        test_results.append(("Search and Filtering", self.test_search_and_filtering()))
         
-        end_time = time.time()
-        duration = end_time - start_time
+        # Client Management tests
+        test_results.append(("Client Creation", self.test_client_management_create()))
+        test_results.append(("Client Edge Cases", self.test_client_management_edge_cases()))
+        test_results.append(("Client Get All & Filtering", self.test_client_management_get_all()))
+        test_results.append(("Client Statistics", self.test_client_statistics()))
+        test_results.append(("Client Update", self.test_client_management_update()))
+        test_results.append(("Client Deletion", self.test_client_management_delete()))
+        test_results.append(("Client Bulk Actions", self.test_client_bulk_actions()))
+        test_results.append(("Client Authentication", self.test_client_authentication_required()))
+        test_results.append(("Client Error Handling", self.test_client_error_handling()))
         
-        # Generate summary
-        self.generate_test_summary(duration)
+        # Print summary
+        print("\n" + "="*60)
+        print("🏁 TEST SUMMARY")
+        print("="*60)
         
-    def generate_test_summary(self, duration):
-        """Generate and display test summary"""
-        print("\n" + "=" * 60)
-        print("🎯 COMPREHENSIVE CRM BACKEND TEST SUMMARY")
-        print("=" * 60)
+        passed = 0
+        failed = 0
         
-        total_tests = len(self.test_results)
-        passed_tests = len([r for r in self.test_results if r["success"]])
-        failed_tests = total_tests - passed_tests
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+        for test_name, result in test_results:
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"{test_name:<30} {status}")
+            if result:
+                passed += 1
+            else:
+                failed += 1
         
-        print(f"📊 Test Results:")
-        print(f"   Total Tests: {total_tests}")
-        print(f"   Passed: {passed_tests}")
-        print(f"   Failed: {failed_tests}")
-        print(f"   Success Rate: {success_rate:.1f}%")
-        print(f"   Duration: {duration:.2f} seconds")
+        print(f"\nTotal Tests: {len(test_results)}")
+        print(f"Passed: {passed}")
+        print(f"Failed: {failed}")
+        print(f"Success Rate: {(passed/len(test_results)*100):.1f}%")
         
-        if failed_tests > 0:
-            print(f"\n❌ Failed Tests:")
-            for result in self.test_results:
-                if not result["success"]:
-                    print(f"   - {result['test']}: {result['message']}")
-        
-        print(f"\n✅ Module Status Summary:")
-        modules = {
-            "JWT Authentication System": ["User Login", "Get User Profile", "Protected Endpoint Access"],
-            "User Management API": ["Get All Users", "Get User Roles", "Create User"],
-            "Customer Management API": ["Get All Customers", "Create Customer", "Get Customer by ID"],
-            "Client Management API": ["Get All Clients", "Get Client Statistics", "Create Client", "Get Client Detail"],
-            "Client Documents API": ["Get Client Documents", "Create Client Document", "Update Client Document"],
-            "Projects Management API": ["Get All Projects", "Get Project Statistics", "Create Project"],
-            "Task Management API": ["Get All Tasks", "Get Task Statistics", "Create Task", "Get Task Comments", "Create Task Comment"],
-            "Interaction Tracking API": ["Get Customer Interactions", "Create Interaction"],
-            "Sales Team Management API": ["Get Sales Team", "Get Sales Analytics"],
-            "Analytics Dashboard API": ["Dashboard - Client Statistics", "Dashboard - Project Statistics", "Dashboard - Task Statistics"]
-        }
-        
-        for module, tests in modules.items():
-            module_results = [r for r in self.test_results if r["test"] in tests]
-            if module_results:
-                module_passed = len([r for r in module_results if r["success"]])
-                module_total = len(module_results)
-                module_rate = (module_passed / module_total * 100) if module_total > 0 else 0
-                status = "✅" if module_rate == 100 else "⚠️" if module_rate >= 50 else "❌"
-                print(f"   {status} {module}: {module_passed}/{module_total} ({module_rate:.0f}%)")
-        
-        # Overall assessment
-        print(f"\n🎯 Overall Assessment:")
-        if success_rate >= 95:
-            print("   🎉 EXCELLENT: CRM system is working perfectly!")
-        elif success_rate >= 80:
-            print("   ✅ GOOD: CRM system is working well with minor issues")
-        elif success_rate >= 60:
-            print("   ⚠️ FAIR: CRM system has some issues that need attention")
+        if failed == 0:
+            print("\n🎉 ALL TESTS PASSED! Backend is working correctly.")
+            return True
         else:
-            print("   ❌ POOR: CRM system has significant issues requiring immediate attention")
-            
-        return {
-            "total_tests": total_tests,
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "success_rate": success_rate,
-            "duration": duration,
-            "status": "PASS" if success_rate >= 80 else "FAIL"
-        }
+            print(f"\n⚠️  {failed} tests failed. Please check the issues above.")
+            return False
 
 if __name__ == "__main__":
-    tester = CRMBackendTester()
-    tester.run_comprehensive_test()
+    tester = CRMAPITester()
+    success = tester.run_all_tests()
+    exit(0 if success else 1)

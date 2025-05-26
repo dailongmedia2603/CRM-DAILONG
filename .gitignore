@@ -2,7 +2,7 @@
 .idea/
 dist
 # dependencies
-node_modules/
+/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -46,25 +46,3 @@ agenthub/agents/youtube/db
 venv/
 .venv/
 __pycache__/
-
-# ===================
-# ADDITIONAL RULES TO PREVENT FILE SIZE VIOLATIONS
-# ===================
-# Archive files (anywhere in the project)
-**/*.zip
-**/*.tar.gz
-**/*.tar
-**/*.tgz
-
-# Build caches and artifacts
-.cache/
-*.pack
-
-# System packages
-*.deb
-
-# Python native libraries
-*.dylib
-
-# Android SDK
-android-sdk/
