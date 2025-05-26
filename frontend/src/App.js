@@ -135,55 +135,10 @@ const ClientsPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedClients, setSelectedClients] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState(null);
-  const [accountDeleteLoading, setDeleteLoading] = useState(false);
-  const [showAccountDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    setDeleteLoading(true);
-    try {
-      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
-      console.log('Delete response:', response.data);
-      fetchUsers();
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
-      alert('Xóa tài khoản thành công!');
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      if (error.response?.status === 403) {
-        alert('Lỗi: Bạn không có quyền xóa tài khoản này. Chỉ admin mới có thể xóa tài khoản.');
-      } else if (error.response?.status === 400) {
-        alert('Lỗi: ' + (error.response?.data?.detail || 'Không thể xóa tài khoản này'));
-      } else {
-        alert('Lỗi xóa tài khoản: ' + (error.response?.data?.detail || 'Unknown error'));
-      }
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const confirmBulkDelete = async () => {
-    try {
-      setBulkActionLoading(true);
-      await Promise.all(
-        selectedClients.map(id => axios.delete(`${API}/users/${id}`))
-      );
-      setClients(clients.filter(client => !selectedClients.includes(client.id)));
-      setSelectedClients([]);
-      setShowBulkDeleteConfirm(false);
-    } catch (error) {
-      console.error('Error performing bulk delete:', error);
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [statistics, setStatistics] = useState({
     totalClients: 0,
     totalContractValue: 0,
