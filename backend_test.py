@@ -130,9 +130,9 @@ class CRMAPITester:
         """Test user login functionality"""
         print("\n=== Testing User Login ===")
         
-        # Test admin login
+        # Test admin login with existing credentials
         login_data = {
-            "email": self.admin_user["email"],
+            "login": "admin",
             "password": "admin123"
         }
         
