@@ -69,7 +69,7 @@ const ClientsPage = () => {
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowDeleteConfirm(false);
-      setAccountToDelete(null);
+      setUserToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -3328,7 +3328,7 @@ const StaffPage = () => {
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowDeleteConfirm(false);
-      setAccountToDelete(null);
+      setUserToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -5746,7 +5746,7 @@ const AccountManagement = () => {
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowDeleteConfirm(false);
-      setAccountToDelete(null);
+      setUserToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
       console.error('Failed to delete user:', error);
