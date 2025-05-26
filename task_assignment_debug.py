@@ -98,6 +98,28 @@ class TaskAssignmentDebugger:
             print(f"❌ Error creating Nhi user: {str(e)}")
             return False
     
+    def reset_nhi_password(self):
+        """Reset Nhi's password as admin"""
+        print("🔑 Resetting Nhi's password...")
+        try:
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            update_data = {
+                "password": "password123"
+            }
+            
+            response = requests.put(f"{BACKEND_URL}/users/{self.nhi_user['id']}", 
+                                  json=update_data, headers=headers)
+            
+            if response.status_code == 200:
+                print("✅ Password reset successful")
+                return True
+            else:
+                print(f"❌ Password reset failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Password reset error: {str(e)}")
+            return False
+
     def login_nhi(self):
         """Login as Nhi Trinh user"""
         print("🔐 Logging in as Nhi Trinh...")
