@@ -44,6 +44,9 @@ const ClientsPage = () => {
   const [selectedClients, setSelectedClients] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
+  const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
 
   const fetchUsers = async () => {
     try {
