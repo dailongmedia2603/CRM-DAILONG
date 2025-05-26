@@ -3314,7 +3314,7 @@ const StaffPage = () => {
 
   const handleDeleteUser = async (userId) => {
     const user = users.find(u => u.id === userId);
-    setAccountToDelete(user);
+    setUserToDelete(user);
     setShowDeleteConfirm(true);
   };
 
