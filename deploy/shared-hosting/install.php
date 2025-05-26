@@ -60,25 +60,43 @@ switch ($step) {
         
     case 2:
         echo '<div class="step">
-            <h2>Bước 2: Cấu hình Database</h2>
+            <h2>Bước 2: Cấu hình Hệ thống</h2>
+            
+            <div class="warning">
+                <h3>ℹ️ LƯU Ý QUAN TRỌNG:</h3>
+                <p><strong>Database chính:</strong> MongoDB Atlas (tự động setup trên Railway)</p>
+                <p><strong>Database local:</strong> Chỉ để demo, không ảnh hưởng hệ thống</p>
+                <p><strong>→ Bạn có thể thay đổi bất kỳ thông tin nào bên dưới!</strong></p>
+            </div>
+            
             <form method="post" action="install.php?step=3">
+                <h4>🗄️ Database Local (MariaDB - Chỉ demo):</h4>
                 <label>Database Host:</label>
                 <input type="text" name="db_host" value="localhost" required>
+                <small>Có thể thay đổi: mysql.yourdomain.com</small>
                 
-                <label>Database Name (sẽ được tạo tự động):</label>
+                <label>Database Name:</label>
                 <input type="text" name="db_name" value="vuaseedi_crm" required>
+                <small>Có thể thay đổi tên bất kỳ</small>
                 
                 <label>Database Username:</label>
                 <input type="text" name="db_user" value="vuaseedi_crmuser" required>
+                <small>Có thể thay đổi username bất kỳ</small>
                 
-                <label>Database Password (sẽ được tạo tự động):</label>
-                <input type="password" name="db_pass" value="">
+                <label>Database Password:</label>
+                <input type="password" name="db_pass" value="" placeholder="Để trống hoặc đặt password">
+                <small>Có thể để trống hoặc tự đặt</small>
                 
+                <hr>
+                
+                <h4>👤 Admin Account (Quan trọng):</h4>
                 <label>Admin Email:</label>
-                <input type="email" name="admin_email" required>
+                <input type="email" name="admin_email" value="admin@crm.com" required>
+                <small>Email để đăng nhập CRM</small>
                 
                 <label>Admin Password:</label>
                 <input type="password" name="admin_pass" required>
+                <small>Mật khẩu mạnh để đăng nhập CRM</small>
                 
                 <button type="submit">Tiếp tục</button>
             </form>
