@@ -375,15 +375,17 @@ class TaskAssignmentDebugger:
                 return False
         
         # Step 3: Login as Nhi (try password reset if needed)
-        if not self.login_nhi():
+        nhi_logged_in = self.login_nhi()
+        if not nhi_logged_in:
             print("🔄 Trying password reset...")
             if self.reset_nhi_password():
-                if not self.login_nhi():
+                nhi_logged_in = self.login_nhi()
+                if not nhi_logged_in:
                     print("❌ Still cannot login as Nhi after password reset")
-                    return False
+                    print("⚠️  Continuing with admin-only debugging...")
             else:
                 print("❌ Cannot reset password and login as Nhi")
-                return False
+                print("⚠️  Continuing with admin-only debugging...")
         
         # Step 4: Check existing tasks
         existing_tasks = self.check_existing_tasks()
@@ -393,7 +395,12 @@ class TaskAssignmentDebugger:
         
         # Step 6: Test visibility
         print("\n" + "=" * 50)
-        nhi_tasks = self.test_nhi_task_visibility()
+        if nhi_logged_in:
+            nhi_tasks = self.test_nhi_task_visibility()
+        else:
+            print("⚠️  Skipping Nhi task visibility test - not logged in")
+            nhi_tasks = []
+            
         admin_tasks = self.test_admin_task_visibility()
         
         # Step 7: Analyze
