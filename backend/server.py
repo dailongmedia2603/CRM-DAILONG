@@ -654,9 +654,30 @@ async def get_projects(
     search: Optional[str] = None,
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get projects with filtering"""
+    """Get projects with filtering and role-based access control"""
     try:
         filter_query = {}
+        
+        # Apply role-based filtering (không áp dụng với admin)
+        if current_user.role != UserRole.ADMIN:
+            # Các role khác chỉ xem được projects mà:
+            # - Được assign cho họ (account_id, content_id, seeder_id)
+            # - Hoặc do họ tạo (created_by)
+            role_filter = {
+                "$or": [
+                    {"created_by": current_user.id}  # Projects do họ tạo
+                ]
+            }
+            
+            # Thêm filter theo role cụ thể
+            if current_user.role == UserRole.ACCOUNT:
+                role_filter["$or"].append({"account_id": current_user.id})
+            elif current_user.role == UserRole.CONTENT:
+                role_filter["$or"].append({"content_id": current_user.id})
+            elif current_user.role == UserRole.SEEDER:
+                role_filter["$or"].append({"seeder_id": current_user.id})
+            
+            filter_query.update(role_filter)
         
         # Apply time filter
         if time_filter and time_value:
