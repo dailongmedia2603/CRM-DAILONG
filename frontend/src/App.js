@@ -61,7 +61,7 @@ const ClientsPage = () => {
   const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
     setAccountDeleteLoading(true);
     try {
@@ -3320,7 +3320,7 @@ const StaffPage = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
     setAccountDeleteLoading(true);
     try {
@@ -5738,7 +5738,7 @@ const AccountManagement = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
     setAccountDeleteLoading(true);
     try {
