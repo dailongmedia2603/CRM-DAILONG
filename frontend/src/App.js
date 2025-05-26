@@ -46,7 +46,7 @@ const ClientsPage = () => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountDeleteLoading, setDeleteLoading] = useState(false);
-  const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
+  const [showAccountDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -58,7 +58,7 @@ const ClientsPage = () => {
   };
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountDeleteLoading, setDeleteLoading] = useState(false);
-  const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
+  const [showAccountDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
@@ -68,7 +68,7 @@ const ClientsPage = () => {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
-      setShowAccountDeleteConfirm(false);
+      setShowDeleteConfirm(false);
       setAccountToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
@@ -3327,7 +3327,7 @@ const StaffPage = () => {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
-      setShowAccountDeleteConfirm(false);
+      setShowDeleteConfirm(false);
       setAccountToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
@@ -5745,7 +5745,7 @@ const AccountManagement = () => {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
-      setShowAccountDeleteConfirm(false);
+      setShowDeleteConfirm(false);
       setAccountToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
