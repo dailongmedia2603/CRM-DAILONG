@@ -56,9 +56,6 @@ const ClientsPage = () => {
       console.error('Failed to fetch users:', error);
     }
   };
-  const [userToDelete, setUserToDelete] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
