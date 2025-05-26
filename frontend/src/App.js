@@ -5971,12 +5971,8 @@ const DashboardLayout = ({ children }) => {
     { 
       icon: FileText, 
       label: 'Dự án', 
-      color: 'text-purple-600',
-      hasSubmenu: true,
-      submenu: [
-        { icon: FileText, label: 'Dự án', path: '/projects', color: 'text-purple-600' },
-        { icon: Users, label: 'Nhân sự', path: '/staff', color: 'text-blue-600' }
-      ]
+      path: '/projects',
+      color: 'text-purple-600'
     },
     { 
       icon: Building2, 
@@ -5992,9 +5988,7 @@ const DashboardLayout = ({ children }) => {
     },
     { icon: CheckCircle, label: 'Công việc', path: '/tasks', color: 'text-indigo-600' },
     { icon: BarChart3, label: 'Báo cáo', path: '/analytics', color: 'text-purple-600' },
-    ...(user?.role !== 'sales' ? [
-      { icon: Settings, label: 'Tài khoản', path: '/accounts', color: 'text-indigo-600' }
-    ] : []),
+    { icon: Users, label: 'Nhân sự', path: '/staff', color: 'text-blue-600' },
   ];
 
   const getPageTitle = () => {
