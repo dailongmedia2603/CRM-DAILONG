@@ -368,9 +368,16 @@ class TaskAssignmentDebugger:
             if not self.create_nhi_user_if_not_exists():
                 return False
         
-        # Step 3: Login as Nhi
+        # Step 3: Login as Nhi (try password reset if needed)
         if not self.login_nhi():
-            return False
+            print("🔄 Trying password reset...")
+            if self.reset_nhi_password():
+                if not self.login_nhi():
+                    print("❌ Still cannot login as Nhi after password reset")
+                    return False
+            else:
+                print("❌ Cannot reset password and login as Nhi")
+                return False
         
         # Step 4: Check existing tasks
         existing_tasks = self.check_existing_tasks()
