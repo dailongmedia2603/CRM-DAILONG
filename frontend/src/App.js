@@ -5679,6 +5679,9 @@ const AccountManagement = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchAccounts();
