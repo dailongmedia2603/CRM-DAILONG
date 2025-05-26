@@ -26,11 +26,11 @@ class RoleBasedFilteringTester:
     def __init__(self):
         self.admin_token = None
         self.sales_token = None
-        self.manager_token = None
+        self.account_token = None
         self.test_results = []
         self.admin_user_id = None
         self.sales_user_id = None
-        self.manager_user_id = None
+        self.account_user_id = None
         
     def log_result(self, test_name, success, details=""):
         """Log test result"""
