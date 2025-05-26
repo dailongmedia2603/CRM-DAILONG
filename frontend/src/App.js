@@ -37,6 +37,7 @@ const useAuth = () => {
 const ClientsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
