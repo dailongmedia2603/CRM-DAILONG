@@ -726,10 +726,11 @@ async def get_projects(
 async def create_project(project_data: ProjectCreate, current_user: User = Depends(get_current_active_user)):
     """Create new project"""
     try:
-        project = Project(**project_data.dict())
-        project_dict = project.dict()
+        project_dict = project_data.dict()
+        project_dict["created_by"] = current_user.id  # Set creator
+        project = Project(**project_dict)
         
-        await db.projects.insert_one(project_dict)
+        await db.projects.insert_one(project.dict())
         return project
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating project: {str(e)}")
