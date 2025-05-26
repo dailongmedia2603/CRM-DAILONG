@@ -261,6 +261,8 @@ class Client(BaseModel):
     contract_end_date: datetime
     payment_terms: str
     status: str = "active"
+    assigned_sales_id: Optional[str] = None  # Sales person assigned to this client
+    created_by: Optional[str] = None         # User who created this client
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
