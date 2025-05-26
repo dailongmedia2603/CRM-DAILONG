@@ -45,7 +45,7 @@ const ClientsPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
+  const [accountDeleteLoading, setDeleteLoading] = useState(false);
   const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
 
   const fetchUsers = async () => {
@@ -57,13 +57,13 @@ const ClientsPage = () => {
     }
   };
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
+  const [accountDeleteLoading, setDeleteLoading] = useState(false);
   const [showAccountDeleteConfirm, setShowAccountDeleteConfirm] = useState(false);
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     
-    setAccountDeleteLoading(true);
+    setDeleteLoading(true);
     try {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
@@ -81,7 +81,7 @@ const ClientsPage = () => {
         alert('Lỗi xóa tài khoản: ' + (error.response?.data?.detail || 'Unknown error'));
       }
     } finally {
-      setAccountDeleteLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -3322,7 +3322,7 @@ const StaffPage = () => {
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     
-    setAccountDeleteLoading(true);
+    setDeleteLoading(true);
     try {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
@@ -3340,7 +3340,7 @@ const StaffPage = () => {
         alert('Lỗi xóa tài khoản: ' + (error.response?.data?.detail || 'Unknown error'));
       }
     } finally {
-      setAccountDeleteLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -5740,7 +5740,7 @@ const AccountManagement = () => {
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     
-    setAccountDeleteLoading(true);
+    setDeleteLoading(true);
     try {
       const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
@@ -5758,7 +5758,7 @@ const AccountManagement = () => {
         alert('Lỗi xóa tài khoản: ' + (error.response?.data?.detail || 'Unknown error'));
       }
     } finally {
-      setAccountDeleteLoading(false);
+      setDeleteLoading(false);
     }
   };
 
