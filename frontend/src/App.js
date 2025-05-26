@@ -500,23 +500,6 @@ const ClientsPage = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.963-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Xóa tài khoản
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Bạn có chắc chắn muốn xóa tài khoản của{' '}
                 <span className="font-semibold text-gray-900">
                   {accountToDelete?.full_name || accountToDelete?.username}
                 </span>?
@@ -638,23 +621,6 @@ const ClientsPage = () => {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.963-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Xóa tài khoản
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Bạn có chắc chắn muốn xóa tài khoản của{' '}
                 <span className="font-semibold text-gray-900">
                   {accountToDelete?.full_name || accountToDelete?.username}
                 </span>?
@@ -752,29 +718,6 @@ const ClientsPage = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Xác nhận xóa tài khoản</h3>
-              <p className="text-slate-600 mb-6">
-                Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.full_name || userToDelete?.username}</strong>? 
-                Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setUserToDelete(null);
-                  }}
                   className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Hủy bỏ
@@ -832,29 +775,6 @@ const ClientsPage = () => {
   );
 };
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Xác nhận xóa tài khoản</h3>
-              <p className="text-slate-600 mb-6">
-                Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.full_name || userToDelete?.username}</strong>? 
-                Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setUserToDelete(null);
-                  }}
                   className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Hủy bỏ
@@ -912,29 +832,6 @@ const ClientsPage = () => {
   );
 };
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Xác nhận xóa tài khoản</h3>
-              <p className="text-slate-600 mb-6">
-                Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.full_name || userToDelete?.username}</strong>? 
-                Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setUserToDelete(null);
-                  }}
                   className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Hủy bỏ
@@ -992,29 +889,6 @@ const ClientsPage = () => {
   );
 };
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Xác nhận xóa tài khoản</h3>
-              <p className="text-slate-600 mb-6">
-                Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.full_name || userToDelete?.username}</strong>? 
-                Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setUserToDelete(null);
-                  }}
                   className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Hủy bỏ
@@ -1072,29 +946,6 @@ const ClientsPage = () => {
   );
 };
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Xác nhận xóa tài khoản</h3>
-              <p className="text-slate-600 mb-6">
-                Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.full_name || userToDelete?.username}</strong>? 
-                Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setUserToDelete(null);
-                  }}
                   className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   Hủy bỏ
