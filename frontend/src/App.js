@@ -7578,16 +7578,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/accounts"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <AccountManagement />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
           </Routes>
         </BrowserRouter>
       </div>
