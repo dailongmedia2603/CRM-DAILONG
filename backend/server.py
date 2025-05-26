@@ -1444,26 +1444,62 @@ async def get_tasks(
     try:
         query = {}
         
+        # Apply role-based filtering (không áp dụng với admin)
+        if current_user.role != UserRole.ADMIN:
+            # Các role khác chỉ xem được tasks mà:
+            # - Được assign cho họ (assigned_to)
+            # - Hoặc do họ tạo (created_by)
+            role_conditions = [
+                {"created_by": current_user.id},    # Tasks do họ tạo
+                {"assigned_to": current_user.id}    # Tasks được assign cho họ
+            ]
+            
+            query["$or"] = role_conditions
+        
         # Filter by status
+        status_conditions = []
         if status == "active":
-            query["status"] = {"$in": ["todo", "in_progress"]}
+            status_conditions = [{"status": {"$in": ["todo", "in_progress"]}}]
         elif status == "completed":
-            query["status"] = "completed"
+            status_conditions = [{"status": "completed"}]
         
         # Filter by priority
+        priority_conditions = []
         if priority:
-            query["priority"] = priority
+            priority_conditions = [{"priority": priority}]
             
         # Filter by deadline
+        deadline_conditions = []
         if deadline_filter:
             today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             tomorrow = today + timedelta(days=1)
             
             if deadline_filter == "today":
-                query["deadline"] = {"$gte": today, "$lt": tomorrow}
+                deadline_conditions = [{"deadline": {"$gte": today, "$lt": tomorrow}}]
             elif deadline_filter == "overdue":
-                query["deadline"] = {"$lt": today}
-                query["status"] = {"$ne": "completed"}
+                deadline_conditions = [
+                    {"deadline": {"$lt": today}}, 
+                    {"status": {"$ne": "completed"}}
+                ]
+        
+        # Combine all conditions
+        all_conditions = []
+        
+        # Role filter (if not admin)
+        if "$or" in query:
+            all_conditions.append({"$or": query["$or"]})
+        
+        # Other filters
+        if status_conditions:
+            all_conditions.extend(status_conditions)
+        if priority_conditions:
+            all_conditions.extend(priority_conditions)
+        if deadline_conditions:
+            all_conditions.extend(deadline_conditions)
+        
+        # Build final query
+        if all_conditions:
+            query = {"$and": all_conditions} if len(all_conditions) > 1 else all_conditions[0]
         
         tasks = await db.tasks.find(query).to_list(1000)
         
