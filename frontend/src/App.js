@@ -3228,12 +3228,10 @@ const StaffPage = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  
-  // Delete confirmation states
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [createUserData, setCreateUserData] = useState({
     full_name: '',
