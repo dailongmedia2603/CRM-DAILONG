@@ -3319,15 +3319,15 @@ const StaffPage = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
-    setAccountDeleteLoading(true);
+    setDeleteLoading(true);
     try {
-      const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
+      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
-      setShowAccountDeleteConfirm(false);
-      setAccountToDelete(null);
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
       alert('Xóa tài khoản thành công!');
     } catch (error) {
       console.error('Failed to delete user:', error);
