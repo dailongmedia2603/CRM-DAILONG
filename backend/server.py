@@ -1129,8 +1129,34 @@ async def get_clients(status: str = "all", current_user: User = Depends(get_curr
     try:
         query = {}
         
+        # Apply role-based filtering (không áp dụng với admin)
+        if current_user.role != UserRole.ADMIN:
+            # Các role khác chỉ xem được clients mà:
+            # - Được assign cho họ (assigned_sales_id)
+            # - Hoặc do họ tạo (created_by)
+            role_conditions = [
+                {"created_by": current_user.id}  # Clients do họ tạo
+            ]
+            
+            # Thêm filter cho sales role
+            if current_user.role in [UserRole.SALES, UserRole.SALE]:
+                role_conditions.append({"assigned_sales_id": current_user.id})
+            
+            if role_conditions:
+                query["$or"] = role_conditions
+        
+        # Apply status filter
         if status != "all":
-            query["status"] = status
+            # Combine với role filter nếu có
+            if "$or" in query:
+                query = {
+                    "$and": [
+                        {"$or": query["$or"]},  # Role filter
+                        {"status": status}      # Status filter
+                    ]
+                }
+            else:
+                query["status"] = status
             
         clients = await db.clients.find(query).to_list(1000)
         
