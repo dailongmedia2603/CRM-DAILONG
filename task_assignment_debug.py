@@ -126,14 +126,20 @@ class TaskAssignmentDebugger:
         
         # Try different possible passwords/usernames
         login_attempts = [
+            {"login": self.nhi_user.get('username', 'nhitrinh'), "password": "password123"},
+            {"login": self.nhi_user.get('email', ''), "password": "password123"},
             {"login": "nhi.trinh", "password": "password123"},
             {"login": "nhitrinh", "password": "password123"},
             {"login": "nhitrinh", "password": "123456"},
-            {"login": "Nhi Trinh", "password": "password123"},
-            {"login": self.nhi_user.get('username', 'nhitrinh'), "password": "password123"}
+            {"login": "Nhi Trinh", "password": "password123"}
         ]
         
+        print(f"   Nhi user data: username={self.nhi_user.get('username')}, email={self.nhi_user.get('email')}")
+        
         for attempt in login_attempts:
+            if not attempt['login']:  # Skip empty login
+                continue
+                
             try:
                 print(f"   Trying login: {attempt['login']}")
                 response = requests.post(f"{BACKEND_URL}/auth/login", json=attempt)
