@@ -663,21 +663,25 @@ async def get_projects(
             # Các role khác chỉ xem được projects mà:
             # - Được assign cho họ (account_id, content_id, seeder_id)
             # - Hoặc do họ tạo (created_by)
-            role_filter = {
-                "$or": [
-                    {"created_by": current_user.id}  # Projects do họ tạo
-                ]
-            }
+            role_conditions = [
+                {"created_by": current_user.id}  # Projects do họ tạo
+            ]
             
             # Thêm filter theo role cụ thể
             if current_user.role == UserRole.ACCOUNT:
-                role_filter["$or"].append({"account_id": current_user.id})
+                role_conditions.append({"account_id": current_user.id})
             elif current_user.role == UserRole.CONTENT:
-                role_filter["$or"].append({"content_id": current_user.id})
+                role_conditions.append({"content_id": current_user.id})
             elif current_user.role == UserRole.SEEDER:
-                role_filter["$or"].append({"seeder_id": current_user.id})
+                role_conditions.append({"seeder_id": current_user.id})
+            elif current_user.role in [UserRole.SALES, UserRole.SALE, UserRole.INTERN]:
+                # Sales roles có thể xem projects do họ tạo hoặc được assign
+                role_conditions.append({"account_id": current_user.id})
+                role_conditions.append({"content_id": current_user.id})
+                role_conditions.append({"seeder_id": current_user.id})
             
-            filter_query.update(role_filter)
+            if role_conditions:
+                filter_query["$or"] = role_conditions
         
         # Apply time filter
         if time_filter and time_value:
@@ -696,11 +700,22 @@ async def get_projects(
         if progress:
             filter_query["progress"] = progress
             
-        # Apply search
+        # Apply search (combine with role-based filter nếu có)
         if search:
-            filter_query["$or"] = [
+            search_conditions = [
                 {"name": {"$regex": search, "$options": "i"}}
             ]
+            
+            # Nếu đã có role filter, combine với search
+            if "$or" in filter_query:
+                filter_query = {
+                    "$and": [
+                        {"$or": filter_query["$or"]},  # Role filter
+                        {"$or": search_conditions}     # Search filter
+                    ]
+                }
+            else:
+                filter_query["$or"] = search_conditions
         
         projects = await db.projects.find(filter_query).to_list(1000)
         return [Project(**{k: v for k, v in project.items()}) for project in projects]
