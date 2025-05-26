@@ -350,6 +350,7 @@ test_plan:
     - "Sales Team Management API"
     - "Client Management API"
     - "Client Detail Functionality"
+    - "Role-Based Statistics Filtering"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
