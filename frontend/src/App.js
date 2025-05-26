@@ -45,6 +45,7 @@ const ClientsPage = () => {
   const [selectedClients, setSelectedClients] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
