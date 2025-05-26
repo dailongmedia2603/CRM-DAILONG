@@ -52,8 +52,8 @@ class RoleBasedFilteringTester:
         # Test users from existing system
         test_users = [
             {"login": "admin", "password": "admin123", "role": "admin"},
-            {"login": "sales", "password": "sales123", "role": "sales"},
-            {"login": "manager", "password": "manager123", "role": "manager"}
+            {"login": "yenvi", "password": "yenvi123", "role": "sales"},
+            {"login": "nhitrinh", "password": "nhitrinh123", "role": "account"}
         ]
         
         tokens = {}
