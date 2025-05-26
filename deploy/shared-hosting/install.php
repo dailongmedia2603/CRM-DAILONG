@@ -129,7 +129,9 @@ switch ($step) {
             ];
             
             echo '<script>
-                setupDatabase("' . $dbHost . '", "' . $dbName . '", "' . $dbUser . '", "' . $dbPass . '");
+                setTimeout(function() {
+                    setupDatabase("' . $dbHost . '", "' . $dbName . '", "' . $dbUser . '", "' . $dbPass . '");
+                }, 1000);
             </script>';
         }
         break;
