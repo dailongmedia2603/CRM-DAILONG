@@ -4883,7 +4883,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, task = null, title, users = [] }
             >
               <option value="">Chọn người thực hiện</option>
               {users.map((user) => (
-                <option key={user.id} value={user.full_name}>
+                <option key={user.id} value={user.id}>
                   {user.full_name} ({user.email})
                 </option>
               ))}
