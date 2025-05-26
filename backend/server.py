@@ -1580,29 +1580,58 @@ async def get_task_statistics(current_user: User = Depends(get_current_active_us
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow = today + timedelta(days=1)
         
+        # Build role-based filter query
+        role_filter = {}
+        
+        # Apply role-based filtering (không áp dụng với admin)
+        if current_user.role != UserRole.ADMIN:
+            # Các role khác chỉ xem được tasks mà:
+            # - Được assign cho họ (assigned_to)
+            # - Hoặc do họ tạo (created_by)
+            role_conditions = [
+                {"created_by": current_user.id},    # Tasks do họ tạo
+                {"assigned_to": current_user.id}    # Tasks được assign cho họ
+            ]
+            
+            role_filter["$or"] = role_conditions
+        
         # Urgent tasks
-        urgent_count = await db.tasks.count_documents({
+        urgent_filter = {
+            **role_filter,
             "priority": "urgent",
             "status": {"$ne": "completed"}
-        })
+        }
+        urgent_count = await db.tasks.count_documents(urgent_filter)
         
         # Todo tasks
-        todo_count = await db.tasks.count_documents({"status": "todo"})
+        todo_filter = {
+            **role_filter,
+            "status": "todo"
+        }
+        todo_count = await db.tasks.count_documents(todo_filter)
         
         # In progress tasks
-        in_progress_count = await db.tasks.count_documents({"status": "in_progress"})
+        in_progress_filter = {
+            **role_filter,
+            "status": "in_progress"
+        }
+        in_progress_count = await db.tasks.count_documents(in_progress_filter)
         
         # Due today
-        due_today_count = await db.tasks.count_documents({
+        due_today_filter = {
+            **role_filter,
             "deadline": {"$gte": today, "$lt": tomorrow},
             "status": {"$ne": "completed"}
-        })
+        }
+        due_today_count = await db.tasks.count_documents(due_today_filter)
         
         # Overdue
-        overdue_count = await db.tasks.count_documents({
+        overdue_filter = {
+            **role_filter,
             "deadline": {"$lt": today},
             "status": {"$ne": "completed"}
-        })
+        }
+        overdue_count = await db.tasks.count_documents(overdue_filter)
         
         return {
             "urgent": urgent_count,
