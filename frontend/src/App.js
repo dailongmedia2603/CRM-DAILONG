@@ -529,7 +529,7 @@ const ClientsPage = () => {
               <button
                 onClick={() => {
                   setShowDeleteConfirm(false);
-                  setUserToDelete(null);
+                  setAccountToDelete(null);
                 }}
                 disabled={deleteLoading}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
@@ -667,7 +667,7 @@ const ClientsPage = () => {
               <button
                 onClick={() => {
                   setShowDeleteConfirm(false);
-                  setUserToDelete(null);
+                  setAccountToDelete(null);
                 }}
                 disabled={deleteLoading}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
@@ -6212,7 +6212,7 @@ const AccountManagement = () => {
               <button
                 onClick={() => {
                   setShowDeleteConfirm(false);
-                  setUserToDelete(null);
+                  setAccountToDelete(null);
                 }}
                 disabled={deleteLoading}
                 className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
