@@ -1,0 +1,23 @@
+{
+  "deploy": {
+    "restartPolicyType": "ON_FAILURE",
+    "cronSchedule": null,
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 300,
+    "sleepApplication": false,
+    "numReplicas": 1
+  },
+  "build": {
+    "buildCommand": "pip install -r requirements.txt",
+    "watchPatterns": ["**/*.py", "requirements.txt"]
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "MONGO_URL": "${{MONGO_URL}}",
+        "JWT_SECRET": "${{JWT_SECRET}}",
+        "ENVIRONMENT": "production"
+      }
+    }
+  }
+}
