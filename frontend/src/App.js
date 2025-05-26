@@ -3317,7 +3317,7 @@ const StaffPage = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
     setDeleteLoading(true);
     try {
