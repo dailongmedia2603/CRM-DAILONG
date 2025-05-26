@@ -79,10 +79,10 @@ class RoleBasedFilteringTester:
         
         self.admin_token = tokens.get("admin")
         self.sales_token = tokens.get("sales")
-        self.manager_token = tokens.get("manager")
+        self.account_token = tokens.get("account")
         self.admin_user_id = user_ids.get("admin")
         self.sales_user_id = user_ids.get("sales")
-        self.manager_user_id = user_ids.get("manager")
+        self.account_user_id = user_ids.get("account")
         
         return len(tokens) >= 2  # Need at least admin and one non-admin user
     
