@@ -140,12 +140,12 @@ const ClientsPage = () => {
   const [accountDeleteLoading, setDeleteLoading] = useState(false);
   const [showAccountDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchClients = async () => {
     try {
-      const response = await axios.get(`${API}/users`);
-      setUsers(response.data);
+      const response = await axios.get(`${API}/clients`);
+      setClients(response.data);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error('Failed to fetch clients:', error);
     }
   };
 
