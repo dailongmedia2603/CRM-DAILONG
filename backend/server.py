@@ -1216,24 +1216,46 @@ async def get_client_statistics(current_user: User = Depends(get_current_active_
         now = datetime.utcnow()
         current_month_start = datetime(now.year, now.month, 1)
         
+        # Build role-based filter query
+        filter_query = {}
+        
+        # Apply role-based filtering (không áp dụng với admin)
+        if current_user.role != UserRole.ADMIN:
+            # Các role khác chỉ xem được clients mà:
+            # - Được assign cho họ (assigned_sales_id)
+            # - Hoặc do họ tạo (created_by)
+            role_conditions = [
+                {"created_by": current_user.id}  # Clients do họ tạo
+            ]
+            
+            # Thêm filter cho sales role
+            if current_user.role in [UserRole.SALES, UserRole.SALE]:
+                role_conditions.append({"assigned_sales_id": current_user.id})
+            
+            if role_conditions:
+                filter_query["$or"] = role_conditions
+        
         # Total clients
-        total_clients = await db.clients.count_documents({})
+        total_clients = await db.clients.count_documents(filter_query)
         
         # Total contract value using aggregation
         pipeline = [
+            {"$match": filter_query},
             {"$group": {"_id": None, "total": {"$sum": "$contract_value"}}}
         ]
         total_contract_result = list(await db.clients.aggregate(pipeline).to_list(1))
         total_contract_value = total_contract_result[0]["total"] if total_contract_result else 0
         
-        # Clients this month
-        clients_this_month = await db.clients.count_documents({
+        # Clients this month - combine role filter with time filter
+        month_filter = {
+            **filter_query,
             "created_at": {"$gte": current_month_start}
-        })
+        }
+        clients_this_month = await db.clients.count_documents(month_filter)
         
         # Contract value this month using aggregation
         pipeline_month = [
-            {"$match": {"created_at": {"$gte": current_month_start}}},
+            {"$match": month_filter},
             {"$group": {"_id": None, "total": {"$sum": "$contract_value"}}}
         ]
         contract_month_result = list(await db.clients.aggregate(pipeline_month).to_list(1))
