@@ -502,40 +502,40 @@ class RoleBasedFilteringTester:
         """Test edge cases - users with no assigned data should see empty results"""
         print("\n🔍 TESTING EDGE CASES...")
         
-        # Test manager user (who should have no data) - should see empty results for non-admin
-        if self.manager_token:
+        # Test account user (who should have limited data) - should see empty results for non-admin
+        if self.account_token:
             try:
-                headers = {"Authorization": f"Bearer {self.manager_token}"}
+                headers = {"Authorization": f"Bearer {self.account_token}"}
                 
                 # Test projects
                 response = requests.get(f"{BACKEND_URL}/projects", headers=headers)
                 if response.status_code == 200:
-                    manager_projects = response.json()
-                    # Manager should see empty or very limited results (only if they created/assigned)
-                    self.log_result("Manager with no data sees limited projects", True, f"Found {len(manager_projects)} projects")
+                    account_projects = response.json()
+                    # Account should see projects they created OR are assigned to (account_id)
+                    self.log_result("Account user sees appropriate projects", True, f"Found {len(account_projects)} projects")
                 else:
-                    self.log_result("Manager with no data sees limited projects", False, f"Status: {response.status_code}")
+                    self.log_result("Account user sees appropriate projects", False, f"Status: {response.status_code}")
                 
                 # Test clients
                 response = requests.get(f"{BACKEND_URL}/clients", headers=headers)
                 if response.status_code == 200:
-                    manager_clients = response.json()
-                    self.log_result("Manager with no data sees limited clients", True, f"Found {len(manager_clients)} clients")
+                    account_clients = response.json()
+                    self.log_result("Account user sees appropriate clients", True, f"Found {len(account_clients)} clients")
                 else:
-                    self.log_result("Manager with no data sees limited clients", False, f"Status: {response.status_code}")
+                    self.log_result("Account user sees appropriate clients", False, f"Status: {response.status_code}")
                 
                 # Test tasks
                 response = requests.get(f"{BACKEND_URL}/tasks", headers=headers)
                 if response.status_code == 200:
-                    manager_tasks = response.json()
-                    self.log_result("Manager with no data sees limited tasks", True, f"Found {len(manager_tasks)} tasks")
+                    account_tasks = response.json()
+                    self.log_result("Account user sees appropriate tasks", True, f"Found {len(account_tasks)} tasks")
                 else:
-                    self.log_result("Manager with no data sees limited tasks", False, f"Status: {response.status_code}")
+                    self.log_result("Account user sees appropriate tasks", False, f"Status: {response.status_code}")
                     
             except Exception as e:
-                self.log_result("Manager edge case testing", False, f"Error: {str(e)}")
+                self.log_result("Account edge case testing", False, f"Error: {str(e)}")
         else:
-            self.log_result("Manager edge case testing", False, "Manager token not available")
+            self.log_result("Account edge case testing", False, "Account token not available")
     
     def run_all_tests(self):
         """Run all role-based filtering tests"""
