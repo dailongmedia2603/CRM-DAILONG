@@ -9,9 +9,9 @@ Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-R
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=200,L]
 
-# Redirect API calls to external backend service
+# Redirect API calls to local PHP backend instead of Railway
 RewriteCond %{REQUEST_URI} ^/api/(.*)$
-RewriteRule ^api/(.*)$ /api-proxy.php?endpoint=$1 [QSA,L]
+RewriteRule ^api/(.*)$ /api.php [QSA,L]
 
 # Handle React Router - redirect all non-file requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
