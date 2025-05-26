@@ -5126,7 +5126,12 @@ const TaskDetailModal = ({ isOpen, onClose, task, formatDate, getPriorityColor, 
 
               <div>
                 <label className="block text-sm font-medium text-slate-500 mb-1">Người thực hiện</label>
-                <p className="text-sm text-slate-900">{task.assigned_to || 'Chưa phân công'}</p>
+                <p className="text-sm text-slate-900">
+                  {task.assigned_to ? 
+                    users.find(u => u.id === task.assigned_to)?.full_name || task.assigned_to 
+                    : 'Chưa phân công'
+                  }
+                </p>
               </div>
 
               <div>
