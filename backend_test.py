@@ -936,8 +936,8 @@ class CRMAPITester:
         
         # Core functionality tests
         test_results.append(("Health Check", self.test_health_check()))
+        test_results.append(("User Login", self.test_existing_user_login()))
         test_results.append(("User Registration", self.test_user_registration()))
-        test_results.append(("User Login", self.test_user_login()))
         test_results.append(("Invalid Login", self.test_invalid_login()))
         test_results.append(("Protected Endpoint Access", self.test_protected_endpoint_access()))
         test_results.append(("Customer Management", self.test_customer_management()))
