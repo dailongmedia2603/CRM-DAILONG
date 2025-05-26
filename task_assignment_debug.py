@@ -101,23 +101,33 @@ class TaskAssignmentDebugger:
     def login_nhi(self):
         """Login as Nhi Trinh user"""
         print("🔐 Logging in as Nhi Trinh...")
-        try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json={
-                "login": "nhi.trinh",
-                "password": "password123"
-            })
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.nhi_token = data["access_token"]
-                print(f"✅ Nhi login successful")
-                return True
-            else:
-                print(f"❌ Nhi login failed: {response.status_code} - {response.text}")
-                return False
-        except Exception as e:
-            print(f"❌ Nhi login error: {str(e)}")
-            return False
+        
+        # Try different possible passwords/usernames
+        login_attempts = [
+            {"login": "nhi.trinh", "password": "password123"},
+            {"login": "nhitrinh", "password": "password123"},
+            {"login": "nhitrinh", "password": "123456"},
+            {"login": "Nhi Trinh", "password": "password123"},
+            {"login": self.nhi_user.get('username', 'nhitrinh'), "password": "password123"}
+        ]
+        
+        for attempt in login_attempts:
+            try:
+                print(f"   Trying login: {attempt['login']}")
+                response = requests.post(f"{BACKEND_URL}/auth/login", json=attempt)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.nhi_token = data["access_token"]
+                    print(f"✅ Nhi login successful with {attempt['login']}")
+                    return True
+                else:
+                    print(f"   ❌ Failed with {attempt['login']}: {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Error with {attempt['login']}: {str(e)}")
+        
+        print("❌ All login attempts failed for Nhi")
+        return False
     
     def check_existing_tasks(self):
         """Check existing tasks in database"""
