@@ -65,7 +65,7 @@ const ClientsPage = () => {
     
     setAccountDeleteLoading(true);
     try {
-      const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
+      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowAccountDeleteConfirm(false);
@@ -3324,7 +3324,7 @@ const StaffPage = () => {
     
     setAccountDeleteLoading(true);
     try {
-      const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
+      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowAccountDeleteConfirm(false);
@@ -5742,7 +5742,7 @@ const AccountManagement = () => {
     
     setAccountDeleteLoading(true);
     try {
-      const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
+      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowAccountDeleteConfirm(false);
