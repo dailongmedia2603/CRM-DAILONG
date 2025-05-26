@@ -1,4 +1,4 @@
-# 🚀 CRM System - Hướng Dẫn Cài Đặt Nhanh
+# 🚀 CRM System - Hướng dẫn Cài Đặt Nhanh (CẬP NHẬT)
 
 ## ⚡ CHO NGƯỜI KHÔNG BIẾT CODE
 
@@ -54,22 +54,35 @@ https://crm.vuaseeding.top/install.php
 - Click "Bắt đầu kiểm tra"
 - Đợi kiểm tra xong → Click "Tiếp tục Bước 2"
 
-**💾 Bước 2: Cấu hình Database**
-- Database Host: `localhost` ✅
-- Database Name: `vuaseedi_crm` ✅
-- Username: `vuaseedi_crmuser` ✅ 
-- Password: (để trống - tự tạo) ✅
-- Admin Email: `admin@crm.com` (hoặc email bạn muốn)
-- Admin Password: **ĐẶT MẬT KHẨU MẠNH**
-- Click "Tiếp tục"
+**💾 Bước 2: Cấu hình Hệ thống**
+
+⚠️ **QUAN TRỌNG: Database Info CÓ THỂ THAY ĐỔI TÙY Ý**
+
+```
+🗄️ Database Local (Chỉ demo - không ảnh hưởng):
+- Database Host: localhost (có thể đổi thành bất kỳ)
+- Database Name: vuaseedi_crm (có thể đổi tên khác)  
+- Username: vuaseedi_crmuser (có thể đổi username khác)
+- Password: (để trống hoặc đặt password tùy ý)
+
+👤 Admin Account (Quan trọng - để đăng nhập CRM):
+- Admin Email: admin@crm.com (hoặc email bạn muốn)
+- Admin Password: ĐẶT MẬT KHẨU MẠNH
+```
+
+**Lý do an toàn thay đổi:**
+- Database thực sự là MongoDB Atlas trên cloud
+- Phần MariaDB local chỉ là demo UI
+- CRM không kết nối tới database local
 
 **🗄️ Bước 3: Tạo Database**
-- Hệ thống tự động tạo database
+- Hệ thống tự động tạo database (chỉ demo)
 - Đợi hoàn thành → Click "Tiếp tục Bước 4"
 
 **🚀 Bước 4: Deploy Backend**  
 - Click "Deploy Backend"
-- Hệ thống tự động setup backend service
+- Hệ thống tự động setup backend service trên Railway
+- Kết nối MongoDB Atlas cloud
 - Đợi hoàn thành → Click "Hoàn thành cài đặt"
 
 **✅ Bước 5: Hoàn thành!**
@@ -83,7 +96,7 @@ https://crm.vuaseeding.top/install.php
 ### 4.1 Đăng nhập:
 ```
 URL: https://crm.vuaseeding.top
-Email: admin@crm.com (hoặc email bạn đã đặt)
+Email: admin@crm.com (hoặc email bạn đã đặt ở bước 3.2)
 Password: [mật khẩu bạn đã đặt ở bước 3.2]
 ```
 
@@ -97,6 +110,23 @@ Password: [mật khẩu bạn đã đặt ở bước 3.2]
 
 ---
 
+## 🔍 ARCHITECTURE GIẢI THÍCH
+
+```
+🌐 crm.vuaseeding.top (Shared Hosting)
+├── Frontend: React static files
+├── MariaDB: Chỉ demo, không dùng ❌
+└── PHP Proxy: Forward đến Railway
+
+☁️ Railway.app (Miễn phí)  
+├── Backend: FastAPI + Python
+└── MongoDB Atlas: Database thực ⭐
+
+💾 Dữ liệu CRM lưu ở: MongoDB Atlas Cloud
+```
+
+---
+
 ## 🆘 KHẮC PHỤC SỰ CỐ
 
 ### ❌ Lỗi "Không truy cập được install.php":
@@ -104,11 +134,11 @@ Password: [mật khẩu bạn đã đặt ở bước 3.2]
 - Kiểm tra domain đã point về hosting chưa
 
 ### ❌ Lỗi "Database connection failed":  
-- Kiểm tra cPanel có MariaDB/MySQL không
-- Thử đổi Database Host thành IP hosting
+- **Không cần lo lắng** - Đây chỉ là demo
+- Database thực là MongoDB Atlas tự động setup
 
 ### ❌ Lỗi "Backend service unavailable":
-- Đợi 2-3 phút để backend deploy xong
+- Đợi 2-3 phút để Railway deploy xong
 - Refresh lại trang và thử lại
 
 ### ❌ Trang trắng hoặc lỗi 500:
@@ -117,23 +147,13 @@ Password: [mật khẩu bạn đã đặt ở bước 3.2]
 
 ---
 
-## 📞 YÊU CẦU HỖ TRỢ
-
-Nếu vẫn gặp vấn đề, cung cấp thông tin:
-1. **Screenshot** lỗi cụ thể
-2. **URL** bạn đang truy cập
-3. **Bước nào** bị lỗi trong quá trình cài đặt
-4. **Error logs** từ cPanel (nếu có)
-
----
-
 ## 🎯 KẾT QUẢ CUỐI CÙNG
 
 Sau khi hoàn thành, bạn sẽ có:
 - ✅ **CRM System** chạy trên domain riêng
 - ✅ **Tài khoản admin** để quản lý
-- ✅ **Database** lưu trữ dữ liệu  
-- ✅ **Backend API** xử lý logic
+- ✅ **MongoDB Atlas** lưu trữ dữ liệu thực  
+- ✅ **Railway Backend** xử lý API
 - ✅ **Giao diện đẹp** responsive mobile
 
 **🎉 Chúc mừng! CRM System của bạn đã sẵn sàng sử dụng!**
