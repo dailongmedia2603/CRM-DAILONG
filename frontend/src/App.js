@@ -50,9 +50,6 @@ const ClientsPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [clientToDelete, setClientToDelete] = useState(null);
 
   const fetchUsers = async () => {
     try {
