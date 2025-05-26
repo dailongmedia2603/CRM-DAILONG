@@ -3339,7 +3339,7 @@ const StaffPage = () => {
         alert('Lỗi xóa tài khoản: ' + (error.response?.data?.detail || 'Unknown error'));
       }
     } finally {
-      setAccountDeleteLoading(false);
+      setDeleteLoading(false);
     }
   };
 
