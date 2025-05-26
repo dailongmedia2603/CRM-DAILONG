@@ -60,9 +60,9 @@ const ClientsPage = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!accountToDelete) return;
+    if (!userToDelete) return;
     
-    setAccountDeleteLoading(true);
+    setDeleteLoading(true);
     try {
       const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
       console.log('Delete response:', response.data);
