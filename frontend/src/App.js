@@ -3321,7 +3321,7 @@ const StaffPage = () => {
     
     setDeleteLoading(true);
     try {
-      const response = await axios.delete(`${API}/users/${accountToDelete.id}`);
+      const response = await axios.delete(`${API}/users/${userToDelete.id}`);
       console.log('Delete response:', response.data);
       fetchUsers();
       setShowAccountDeleteConfirm(false);
