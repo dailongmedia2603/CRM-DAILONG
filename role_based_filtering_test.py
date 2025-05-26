@@ -108,7 +108,7 @@ class RoleBasedFilteringTester:
                 "name": "Sales Project 1", 
                 "contract_value": 5000,
                 "created_by_role": "sales",
-                "account_id": self.sales_user_id,  # Assign to sales user
+                "account_id": self.account_user_id,  # Assign to account user
                 "content_id": None,
                 "seeder_id": None
             },
@@ -116,7 +116,7 @@ class RoleBasedFilteringTester:
                 "name": "Admin Project Assigned to Sales",
                 "contract_value": 8000,
                 "created_by_role": "admin",
-                "account_id": self.sales_user_id,  # Assign to sales user
+                "account_id": self.account_user_id,  # Assign to account user
                 "content_id": None,
                 "seeder_id": None
             }
