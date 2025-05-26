@@ -520,7 +520,7 @@ const ClientsPage = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Bạn có chắc chắn muốn xóa tài khoản của{' '}
                 <span className="font-semibold text-gray-900">
-                  {userToDelete?.full_name || userToDelete?.username}
+                  {accountToDelete?.full_name || accountToDelete?.username}
                 </span>?
               </p>
               <p className="text-xs text-red-600 mb-6">
@@ -658,7 +658,7 @@ const ClientsPage = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Bạn có chắc chắn muốn xóa tài khoản của{' '}
                 <span className="font-semibold text-gray-900">
-                  {userToDelete?.full_name || userToDelete?.username}
+                  {accountToDelete?.full_name || accountToDelete?.username}
                 </span>?
               </p>
               <p className="text-xs text-red-600 mb-6">
@@ -6202,7 +6202,7 @@ const AccountManagement = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Bạn có chắc chắn muốn xóa tài khoản của{' '}
                 <span className="font-semibold text-gray-900">
-                  {userToDelete?.full_name || userToDelete?.username}
+                  {accountToDelete?.full_name || accountToDelete?.username}
                 </span>?
               </p>
               <p className="text-xs text-red-600 mb-6">
