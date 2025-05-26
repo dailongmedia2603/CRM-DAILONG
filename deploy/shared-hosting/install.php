@@ -33,7 +33,8 @@ $config = include 'config.php';
         .step { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 5px; }
         .success { background: #d4edda; color: #155724; }
         .error { background: #f8d7da; color: #721c24; }
-        .warning { background: #fff3cd; color: #856404; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #ffc107; }
+        small { color: #666; font-size: 12px; display: block; margin-bottom: 10px; }
         button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
         button:hover { background: #005a87; }
         input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
