@@ -38,6 +38,7 @@ const ClientsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [clients, setClients] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
