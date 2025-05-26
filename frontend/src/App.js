@@ -5680,6 +5680,7 @@ const AccountManagement = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
 
