@@ -198,17 +198,16 @@ class Customer(BaseModel):
     source: Optional[str] = None  # Nguồn
 
 class CustomerCreate(BaseModel):
-    name: str
-    email: Optional[EmailStr] = None
+    name: str  # Tên khách hàng (Tên Zalo/Facebook)
     phone: Optional[str] = None
-    company: Optional[str] = None
-    position: Optional[str] = None
-    status: CustomerStatus = CustomerStatus.LEAD
+    company: Optional[str] = None  # Sản phẩm
+    status: CustomerStatus = CustomerStatus.HIGH  # Tiềm năng
+    care_status: CareStatus = CareStatus.POTENTIAL_CLOSE  # Trạng thái chăm sóc
+    sales_result: Optional[SalesResult] = None  # Kết quả bán hàng
     assigned_sales_id: str
-    potential_value: Optional[float] = 0.0
-    notes: Optional[str] = None
-    address: Optional[str] = None
-    source: Optional[str] = None
+    potential_value: Optional[float] = 0.0  # Giá trị hợp đồng
+    notes: Optional[str] = None  # Ghi chú
+    source: Optional[str] = None  # Nguồn
 
 class CustomerUpdate(BaseModel):
     name: Optional[str] = None
