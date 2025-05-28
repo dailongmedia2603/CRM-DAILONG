@@ -27,17 +27,29 @@ class CustomerAPITest(unittest.TestCase):
     
     def setUp(self):
         """Set up the test by logging in and getting an auth token"""
+        print("\nSetting up test...")
         # Login with admin credentials
         login_data = {
             "login": "admin",
             "password": "admin123"
         }
-        response = requests.post(f"{API_BASE}/auth/login", json=login_data)
-        self.assertEqual(response.status_code, 200, "Failed to login with admin credentials")
-        
-        # Extract token for authentication
-        self.token = response.json()["access_token"]
-        self.headers = {"Authorization": f"Bearer {self.token}"}
+        try:
+            print(f"Attempting to login with admin credentials...")
+            response = requests.post(f"{API_BASE}/auth/login", json=login_data)
+            print(f"Login response status code: {response.status_code}")
+            print(f"Login response content: {response.text[:200]}...")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.token = data["access_token"]
+                self.headers = {"Authorization": f"Bearer {self.token}"}
+                print(f"Successfully logged in and got token")
+            else:
+                print(f"Failed to login: {response.status_code} - {response.text}")
+                self.fail(f"Failed to login with admin credentials: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Exception during login: {str(e)}")
+            self.fail(f"Exception during login: {str(e)}")
         
         # Store created customer IDs for cleanup
         self.customer_ids = []
