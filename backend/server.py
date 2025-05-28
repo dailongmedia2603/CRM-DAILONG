@@ -183,20 +183,19 @@ class Token(BaseModel):
 
 class Customer(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    email: Optional[EmailStr] = None
+    name: str  # Tên khách hàng (Tên Zalo/Facebook)
     phone: Optional[str] = None
-    company: Optional[str] = None
-    position: Optional[str] = None
-    status: CustomerStatus = CustomerStatus.LEAD
+    company: Optional[str] = None  # Sản phẩm
+    status: CustomerStatus = CustomerStatus.HIGH  # Tiềm năng
+    care_status: CareStatus = CareStatus.POTENTIAL_CLOSE  # Trạng thái chăm sóc
+    sales_result: Optional[SalesResult] = None  # Kết quả bán hàng
     assigned_sales_id: str
     total_revenue: float = 0.0
-    potential_value: float = 0.0
+    potential_value: float = 0.0  # Giá trị hợp đồng
     last_contact: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    notes: Optional[str] = None
-    address: Optional[str] = None
-    source: Optional[str] = None
+    notes: Optional[str] = None  # Ghi chú
+    source: Optional[str] = None  # Nguồn
 
 class CustomerCreate(BaseModel):
     name: str
