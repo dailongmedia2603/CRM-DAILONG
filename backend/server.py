@@ -281,7 +281,12 @@ class TaskCommentCreate(BaseModel):
 
 # Utility functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    # Support both bcrypt direct and passlib
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except:
+        # Fallback to direct bcrypt check
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
