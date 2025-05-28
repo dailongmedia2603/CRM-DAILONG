@@ -6368,24 +6368,20 @@ const CustomerList = () => {
 
   const getStatusBadge = (status) => {
     const statusStyles = {
-      active: 'bg-green-100 text-green-800 border-green-200',
-      lead: 'bg-blue-100 text-blue-800 border-blue-200',
-      prospect: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      inactive: 'bg-gray-100 text-gray-800 border-gray-200',
-      closed: 'bg-red-100 text-red-800 border-red-200'
+      high: 'bg-green-100 text-green-800 border-green-200',
+      normal: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      low: 'bg-red-100 text-red-800 border-red-200'
     };
     
     const statusLabels = {
-      active: 'Đang hoạt động',
-      lead: 'Khách tiềm năng', 
-      prospect: 'Triển vọng',
-      inactive: 'Không hoạt động',
-      closed: 'Đã đóng'
+      high: 'Tiềm năng',
+      normal: 'Bình thường', 
+      low: 'Thấp'
     };
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[status] || statusStyles.lead}`}>
-        <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'active' ? 'bg-green-500' : status === 'lead' ? 'bg-blue-500' : status === 'prospect' ? 'bg-yellow-500' : status === 'closed' ? 'bg-red-500' : 'bg-gray-500'}`}></div>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[status] || statusStyles.normal}`}>
+        <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'high' ? 'bg-green-500' : status === 'normal' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
         {statusLabels[status] || status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
