@@ -6433,25 +6433,14 @@ const CustomerList = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Họ và tên *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tên khách hàng *</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Nhập tên khách hàng"
+                    placeholder="Tên Zalo/Facebook"
                     required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Địa chỉ Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Nhập địa chỉ email"
                   />
                 </div>
                 
@@ -6467,51 +6456,70 @@ const CustomerList = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Công ty</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Sản phẩm</label>
                   <input
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({...formData, company: e.target.value})}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Nhập tên công ty"
-                  />
-              </div>
-              
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Chức vụ</label>
-                  <input
-                    type="text"
-                    value={formData.position}
-                    onChange={(e) => setFormData({...formData, position: e.target.value})}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Nhập chức vụ/vị trí"
+                    placeholder="Nhập tên sản phẩm"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Trạng thái</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiềm năng</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   >
-                    <option value="lead">Khách tiềm năng</option>
-                    <option value="prospect">Triển vọng</option>
-                    <option value="active">Đang hoạt động</option>
-                    <option value="inactive">Không hoạt động</option>
-                    <option value="closed">Đã đóng</option>
+                    <option value="high">Tiềm năng</option>
+                    <option value="normal">Bình thường</option>
+                    <option value="low">Thấp</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Giá trị tiềm năng (VNĐ)</label>
-                <input
-                  type="number"
-                  value={formData.potential_value}
-                  onChange={(e) => setFormData({...formData, potential_value: parseFloat(e.target.value) || 0})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="0"
-                />
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Giá trị hợp đồng (VNĐ)</label>
+                  <input
+                    type="text"
+                    value={formData.potential_value ? Number(formData.potential_value).toLocaleString('vi-VN') : ''}
+                    onChange={(e) => {
+                      // Remove all non-numeric characters except dots and commas
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      setFormData({...formData, potential_value: value ? parseInt(value) : 0});
+                    }}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Trạng thái chăm sóc</label>
+                  <select
+                    value={formData.care_status}
+                    onChange={(e) => setFormData({...formData, care_status: e.target.value})}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
+                    <option value="potential_close">Khả năng chốt</option>
+                    <option value="thinking">Đang suy nghĩ</option>
+                    <option value="working">Đang làm việc</option>
+                    <option value="silent">Im ru</option>
+                    <option value="rejected">Từ chối</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Kết quả bán hàng</label>
+                  <select
+                    value={formData.sales_result}
+                    onChange={(e) => setFormData({...formData, sales_result: e.target.value})}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
+                    <option value="">Chọn kết quả</option>
+                    <option value="signed_contract">Ký hợp đồng</option>
+                    <option value="not_interested">Không quan tâm</option>
+                  </select>
                 </div>
                 
                 <div>
@@ -6525,17 +6533,6 @@ const CustomerList = () => {
                   />
                 </div>
               </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Địa chỉ</label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Nhập địa chỉ"
-              />
-            </div>
             
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Ghi chú</label>
