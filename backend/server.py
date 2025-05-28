@@ -56,11 +56,20 @@ class UserRole(str, Enum):
     CONTENT = "content"
 
 class CustomerStatus(str, Enum):
-    LEAD = "lead"
-    PROSPECT = "prospect"
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    CLOSED = "closed"
+    HIGH = "high"          # Tiềm năng
+    NORMAL = "normal"      # Bình thường  
+    LOW = "low"            # Thấp
+
+class CareStatus(str, Enum):
+    POTENTIAL_CLOSE = "potential_close"  # Khả năng chốt
+    THINKING = "thinking"                # Đang suy nghĩ
+    WORKING = "working"                  # Đang làm việc
+    SILENT = "silent"                    # Im ru
+    REJECTED = "rejected"                # Từ chối
+
+class SalesResult(str, Enum):
+    SIGNED_CONTRACT = "signed_contract"  # Ký hợp đồng
+    NOT_INTERESTED = "not_interested"    # Không quan tâm
 
 class InteractionType(str, Enum):
     CALL = "call"
