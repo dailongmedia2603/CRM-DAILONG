@@ -210,16 +210,15 @@ class CustomerCreate(BaseModel):
     source: Optional[str] = None  # Nguồn
 
 class CustomerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    name: Optional[str] = None  # Tên khách hàng (Tên Zalo/Facebook)
     phone: Optional[str] = None
-    company: Optional[str] = None
-    position: Optional[str] = None
-    status: Optional[CustomerStatus] = None
-    potential_value: Optional[float] = None
-    notes: Optional[str] = None
-    address: Optional[str] = None
-    source: Optional[str] = None
+    company: Optional[str] = None  # Sản phẩm
+    status: Optional[CustomerStatus] = None  # Tiềm năng
+    care_status: Optional[CareStatus] = None  # Trạng thái chăm sóc
+    sales_result: Optional[SalesResult] = None  # Kết quả bán hàng
+    potential_value: Optional[float] = None  # Giá trị hợp đồng
+    notes: Optional[str] = None  # Ghi chú
+    source: Optional[str] = None  # Nguồn
 
 class Interaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
