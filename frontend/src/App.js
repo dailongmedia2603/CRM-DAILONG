@@ -6359,8 +6359,9 @@ const CustomerList = () => {
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.company?.toLowerCase().includes(searchTerm.toLowerCase());
+                         (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (customer.source && customer.source.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = !statusFilter || customer.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
