@@ -364,11 +364,11 @@ async def login(user_credentials: UserLogin):
         raise HTTPException(status_code=400, detail="Invalid login credentials")
     
     # Verify password
-    if not verify_password(user_credentials.password, user_data["password"]):
+    if not verify_password(user_credentials.password, user_data["hashed_password"]):
         raise HTTPException(status_code=400, detail="Invalid login credentials")
     
     # Create token
-    user_obj = User(**{k: v for k, v in user_data.items() if k != "password"})
+    user_obj = User(**{k: v for k, v in user_data.items() if k != "hashed_password"})
     access_token = create_access_token(data={"sub": user_obj.id})
     return Token(access_token=access_token, user=user_obj)
 
