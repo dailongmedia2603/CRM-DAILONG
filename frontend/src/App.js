@@ -6668,8 +6668,8 @@ const CustomerList = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap table-hide-mobile">
-                    <div className="text-sm text-slate-900">{customer.email || 'Không có email'}</div>
-                    <div className="text-sm text-slate-500">{customer.phone || 'Không có số điện thoại'}</div>
+                    <div className="text-sm text-slate-900">{customer.phone || 'Không có SĐT'}</div>
+                    <div className="text-sm text-slate-500">{customer.company || 'Không có sản phẩm'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(customer.status)}
