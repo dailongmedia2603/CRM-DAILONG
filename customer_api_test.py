@@ -291,4 +291,9 @@ class CustomerAPITest(unittest.TestCase):
         self.assertNotEqual(response.status_code, 200, "Should fail with missing assigned_sales_id field")
 
 if __name__ == "__main__":
-    unittest.main()
+    print("Starting Customer API tests...")
+    try:
+        unittest.main(verbosity=2)
+    except Exception as e:
+        print(f"Error running tests: {str(e)}")
+        sys.exit(1)
