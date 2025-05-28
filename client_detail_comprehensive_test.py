@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone, timedelta
 
 # Configuration
-BACKEND_URL = "https://3c3487d3-5b5a-4c39-935b-f362292e6e62.preview.emergentagent.com/api"
+BACKEND_URL = "https://3b82276e-07b9-4d31-bbc2-f9a78618e89b.preview.emergentagent.com/api"
 
 class ClientDetailTester:
     def __init__(self):

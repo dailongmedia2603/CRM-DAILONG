@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 # Configuration
-BACKEND_URL = "https://3c3487d3-5b5a-4c39-935b-f362292e6e62.preview.emergentagent.com/api"
+BACKEND_URL = "https://3b82276e-07b9-4d31-bbc2-f9a78618e89b.preview.emergentagent.com/api"
 TEST_USER_CREDENTIALS = {
     "login": "admin",
     "password": "admin123"
