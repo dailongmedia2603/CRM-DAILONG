@@ -61,26 +61,41 @@ class CustomerAPITest(unittest.TestCase):
     
     def test_get_customers(self):
         """Test GET /api/customers - Should return customers with new fields"""
-        response = requests.get(f"{API_BASE}/customers", headers=self.headers)
-        self.assertEqual(response.status_code, 200, "Failed to get customers")
-        
-        # Check if response is a list
-        customers = response.json()
-        self.assertIsInstance(customers, list, "Response is not a list")
-        
-        # If there are customers, check for new fields
-        if customers:
-            customer = customers[0]
-            # Check for new fields
-            self.assertIn("care_status", customer, "care_status field missing")
-            self.assertIn("sales_result", customer, "sales_result field missing")
-            self.assertIn("potential_value", customer, "potential_value field missing")
-            self.assertIn("source", customer, "source field missing")
+        print("\nTesting GET /api/customers...")
+        try:
+            response = requests.get(f"{API_BASE}/customers", headers=self.headers)
+            print(f"GET /customers response status code: {response.status_code}")
+            print(f"GET /customers response content: {response.text[:200]}...")
             
-            # Check that email/position/address are not present (as per requirements)
-            self.assertNotIn("email", customer, "email field should not be present")
-            self.assertNotIn("position", customer, "position field should not be present")
-            self.assertNotIn("address", customer, "address field should not be present")
+            self.assertEqual(response.status_code, 200, "Failed to get customers")
+            
+            # Check if response is a list
+            customers = response.json()
+            self.assertIsInstance(customers, list, "Response is not a list")
+            
+            # If there are customers, check for new fields
+            if customers:
+                print(f"Found {len(customers)} customers")
+                customer = customers[0]
+                print(f"First customer fields: {list(customer.keys())}")
+                
+                # Check for new fields
+                self.assertIn("care_status", customer, "care_status field missing")
+                self.assertIn("sales_result", customer, "sales_result field missing")
+                self.assertIn("potential_value", customer, "potential_value field missing")
+                self.assertIn("source", customer, "source field missing")
+                
+                # Check that email/position/address are not present (as per requirements)
+                self.assertNotIn("email", customer, "email field should not be present")
+                self.assertNotIn("position", customer, "position field should not be present")
+                self.assertNotIn("address", customer, "address field should not be present")
+                
+                print("✅ GET /customers test passed")
+            else:
+                print("No customers found, skipping field checks")
+        except Exception as e:
+            print(f"Exception during GET /customers test: {str(e)}")
+            self.fail(f"Exception during GET /customers test: {str(e)}")
     
     def test_create_customer_with_all_fields(self):
         """Test creating a customer with all new fields populated"""
