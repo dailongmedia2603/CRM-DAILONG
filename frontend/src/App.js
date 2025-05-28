@@ -6662,8 +6662,8 @@ const CustomerList = () => {
                       </div>
                       <div>
                         <div className="text-sm font-medium text-slate-900">{customer.name}</div>
-                        <div className="text-sm text-slate-500 sm:hidden">{customer.email || 'Không có email'}</div>
-                        <div className="text-sm text-slate-500 sm:hidden">{customer.company || 'Không có công ty'}</div>
+                        <div className="text-sm text-slate-500 sm:hidden">{customer.phone || 'Không có SĐT'}</div>
+                        <div className="text-sm text-slate-500 sm:hidden">{customer.company || 'Không có sản phẩm'}</div>
                       </div>
                     </div>
                   </td>
