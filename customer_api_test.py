@@ -7,6 +7,7 @@ import requests
 import json
 import unittest
 import os
+import sys
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -17,6 +18,9 @@ BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'http://localhost:8001')
 API_BASE = f"{BACKEND_URL}/api"
 
 print(f"Testing updated Customer API at: {API_BASE}")
+
+# Enable more detailed error output
+requests.packages.urllib3.add_stderr_logger()
 
 class CustomerAPITest(unittest.TestCase):
     """Test the updated Customer API with new fields and schema changes for the Lead module"""
