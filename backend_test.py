@@ -1317,6 +1317,9 @@ class CRMAPITester:
         # Lead Management API tests
         test_results.append(("Lead Management API", self.test_lead_management_api()))
         
+        # Customer Interactions API tests with follow_up type
+        test_results.append(("Customer Interactions API with follow_up", self.test_customer_interactions_api()))
+        
         # Print summary
         print("\n" + "="*60)
         print("🏁 TEST SUMMARY")
