@@ -6330,7 +6330,7 @@ const Dashboard = () => {
 
 // Customer Management Component - wrapper for new LeadManagement
 const CustomerManagement = () => {
-  return React.createElement(require('./LeadManagement').default);
+  return <LeadManagement />;
 };
 
 // Customer List Component - Enhanced Lead Management
