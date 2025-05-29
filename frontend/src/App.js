@@ -6556,34 +6556,33 @@ const CustomerList = () => {
     }, [customer]);
 
     const fetchCareHistory = async () => {
+      setLoading(true);
       try {
-        // Mock data for now - you can implement actual API call
-        const mockHistory = [
-          {
-            id: 1,
-            date: new Date().toISOString(),
-            note: 'Đã gọi điện thoại để tư vấn sản phẩm',
-            user: user?.full_name || 'Admin',
-            type: 'call'
-          },
-          {
-            id: 2,
-            date: new Date(Date.now() - 86400000).toISOString(),
-            note: 'Gửi thông tin báo giá qua email',
-            user: user?.full_name || 'Admin',
-            type: 'email'
-          },
-          {
-            id: 3,
-            date: new Date(Date.now() - 172800000).toISOString(),
-            note: 'Khách hàng quan tâm đến sản phẩm, hẹn gặp vào tuần sau',
-            user: user?.full_name || 'Admin',
-            type: 'meeting'
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/interactions`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           }
-        ];
-        setCareHistory(mockHistory);
+        });
+
+        if (response.ok) {
+          const interactions = await response.json();
+          // Convert backend format to frontend format
+          const formattedHistory = interactions.map(interaction => ({
+            id: interaction.id,
+            date: interaction.date,
+            note: interaction.description || interaction.title,
+            user: interaction.sales_id, // Will need to resolve to username later
+            type: interaction.type
+          }));
+          setCareHistory(formattedHistory);
+        } else {
+          throw new Error('Failed to fetch care history');
+        }
       } catch (error) {
         console.error('Failed to fetch care history:', error);
+        // Fallback to empty array if API fails
+        setCareHistory([]);
       } finally {
         setLoading(false);
       }
