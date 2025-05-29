@@ -407,9 +407,13 @@ const LeadManagement = () => {
     });
 
     const handleSave = async () => {
+      console.log('🚀 handleSave called with data:', formData);
+      
       try {
         // Get authentication token from localStorage
         const token = localStorage.getItem('access_token');
+        console.log('🔑 Token exists:', !!token);
+        
         if (!token) {
           alert('Bạn cần đăng nhập để thực hiện hành động này');
           return;
@@ -428,9 +432,13 @@ const LeadManagement = () => {
           // Set to first available sales user
           currentUserId = users[0].id;
         }
+        
+        console.log('👤 Assigned sales ID:', currentUserId);
+        console.log('📝 Users available:', users.length);
 
         if (customer?.id) {
           // Update existing customer
+          console.log('🔄 Updating customer:', customer.id);
           await axios.put(`${API}/customers/${customer.id}`, formData, config);
         } else {
           // Create new customer - ensure assigned_sales_id is set
@@ -444,8 +452,11 @@ const LeadManagement = () => {
             delete dataToSend.sales_result;
           }
           
+          console.log('➕ Creating new customer with data:', dataToSend);
           await axios.post(`${API}/customers`, dataToSend, config);
         }
+        
+        console.log('✅ Save successful, refreshing list...');
         
         // Refresh the customer list
         fetchCustomers();
@@ -454,7 +465,8 @@ const LeadManagement = () => {
         // Show success message
         alert(customer?.id ? 'Cập nhật lead thành công!' : 'Thêm lead thành công!');
       } catch (error) {
-        console.error('Failed to save customer:', error);
+        console.error('❌ Failed to save customer:', error);
+        console.error('❌ Error response:', error.response?.data);
         alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể lưu lead'}`);
       }
     };
