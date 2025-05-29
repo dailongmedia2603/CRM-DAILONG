@@ -6475,6 +6475,7 @@ const CustomerList = () => {
 
   // Helper functions for status badges
   // Helper functions for status badges
+  // Helper functions for status badges
   const getStatusBadge = (status) => {
     const statusStyles = {
       high: 'bg-green-100 text-green-800 border-green-200',
