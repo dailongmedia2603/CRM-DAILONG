@@ -245,7 +245,7 @@ const LeadManagement = () => {
             id: 1,
             date: new Date().toISOString(),
             note: 'Đã gọi điện thoại để tư vấn sản phẩm',
-            user: user?.full_name || 'Admin',
+            user: 'Admin',
             type: 'call'
           },
           {
