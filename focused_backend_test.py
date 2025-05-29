@@ -33,7 +33,7 @@ class FocusedCRMAPITester:
         print(f"ℹ️ {message}")
 
     def login(self, credentials):
-        self.log_info(f"Logging in as {credentials.get('email')}")
+        self.log_info(f"Logging in as {credentials.get('login')}")
         try:
             response = requests.post(
                 f"{self.base_url}/auth/login",
