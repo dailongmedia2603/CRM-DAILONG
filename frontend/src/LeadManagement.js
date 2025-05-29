@@ -422,14 +422,21 @@ const LeadManagement = () => {
           }
         };
 
+        // Get current user info to set assigned_sales_id
+        let currentUserId = formData.assigned_sales_id;
+        if (!currentUserId && users.length > 0) {
+          // Set to first available sales user
+          currentUserId = users[0].id;
+        }
+
         if (customer?.id) {
           // Update existing customer
           await axios.put(`${API}/customers/${customer.id}`, formData, config);
         } else {
-          // Create new customer - set default assigned_sales_id if not provided
+          // Create new customer - ensure assigned_sales_id is set
           const dataToSend = {
             ...formData,
-            assigned_sales_id: formData.assigned_sales_id || token // Use token as fallback
+            assigned_sales_id: currentUserId
           };
           await axios.post(`${API}/customers`, dataToSend, config);
         }
