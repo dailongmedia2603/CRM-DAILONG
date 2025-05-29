@@ -559,7 +559,7 @@ const LeadManagement = () => {
         onClose();
         
         // Show success message
-        alert(customer?.id ? 'Cập nhật lead thành công!' : 'Thêm lead thành công!');
+        showNotification(customer?.id ? 'Cập nhật lead thành công!' : 'Thêm lead thành công!', 'success');
       } catch (error) {
         console.error('❌ Failed to save customer:', error);
         console.error('❌ Error response:', error.response?.data);
