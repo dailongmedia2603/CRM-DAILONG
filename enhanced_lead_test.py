@@ -7,29 +7,32 @@ import sys
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv('/app/frontend/.env')
+try:
+    load_dotenv('/app/frontend/.env')
+except Exception as e:
+    print(f"Warning: Could not load .env file: {str(e)}")
 
 # Get the backend URL from environment variables
 BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001')
 API_URL = f"{BACKEND_URL}/api"
 
-class EnhancedLeadManagementTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
+print(f"Testing backend at: {API_URL}")
+
+class LeadManagementTest(unittest.TestCase):
+    def setUp(self):
         """Set up authentication and test data before running tests"""
-        cls.auth_token = None
-        cls.admin_user = None
-        cls.test_customer_id = None
-        cls.sales_user_id = None
+        self.auth_token = None
+        self.admin_user = None
+        self.test_customer_id = None
+        self.sales_user_id = None
         
         # Authenticate as admin
-        cls.authenticate()
+        self.authenticate()
         
         # Get or create a sales user for testing
-        cls.setup_sales_user()
+        self.setup_sales_user()
     
-    @classmethod
-    def authenticate(cls):
+    def authenticate(self):
         """Authenticate with the API and get a JWT token"""
         auth_data = {
             "username": "admin",
@@ -41,20 +44,37 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             response.raise_for_status()
             
             data = response.json()
-            cls.auth_token = data.get("access_token")
-            cls.admin_user = data.get("user")
+            self.auth_token = data.get("access_token")
+            self.admin_user = data.get("user")
             
-            print(f"✅ Authentication successful. User: {cls.admin_user.get('username')}, Role: {cls.admin_user.get('role')}")
+            print(f"✅ Authentication successful. User: {self.admin_user.get('username')}, Role: {self.admin_user.get('role')}")
         except requests.exceptions.RequestException as e:
             print(f"❌ Authentication failed: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
-            sys.exit(1)
+            # Try with login instead of username
+            try:
+                auth_data = {
+                    "login": "admin",
+                    "password": "admin123"
+                }
+                response = requests.post(f"{API_URL}/auth/login", json=auth_data)
+                response.raise_for_status()
+                
+                data = response.json()
+                self.auth_token = data.get("access_token")
+                self.admin_user = data.get("user")
+                
+                print(f"✅ Authentication successful with 'login' field. User: {self.admin_user.get('username')}, Role: {self.admin_user.get('role')}")
+            except requests.exceptions.RequestException as e2:
+                print(f"❌ Authentication failed with 'login' field: {str(e2)}")
+                if hasattr(e2, 'response') and e2.response:
+                    print(f"Response: {e2.response.text}")
+                sys.exit(1)
     
-    @classmethod
-    def setup_sales_user(cls):
+    def setup_sales_user(self):
         """Get or create a sales user for testing"""
-        headers = {"Authorization": f"Bearer {cls.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
         
         # First, try to find an existing sales user
         try:
@@ -65,8 +85,8 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             sales_users = [user for user in users if user.get("role") == "sales" and user.get("is_active")]
             
             if sales_users:
-                cls.sales_user_id = sales_users[0].get("id")
-                print(f"✅ Found existing sales user with ID: {cls.sales_user_id}")
+                self.sales_user_id = sales_users[0].get("id")
+                print(f"✅ Found existing sales user with ID: {self.sales_user_id}")
             else:
                 # Create a new sales user if none exists
                 user_data = {
@@ -83,17 +103,17 @@ class EnhancedLeadManagementTest(unittest.TestCase):
                 response.raise_for_status()
                 
                 new_user = response.json()
-                cls.sales_user_id = new_user.get("id")
-                print(f"✅ Created new sales user with ID: {cls.sales_user_id}")
+                self.sales_user_id = new_user.get("id")
+                print(f"✅ Created new sales user with ID: {self.sales_user_id}")
         
         except requests.exceptions.RequestException as e:
             print(f"❌ Failed to set up sales user: {str(e)}")
             if hasattr(e, 'response') and e.response:
                 print(f"Response: {e.response.text}")
             # Continue with admin user's ID as fallback
-            if cls.admin_user:
-                cls.sales_user_id = cls.admin_user.get("id")
-                print(f"⚠️ Using admin user ID as fallback: {cls.sales_user_id}")
+            if self.admin_user:
+                self.sales_user_id = self.admin_user.get("id")
+                print(f"⚠️ Using admin user ID as fallback: {self.sales_user_id}")
     
     def get_headers(self):
         """Get headers with authentication token"""
@@ -167,7 +187,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             response.raise_for_status()
             
             created_customer = response.json()
-            self.__class__.test_customer_id = created_customer.get("id")
+            self.test_customer_id = created_customer.get("id")
             
             # Verify all fields were saved correctly
             self.assertEqual(created_customer.get("name"), customer_data.get("name"))
@@ -181,7 +201,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             self.assertEqual(created_customer.get("notes"), customer_data.get("notes"))
             self.assertEqual(created_customer.get("source"), customer_data.get("source"))
             
-            print(f"✅ Created customer with ID: {self.__class__.test_customer_id}")
+            print(f"✅ Created customer with ID: {self.test_customer_id}")
             print("✅ POST /api/customers endpoint working correctly with new schema")
             return True
         
@@ -219,8 +239,8 @@ class EnhancedLeadManagementTest(unittest.TestCase):
                     self.assertIn("potential_value", customer)
                 
                 # Find our test customer if we created one
-                if self.__class__.test_customer_id:
-                    test_customer = next((c for c in customers if c.get("id") == self.__class__.test_customer_id), None)
+                if self.test_customer_id:
+                    test_customer = next((c for c in customers if c.get("id") == self.test_customer_id), None)
                     if test_customer:
                         print(f"✅ Found our test customer in GET response")
                 
@@ -243,7 +263,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
         """Test PUT /api/customers/{id} endpoint with enhanced fields"""
         print("\n🔍 Testing PUT /api/customers/{id} endpoint...")
         
-        if not self.__class__.test_customer_id:
+        if not self.test_customer_id:
             print("⚠️ No test customer ID available for update test")
             return True  # Skip this test
         
@@ -259,7 +279,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
         
         try:
             response = requests.put(
-                f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                f"{API_URL}/customers/{self.test_customer_id}", 
                 json=update_data,
                 headers=self.get_headers()
             )
@@ -291,7 +311,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
         """Test all enum values for status, care_status, sales_result fields"""
         print("\n🔍 Testing enum values validation...")
         
-        if not self.__class__.test_customer_id:
+        if not self.test_customer_id:
             print("⚠️ No test customer ID available for enum validation test")
             return True  # Skip this test
         
@@ -303,7 +323,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             try:
                 update_data = {"status": status}
                 response = requests.put(
-                    f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                    f"{API_URL}/customers/{self.test_customer_id}", 
                     json=update_data,
                     headers=self.get_headers()
                 )
@@ -321,7 +341,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             try:
                 update_data = {"care_status": status}
                 response = requests.put(
-                    f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                    f"{API_URL}/customers/{self.test_customer_id}", 
                     json=update_data,
                     headers=self.get_headers()
                 )
@@ -339,7 +359,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             try:
                 update_data = {"sales_result": result}
                 response = requests.put(
-                    f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                    f"{API_URL}/customers/{self.test_customer_id}", 
                     json=update_data,
                     headers=self.get_headers()
                 )
@@ -475,7 +495,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
         """Test potential_value number formatting"""
         print("\n🔍 Testing potential_value number formatting...")
         
-        if not self.__class__.test_customer_id:
+        if not self.test_customer_id:
             print("⚠️ No test customer ID available for potential_value test")
             return True  # Skip this test
         
@@ -493,7 +513,7 @@ class EnhancedLeadManagementTest(unittest.TestCase):
             try:
                 update_data = {"potential_value": input_value}
                 response = requests.put(
-                    f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                    f"{API_URL}/customers/{self.test_customer_id}", 
                     json=update_data,
                     headers=self.get_headers()
                 )
@@ -578,65 +598,57 @@ class EnhancedLeadManagementTest(unittest.TestCase):
         """Clean up test data"""
         print("\n🧹 Cleaning up test data...")
         
-        if self.__class__.test_customer_id:
+        if self.test_customer_id:
             try:
                 response = requests.delete(
-                    f"{API_URL}/customers/{self.__class__.test_customer_id}", 
+                    f"{API_URL}/customers/{self.test_customer_id}", 
                     headers=self.get_headers()
                 )
                 response.raise_for_status()
-                print(f"✅ Deleted test customer with ID: {self.__class__.test_customer_id}")
+                print(f"✅ Deleted test customer with ID: {self.test_customer_id}")
             except Exception as e:
                 print(f"⚠️ Failed to delete test customer: {str(e)}")
         
         print("✅ Cleanup completed")
         return True
 
-    def run_all_tests(self):
-        """Run all tests and return overall success status"""
-        test_methods = [
-            self.test_01_get_users_endpoint,
-            self.test_02_create_customer,
-            self.test_03_get_customers,
-            self.test_04_update_customer,
-            self.test_05_enum_values_validation,
-            self.test_06_required_field_validation,
-            self.test_07_optional_fields_validation,
-            self.test_08_potential_value_formatting,
-            self.test_09_get_customers_with_filters,
-            self.test_10_cleanup
-        ]
-        
-        results = []
-        for test_method in test_methods:
-            try:
-                result = test_method()
-                results.append(result)
-            except Exception as e:
-                print(f"❌ Test {test_method.__name__} failed with exception: {str(e)}")
-                results.append(False)
-        
-        success_count = sum(1 for result in results if result)
-        total_count = len(results)
-        success_rate = (success_count / total_count) * 100 if total_count > 0 else 0
-        
-        print("\n============================================================")
-        print(f"🏁 TEST SUMMARY: Enhanced Lead Management System")
-        print("============================================================")
-        print(f"Total Tests: {total_count}")
-        print(f"Passed: {success_count}")
-        print(f"Failed: {total_count - success_count}")
-        print(f"Success Rate: {success_rate:.1f}%")
-        
-        if success_count == total_count:
-            print("\n✅ All tests passed! The Enhanced Lead Management System is working correctly.")
-            return True
-        else:
-            print("\n⚠️ Some tests failed. Please check the issues above.")
-            return False
+def run_tests():
+    """Run all tests and return overall success status"""
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(LeadManagementTest('test_01_get_users_endpoint'))
+    test_suite.addTest(LeadManagementTest('test_02_create_customer'))
+    test_suite.addTest(LeadManagementTest('test_03_get_customers'))
+    test_suite.addTest(LeadManagementTest('test_04_update_customer'))
+    test_suite.addTest(LeadManagementTest('test_05_enum_values_validation'))
+    test_suite.addTest(LeadManagementTest('test_06_required_field_validation'))
+    test_suite.addTest(LeadManagementTest('test_07_optional_fields_validation'))
+    test_suite.addTest(LeadManagementTest('test_08_potential_value_formatting'))
+    test_suite.addTest(LeadManagementTest('test_09_get_customers_with_filters'))
+    test_suite.addTest(LeadManagementTest('test_10_cleanup'))
+    
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(test_suite)
+    
+    success_count = result.testsRun - len(result.errors) - len(result.failures)
+    total_count = result.testsRun
+    success_rate = (success_count / total_count) * 100 if total_count > 0 else 0
+    
+    print("\n============================================================")
+    print(f"🏁 TEST SUMMARY: Enhanced Lead Management System")
+    print("============================================================")
+    print(f"Total Tests: {total_count}")
+    print(f"Passed: {success_count}")
+    print(f"Failed: {total_count - success_count}")
+    print(f"Success Rate: {success_rate:.1f}%")
+    
+    if success_count == total_count:
+        print("\n✅ All tests passed! The Enhanced Lead Management System is working correctly.")
+        return True
+    else:
+        print("\n⚠️ Some tests failed. Please check the issues above.")
+        return False
 
 if __name__ == "__main__":
     print(f"🚀 Starting Enhanced Lead Management API Tests against {API_URL}")
-    tester = EnhancedLeadManagementTest()
-    success = tester.run_all_tests()
+    success = run_tests()
     sys.exit(0 if success else 1)
