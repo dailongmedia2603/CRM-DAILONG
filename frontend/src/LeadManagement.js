@@ -52,7 +52,19 @@ const LeadManagement = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get(`${API}/customers`);
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.log('No token found');
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      const response = await axios.get(`${API}/customers`, config);
       setCustomers(response.data);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
@@ -63,7 +75,19 @@ const LeadManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API}/users`);
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.log('No token found');
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      const response = await axios.get(`${API}/users`, config);
       // Filter only sales team members
       const salesUsers = response.data.filter(u => 
         ['sales', 'manager', 'admin'].includes(u.role)
