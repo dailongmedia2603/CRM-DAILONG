@@ -969,6 +969,319 @@ class CRMAPITester:
         except Exception as e:
             print(f"❌ Error testing bulk action with invalid action: {e}")
             return False
+            
+    def test_lead_management_api(self):
+        """Test Lead Management API endpoints thoroughly"""
+        print("\n=== Testing Lead Management API ===")
+        
+        # Test admin login
+        print("\n--- Testing Admin Authentication ---")
+        login_data = {
+            "login": "admin",
+            "password": "admin123"
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+            if response.status_code == 200:
+                data = response.json()
+                self.admin_token = data["access_token"]
+                self.admin_user = data["user"]
+                print(f"✅ Admin login successful: {self.admin_user['username']}")
+            else:
+                print(f"❌ Admin login failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin login error: {e}")
+            return False
+            
+        # Set auth headers
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Test GET /api/users endpoint
+        print("\n--- Testing GET /api/users ---")
+        try:
+            response = self.session.get(f"{API_BASE}/users", headers=headers)
+            if response.status_code == 200:
+                users = response.json()
+                print(f"✅ GET /api/users successful: {len(users)} users found")
+                
+                # Find a sales user for assigning leads
+                sales_users = [user for user in users if user.get("role") == "sales"]
+                if sales_users:
+                    sales_user_id = sales_users[0]["id"]
+                    print(f"✅ Found sales user for lead assignment: {sales_users[0].get('username', 'Unknown')}")
+                else:
+                    # If no sales user found, use admin user
+                    sales_user_id = self.admin_user["id"]
+                    print(f"⚠️ No sales users found, using admin user for lead assignment")
+            else:
+                print(f"❌ GET /api/users failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ GET /api/users error: {e}")
+            return False
+        
+        # Test GET /api/customers endpoint
+        print("\n--- Testing GET /api/customers ---")
+        try:
+            response = self.session.get(f"{API_BASE}/customers", headers=headers)
+            if response.status_code == 200:
+                leads = response.json()
+                print(f"✅ GET /api/customers successful: {len(leads)} leads found")
+            else:
+                print(f"❌ GET /api/customers failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ GET /api/customers error: {e}")
+            return False
+        
+        # Test POST /api/customers with different statuses
+        print("\n--- Testing POST /api/customers with different statuses ---")
+        
+        # Test data with different statuses, care_status, and sales_result values
+        test_leads = [
+            {
+                "name": "Lead with High Status",
+                "phone": "+84123456789",
+                "company": "High Value Corp",
+                "status": "high",
+                "care_status": "potential_close",
+                "sales_result": None,
+                "assigned_sales_id": sales_user_id,
+                "potential_value": 100000.0,
+                "notes": "High potential lead",
+                "source": "website"
+            },
+            {
+                "name": "Lead with Normal Status",
+                "phone": "+84987654321",
+                "company": "Normal Corp",
+                "status": "normal",
+                "care_status": "thinking",
+                "sales_result": None,
+                "assigned_sales_id": sales_user_id,
+                "potential_value": 50000.0,
+                "notes": "Normal potential lead",
+                "source": "referral"
+            },
+            {
+                "name": "Lead with Low Status",
+                "phone": "+84555666777",
+                "company": "Low Value Corp",
+                "status": "low",
+                "care_status": "silent",
+                "sales_result": None,
+                "assigned_sales_id": sales_user_id,
+                "potential_value": 10000.0,
+                "notes": "Low potential lead",
+                "source": "cold call"
+            },
+            {
+                "name": "Nguyễn Văn Anh",  # Vietnamese name
+                "phone": "+84111222333",
+                "company": "Công ty TNHH Việt Nam",  # Vietnamese company name
+                "status": "high",
+                "care_status": "working",
+                "sales_result": None,
+                "assigned_sales_id": sales_user_id,
+                "potential_value": 75000.0,
+                "notes": "Khách hàng tiềm năng từ Hà Nội",  # Vietnamese notes
+                "source": "exhibition"
+            },
+            {
+                "name": "Trần Thị Bình",  # Vietnamese name
+                "phone": "+84444555666",
+                "company": "Doanh nghiệp Xây dựng Sài Gòn",  # Vietnamese company name
+                "status": "normal",
+                "care_status": "rejected",
+                "sales_result": "not_interested",
+                "assigned_sales_id": sales_user_id,
+                "potential_value": 25000.0,
+                "notes": "Đã từ chối đề xuất ban đầu",  # Vietnamese notes
+                "source": "partner"
+            }
+        ]
+        
+        created_lead_ids = []
+        
+        for i, lead_data in enumerate(test_leads):
+            try:
+                response = self.session.post(f"{API_BASE}/customers", json=lead_data, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    created_lead_ids.append(data["id"])
+                    print(f"✅ Created lead {i+1}: {data['name']} (ID: {data['id']})")
+                    
+                    # Verify all fields are set correctly
+                    if (data["status"] == lead_data["status"] and 
+                        data["care_status"] == lead_data["care_status"] and
+                        data["potential_value"] == lead_data["potential_value"]):
+                        print(f"  ✅ Lead data fields set correctly")
+                    else:
+                        print(f"  ❌ Lead data fields incorrect")
+                        return False
+                else:
+                    print(f"❌ Failed to create lead {i+1}: {response.status_code} - {response.text}")
+                    return False
+            except Exception as e:
+                print(f"❌ Error creating lead {i+1}: {e}")
+                return False
+        
+        # Test PUT /api/customers/{id} to update a lead
+        print("\n--- Testing PUT /api/customers/{id} ---")
+        
+        if created_lead_ids:
+            lead_id = created_lead_ids[0]
+            update_data = {
+                "status": "normal",
+                "care_status": "working",
+                "sales_result": "signed_contract",
+                "potential_value": 120000.0,
+                "notes": "Updated notes after contract signing"
+            }
+            
+            try:
+                response = self.session.put(f"{API_BASE}/customers/{lead_id}", json=update_data, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    print(f"✅ Updated lead: {data['name']}")
+                    
+                    # Verify update fields
+                    if (data["status"] == update_data["status"] and 
+                        data["care_status"] == update_data["care_status"] and
+                        data["sales_result"] == update_data["sales_result"] and
+                        data["potential_value"] == update_data["potential_value"]):
+                        print(f"  ✅ Lead update fields set correctly")
+                    else:
+                        print(f"  ❌ Lead update fields incorrect")
+                        return False
+                else:
+                    print(f"❌ Failed to update lead: {response.status_code} - {response.text}")
+                    return False
+            except Exception as e:
+                print(f"❌ Error updating lead: {e}")
+                return False
+        
+        # Test validation for required fields
+        print("\n--- Testing validation for required fields ---")
+        
+        # Missing required field (name)
+        invalid_lead = {
+            "phone": "+84999888777",
+            "company": "Invalid Corp",
+            "status": "high",
+            "care_status": "potential_close",
+            "assigned_sales_id": sales_user_id,
+            "potential_value": 50000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=invalid_lead, headers=headers)
+            if response.status_code in [400, 422]:  # Pydantic validation error or custom validation
+                print(f"✅ Validation correctly rejected lead without name field")
+            else:
+                print(f"❌ Validation should reject lead without name, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing validation: {e}")
+            return False
+        
+        # Missing required field (assigned_sales_id)
+        invalid_lead = {
+            "name": "Invalid Lead",
+            "phone": "+84999888777",
+            "company": "Invalid Corp",
+            "status": "high",
+            "care_status": "potential_close",
+            "potential_value": 50000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=invalid_lead, headers=headers)
+            if response.status_code in [400, 422]:  # Pydantic validation error or custom validation
+                print(f"✅ Validation correctly rejected lead without assigned_sales_id field")
+            else:
+                print(f"❌ Validation should reject lead without assigned_sales_id, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing validation: {e}")
+            return False
+        
+        # Invalid enum value for status
+        invalid_lead = {
+            "name": "Invalid Status Lead",
+            "phone": "+84999888777",
+            "company": "Invalid Corp",
+            "status": "invalid_status",  # Invalid enum value
+            "care_status": "potential_close",
+            "assigned_sales_id": sales_user_id,
+            "potential_value": 50000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=invalid_lead, headers=headers)
+            if response.status_code in [400, 422]:  # Pydantic validation error or custom validation
+                print(f"✅ Validation correctly rejected lead with invalid status enum value")
+            else:
+                print(f"❌ Validation should reject lead with invalid status, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing validation: {e}")
+            return False
+        
+        # Invalid enum value for care_status
+        invalid_lead = {
+            "name": "Invalid Care Status Lead",
+            "phone": "+84999888777",
+            "company": "Invalid Corp",
+            "status": "high",
+            "care_status": "invalid_care_status",  # Invalid enum value
+            "assigned_sales_id": sales_user_id,
+            "potential_value": 50000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=invalid_lead, headers=headers)
+            if response.status_code in [400, 422]:  # Pydantic validation error or custom validation
+                print(f"✅ Validation correctly rejected lead with invalid care_status enum value")
+            else:
+                print(f"❌ Validation should reject lead with invalid care_status, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing validation: {e}")
+            return False
+        
+        # Invalid enum value for sales_result
+        invalid_lead = {
+            "name": "Invalid Sales Result Lead",
+            "phone": "+84999888777",
+            "company": "Invalid Corp",
+            "status": "high",
+            "care_status": "potential_close",
+            "sales_result": "invalid_result",  # Invalid enum value
+            "assigned_sales_id": sales_user_id,
+            "potential_value": 50000.0
+        }
+        
+        try:
+            response = self.session.post(f"{API_BASE}/customers", json=invalid_lead, headers=headers)
+            if response.status_code in [400, 422]:  # Pydantic validation error or custom validation
+                print(f"✅ Validation correctly rejected lead with invalid sales_result enum value")
+            else:
+                print(f"❌ Validation should reject lead with invalid sales_result, got: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error testing validation: {e}")
+            return False
+        
+        print("\n--- Lead Management API Testing Summary ---")
+        print(f"✅ Successfully created {len(created_lead_ids)} leads with different statuses")
+        print(f"✅ Successfully updated lead information")
+        print(f"✅ Successfully validated required fields and enum values")
+        print(f"✅ Successfully tested with Vietnamese characters")
+        
+        return True
 
     def run_all_tests(self):
         """Run all tests in sequence"""
