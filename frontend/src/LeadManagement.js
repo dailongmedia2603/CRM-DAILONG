@@ -438,6 +438,12 @@ const LeadManagement = () => {
             ...formData,
             assigned_sales_id: currentUserId
           };
+          
+          // Remove sales_result if empty to avoid validation errors
+          if (!dataToSend.sales_result) {
+            delete dataToSend.sales_result;
+          }
+          
           await axios.post(`${API}/customers`, dataToSend, config);
         }
         
