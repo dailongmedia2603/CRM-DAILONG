@@ -1348,6 +1348,154 @@ class CRMAPITester:
             print(f"\n⚠️  {failed} tests failed. Please check the issues above.")
             return False
 
+    def test_customer_interactions_api(self):
+        """Test customer interactions API with follow_up type"""
+        print("\n=== Testing Customer Interactions API with follow_up type ===")
+        
+        if not self.admin_token or not self.sales_token or not self.test_customer_id:
+            print("❌ Prerequisites not met. Need admin token, sales token, and test customer ID")
+            return False
+        
+        # Test 1: Create a new interaction with type "follow_up"
+        print("\n- Testing POST /api/interactions with follow_up type")
+        follow_up_interaction = {
+            "customer_id": self.test_customer_id,
+            "type": "follow_up",
+            "title": "Follow-up Call",
+            "description": "Followed up on previous discussion",
+            "revenue_generated": 0.0,
+            "next_action": "Schedule demo",
+            "next_action_date": (datetime.utcnow() + timedelta(days=5)).isoformat()
+        }
+        
+        headers = {"Authorization": f"Bearer {self.sales_token}"}
+        try:
+            response = self.session.post(f"{API_BASE}/interactions", json=follow_up_interaction, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                follow_up_interaction_id = data["id"]
+                print(f"✅ Follow-up interaction creation successful: {data['title']}")
+                print(f"   - ID: {follow_up_interaction_id}")
+                print(f"   - Type: {data['type']}")
+                print(f"   - Customer ID: {data['customer_id']}")
+                
+                # Verify all required fields are present in response
+                required_fields = ["id", "customer_id", "sales_id", "type", "title", "date"]
+                missing_fields = [field for field in required_fields if field not in data]
+                if missing_fields:
+                    print(f"❌ Missing required fields in response: {missing_fields}")
+                    return False
+                
+                # Verify the type is "follow_up"
+                if data["type"] != "follow_up":
+                    print(f"❌ Interaction type mismatch: expected 'follow_up', got '{data['type']}'")
+                    return False
+            else:
+                print(f"❌ Follow-up interaction creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Follow-up interaction creation error: {e}")
+            return False
+        
+        # Test 2: Get customer interactions and verify the follow-up interaction is included
+        print("\n- Testing GET /api/customers/{customer_id}/interactions")
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}/interactions", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ Customer interactions retrieval successful: {len(data)} interactions")
+                
+                # Verify the follow-up interaction is in the list
+                follow_up_interactions = [i for i in data if i["id"] == follow_up_interaction_id]
+                if follow_up_interactions:
+                    print(f"✅ Follow-up interaction found in customer interactions")
+                else:
+                    print(f"❌ Follow-up interaction not found in customer interactions")
+                    return False
+                
+                # Verify the structure of the response
+                if len(data) > 0:
+                    first_interaction = data[0]
+                    required_fields = ["id", "customer_id", "sales_id", "type", "title", "date"]
+                    missing_fields = [field for field in required_fields if field not in first_interaction]
+                    if missing_fields:
+                        print(f"❌ Missing required fields in interaction response: {missing_fields}")
+                        return False
+                    print(f"✅ Interaction response structure is valid")
+            else:
+                print(f"❌ Customer interactions retrieval failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Customer interactions retrieval error: {e}")
+            return False
+        
+        # Test 3: Test access control - Admin should be able to access any customer's interactions
+        print("\n- Testing access control with admin user")
+        admin_headers = {"Authorization": f"Bearer {self.admin_token}"}
+        try:
+            response = self.session.get(f"{API_BASE}/customers/{self.test_customer_id}/interactions", headers=admin_headers)
+            if response.status_code == 200:
+                print(f"✅ Admin can access customer interactions")
+            else:
+                print(f"❌ Admin access to customer interactions failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Admin access test error: {e}")
+            return False
+        
+        # Test 4: Test required fields validation
+        print("\n- Testing required fields validation")
+        # Missing customer_id
+        invalid_interaction = {
+            "type": "follow_up",
+            "title": "Missing Customer ID"
+        }
+        try:
+            response = self.session.post(f"{API_BASE}/interactions", json=invalid_interaction, headers=headers)
+            if response.status_code != 200:
+                print(f"✅ Validation correctly rejected interaction missing customer_id: {response.status_code}")
+            else:
+                print(f"❌ Validation failed: accepted interaction without customer_id")
+                return False
+        except Exception as e:
+            print(f"❌ Validation test error: {e}")
+            return False
+        
+        # Missing type
+        invalid_interaction = {
+            "customer_id": self.test_customer_id,
+            "title": "Missing Type"
+        }
+        try:
+            response = self.session.post(f"{API_BASE}/interactions", json=invalid_interaction, headers=headers)
+            if response.status_code != 200:
+                print(f"✅ Validation correctly rejected interaction missing type: {response.status_code}")
+            else:
+                print(f"❌ Validation failed: accepted interaction without type")
+                return False
+        except Exception as e:
+            print(f"❌ Validation test error: {e}")
+            return False
+        
+        # Missing title
+        invalid_interaction = {
+            "customer_id": self.test_customer_id,
+            "type": "follow_up"
+        }
+        try:
+            response = self.session.post(f"{API_BASE}/interactions", json=invalid_interaction, headers=headers)
+            if response.status_code != 200:
+                print(f"✅ Validation correctly rejected interaction missing title: {response.status_code}")
+            else:
+                print(f"❌ Validation failed: accepted interaction without title")
+                return False
+        except Exception as e:
+            print(f"❌ Validation test error: {e}")
+            return False
+        
+        print("\n✅ All customer interactions API tests passed!")
+        return True
+
 if __name__ == "__main__":
     tester = CRMAPITester()
     success = tester.run_all_tests()
