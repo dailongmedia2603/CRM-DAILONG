@@ -6557,16 +6557,26 @@ const CustomerList = () => {
 
     const fetchCareHistory = async () => {
       setLoading(true);
+      console.log('Fetching care history for customer:', customer.id);
+      
       try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/interactions`, {
+        const url = `${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/interactions`;
+        console.log('API URL:', url);
+        console.log('Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+        
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         });
 
+        console.log('API Response status:', response.status);
+
         if (response.ok) {
           const interactions = await response.json();
+          console.log('Received interactions:', interactions);
+          
           // Convert backend format to frontend format
           const formattedHistory = interactions.map(interaction => ({
             id: interaction.id,
@@ -6575,13 +6585,17 @@ const CustomerList = () => {
             user: interaction.sales_id, // Will need to resolve to username later
             type: interaction.type
           }));
+          console.log('Formatted history:', formattedHistory);
           setCareHistory(formattedHistory);
         } else {
-          throw new Error('Failed to fetch care history');
+          const errorText = await response.text();
+          console.error('API Error:', response.status, errorText);
+          throw new Error(`Failed to fetch care history: ${response.status} ${errorText}`);
         }
       } catch (error) {
         console.error('Failed to fetch care history:', error);
-        // Fallback to empty array if API fails
+        // Only show alert if there's a real error, not just empty data
+        alert('Không thể tải lịch sử chăm sóc. Sẽ hiển thị danh sách trống.');
         setCareHistory([]);
       } finally {
         setLoading(false);
