@@ -22,7 +22,6 @@ const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
 // Enhanced Lead Management Component
 const LeadManagement = () => {
-  const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [users, setUsers] = useState([]); // Sales team for filtering
   const [loading, setLoading] = useState(true);
