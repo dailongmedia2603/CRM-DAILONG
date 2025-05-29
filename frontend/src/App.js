@@ -8153,6 +8153,692 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // Main App Component
+// Internship Assignments Page - Giao việc cho thực tập sinh
+const InternshipAssignments = () => {
+  const { user } = useAuth();
+  const [assignments, setAssignments] = useState([]);
+  const [interns, setInterns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [newAssignment, setNewAssignment] = useState({
+    title: '',
+    description: '',
+    intern_id: '',
+    deadline: '',
+    priority: 'normal'
+  });
+
+  useEffect(() => {
+    fetchAssignments();
+    fetchInterns();
+  }, []);
+
+  const fetchAssignments = async () => {
+    try {
+      setLoading(true);
+      // Mock data for now - replace with real API call
+      const mockAssignments = [
+        {
+          id: 1,
+          title: 'Tạo báo cáo khách hàng tháng 12',
+          description: 'Tổng hợp và phân tích dữ liệu khách hàng trong tháng 12',
+          intern_name: 'Nguyễn Văn A',
+          intern_id: 'intern1',
+          deadline: '2024-12-15',
+          priority: 'high',
+          status: 'in_progress',
+          created_at: '2024-12-01',
+          completion_percentage: 65
+        },
+        {
+          id: 2,
+          title: 'Cập nhật database khách hàng',
+          description: 'Làm sạch và cập nhật thông tin liên lạc khách hàng',
+          intern_name: 'Trần Thị B',
+          intern_id: 'intern2',
+          deadline: '2024-12-20',
+          priority: 'normal',
+          status: 'pending',
+          created_at: '2024-12-02',
+          completion_percentage: 20
+        }
+      ];
+      setAssignments(mockAssignments);
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchInterns = async () => {
+    try {
+      // Mock data for interns - replace with real API call
+      const mockInterns = [
+        { id: 'intern1', name: 'Nguyễn Văn A', email: 'a.nguyen@intern.com' },
+        { id: 'intern2', name: 'Trần Thị B', email: 'b.tran@intern.com' },
+        { id: 'intern3', name: 'Lê Văn C', email: 'c.le@intern.com' }
+      ];
+      setInterns(mockInterns);
+    } catch (error) {
+      console.error('Failed to fetch interns:', error);
+    }
+  };
+
+  const handleCreateAssignment = async () => {
+    try {
+      // Mock creation - replace with real API call
+      const newId = Math.max(...assignments.map(a => a.id), 0) + 1;
+      const intern = interns.find(i => i.id === newAssignment.intern_id);
+      
+      const assignment = {
+        id: newId,
+        ...newAssignment,
+        intern_name: intern?.name || '',
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        completion_percentage: 0
+      };
+
+      setAssignments([assignment, ...assignments]);
+      setNewAssignment({
+        title: '',
+        description: '',
+        intern_id: '',
+        deadline: '',
+        priority: 'normal'
+      });
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Failed to create assignment:', error);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'normal': return 'bg-blue-100 text-blue-800';
+      case 'low': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const filteredAssignments = assignments.filter(assignment =>
+    assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    assignment.intern_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Giao việc thực tập sinh</h1>
+          <p className="text-slate-600 mt-1">Quản lý và theo dõi công việc được giao cho thực tập sinh</p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition-colors flex items-center space-x-2"
+        >
+          <Plus className="h-5 w-5" />
+          <span>Giao việc mới</span>
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-blue-100">
+              <ClipboardList className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Tổng số việc</p>
+              <p className="text-2xl font-semibold text-slate-900">{assignments.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-yellow-100">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Đang thực hiện</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                {assignments.filter(a => a.status === 'in_progress').length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Hoàn thành</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                {assignments.filter(a => a.status === 'completed').length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-red-100">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Quá hạn</p>
+              <p className="text-2xl font-semibold text-slate-900">
+                {assignments.filter(a => a.status === 'overdue').length}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm công việc hoặc thực tập sinh..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+          />
+        </div>
+      </div>
+
+      {/* Assignments List */}
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Công việc
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Thực tập sinh
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Deadline
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Ưu tiên
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Tiến độ
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-200">
+              {filteredAssignments.map((assignment) => (
+                <tr key={assignment.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-slate-900">{assignment.title}</div>
+                      <div className="text-sm text-slate-500 truncate max-w-xs">{assignment.description}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                    {assignment.intern_name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                    {new Date(assignment.deadline).toLocaleDateString('vi-VN')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(assignment.priority)}`}>
+                      {assignment.priority === 'high' ? 'Cao' : assignment.priority === 'normal' ? 'Bình thường' : 'Thấp'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                      {assignment.status === 'completed' ? 'Hoàn thành' : 
+                       assignment.status === 'in_progress' ? 'Đang làm' :
+                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-1 bg-slate-200 rounded-full h-2 mr-2">
+                        <div 
+                          className="bg-cyan-600 h-2 rounded-full" 
+                          style={{ width: `${assignment.completion_percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-slate-600">{assignment.completion_percentage}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => setSelectedAssignment(assignment)}
+                      className="text-cyan-600 hover:text-cyan-900 mr-3"
+                    >
+                      <Eye className="h-5 w-5" />
+                    </button>
+                    <button className="text-slate-400 hover:text-slate-600">
+                      <Edit className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create Assignment Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Giao việc mới</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tiêu đề</label>
+                  <input
+                    type="text"
+                    value={newAssignment.title}
+                    onChange={(e) => setNewAssignment({...newAssignment, title: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                    placeholder="Nhập tiêu đề công việc..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+                  <textarea
+                    value={newAssignment.description}
+                    onChange={(e) => setNewAssignment({...newAssignment, description: e.target.value})}
+                    rows={3}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                    placeholder="Mô tả chi tiết công việc..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Thực tập sinh</label>
+                  <select
+                    value={newAssignment.intern_id}
+                    onChange={(e) => setNewAssignment({...newAssignment, intern_id: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  >
+                    <option value="">Chọn thực tập sinh...</option>
+                    {interns.map((intern) => (
+                      <option key={intern.id} value={intern.id}>{intern.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+                  <input
+                    type="date"
+                    value={newAssignment.deadline}
+                    onChange={(e) => setNewAssignment({...newAssignment, deadline: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Ưu tiên</label>
+                  <select
+                    value={newAssignment.priority}
+                    onChange={(e) => setNewAssignment({...newAssignment, priority: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  >
+                    <option value="low">Thấp</option>
+                    <option value="normal">Bình thường</option>
+                    <option value="high">Cao</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:text-slate-800"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleCreateAssignment}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                >
+                  Tạo công việc
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Internship Performance Page - Hiệu suất thực tập sinh
+const InternshipPerformance = () => {
+  const { user } = useAuth();
+  const [interns, setInterns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchInternPerformance();
+  }, [selectedPeriod]);
+
+  const fetchInternPerformance = async () => {
+    try {
+      setLoading(true);
+      // Mock data for intern performance - replace with real API call
+      const mockPerformance = [
+        {
+          id: 'intern1',
+          name: 'Nguyễn Văn A',
+          email: 'a.nguyen@intern.com',
+          avatar: null,
+          department: 'Marketing',
+          supervisor: 'Trần Thanh Hòa',
+          start_date: '2024-11-01',
+          tasks_completed: 12,
+          tasks_in_progress: 3,
+          tasks_overdue: 1,
+          completion_rate: 85,
+          quality_score: 8.5,
+          attendance_rate: 95,
+          feedback_count: 5,
+          average_rating: 4.2
+        },
+        {
+          id: 'intern2',
+          name: 'Trần Thị B',
+          email: 'b.tran@intern.com',
+          avatar: null,
+          department: 'Sales',
+          supervisor: 'Lê Minh Tuấn',
+          start_date: '2024-10-15',
+          tasks_completed: 18,
+          tasks_in_progress: 2,
+          tasks_overdue: 0,
+          completion_rate: 92,
+          quality_score: 9.0,
+          attendance_rate: 98,
+          feedback_count: 8,
+          average_rating: 4.6
+        },
+        {
+          id: 'intern3',
+          name: 'Lê Văn C',
+          email: 'c.le@intern.com',
+          avatar: null,
+          department: 'IT',
+          supervisor: 'Phạm Văn D',
+          start_date: '2024-12-01',
+          tasks_completed: 5,
+          tasks_in_progress: 4,
+          tasks_overdue: 2,
+          completion_rate: 65,
+          quality_score: 7.0,
+          attendance_rate: 88,
+          feedback_count: 2,
+          average_rating: 3.5
+        }
+      ];
+      setInterns(mockPerformance);
+    } catch (error) {
+      console.error('Failed to fetch intern performance:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPerformanceColor = (score) => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 75) return 'text-blue-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getPerformanceBadge = (score) => {
+    if (score >= 90) return 'bg-green-100 text-green-800';
+    if (score >= 75) return 'bg-blue-100 text-blue-800';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+  const getPerformanceLabel = (score) => {
+    if (score >= 90) return 'Xuất sắc';
+    if (score >= 75) return 'Tốt';
+    if (score >= 60) return 'Khá';
+    return 'Cần cải thiện';
+  };
+
+  const filteredInterns = interns.filter(intern =>
+    intern.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    intern.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const averageCompletionRate = interns.reduce((sum, intern) => sum + intern.completion_rate, 0) / interns.length || 0;
+  const averageQualityScore = interns.reduce((sum, intern) => sum + intern.quality_score, 0) / interns.length || 0;
+  const totalTasksCompleted = interns.reduce((sum, intern) => sum + intern.tasks_completed, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Hiệu suất thực tập sinh</h1>
+          <p className="text-slate-600 mt-1">Theo dõi và đánh giá hiệu suất làm việc của thực tập sinh</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            <option value="week">Tuần này</option>
+            <option value="month">Tháng này</option>
+            <option value="quarter">Quý này</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overall Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-blue-100">
+              <Users className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Tổng thực tập sinh</p>
+              <p className="text-2xl font-semibold text-slate-900">{interns.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Tỷ lệ hoàn thành TB</p>
+              <p className="text-2xl font-semibold text-slate-900">{averageCompletionRate.toFixed(1)}%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-teal-100">
+              <Star className="h-6 w-6 text-teal-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Điểm chất lượng TB</p>
+              <p className="text-2xl font-semibold text-slate-900">{averageQualityScore.toFixed(1)}/10</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-orange-100">
+              <Target className="h-6 w-6 text-orange-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm text-slate-600">Công việc hoàn thành</p>
+              <p className="text-2xl font-semibold text-slate-900">{totalTasksCompleted}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm thực tập sinh hoặc phòng ban..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+        </div>
+      </div>
+
+      {/* Performance Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredInterns.map((intern) => (
+          <div key={intern.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center">
+                <div className="h-12 w-12 bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                  {intern.name.charAt(0)}
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-slate-900">{intern.name}</h3>
+                  <p className="text-sm text-slate-600">{intern.department} • {intern.supervisor}</p>
+                </div>
+              </div>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPerformanceBadge(intern.completion_rate)}`}>
+                {getPerformanceLabel(intern.completion_rate)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-3 bg-slate-50 rounded-lg">
+                <p className="text-2xl font-semibold text-slate-900">{intern.tasks_completed}</p>
+                <p className="text-sm text-slate-600">Hoàn thành</p>
+              </div>
+              <div className="text-center p-3 bg-slate-50 rounded-lg">
+                <p className="text-2xl font-semibold text-slate-900">{intern.tasks_in_progress}</p>
+                <p className="text-sm text-slate-600">Đang làm</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Tỷ lệ hoàn thành</span>
+                <span className={`text-sm font-medium ${getPerformanceColor(intern.completion_rate)}`}>
+                  {intern.completion_rate}%
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-teal-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${intern.completion_rate}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Điểm chất lượng</span>
+                <span className={`text-sm font-medium ${getPerformanceColor(intern.quality_score * 10)}`}>
+                  {intern.quality_score}/10
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${intern.quality_score * 10}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Tỷ lệ chuyên cần</span>
+                <span className={`text-sm font-medium ${getPerformanceColor(intern.attendance_rate)}`}>
+                  {intern.attendance_rate}%
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${intern.attendance_rate}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center space-x-4 text-sm text-slate-600">
+                <span>⭐ {intern.average_rating}/5</span>
+                <span>💬 {intern.feedback_count} feedback</span>
+              </div>
+              <button className="text-teal-600 hover:text-teal-800 text-sm font-medium">
+                Xem chi tiết
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
