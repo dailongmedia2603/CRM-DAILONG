@@ -15,7 +15,8 @@ import {
   PieChart as PieChartIcon, TrendingDown, ExternalLink,
   Archive, MapPin, Save, Upload, Download, Link2,
   ArrowLeft, Tag, Briefcase, Send, Bold, Italic, Underline,
-  MessageCircle, FolderOpen, CalendarDays, Banknote
+  MessageCircle, FolderOpen, CalendarDays, Banknote,
+  GraduationCap, ClipboardList
 } from 'lucide-react';
 import LeadManagement from './LeadManagement';
 import './App.css';
