@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
 import axios from 'axios';
 import { 
   Search, 
