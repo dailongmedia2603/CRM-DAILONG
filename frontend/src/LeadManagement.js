@@ -278,7 +278,7 @@ const LeadManagement = () => {
         id: Date.now(),
         date: new Date().toISOString(),
         note: newNote,
-        user: user?.full_name || 'Admin',
+        user: 'Admin',
         type: 'note'
       };
       
