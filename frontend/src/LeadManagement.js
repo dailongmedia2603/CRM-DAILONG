@@ -455,7 +455,7 @@ const LeadManagement = () => {
           }
           
           console.log('➕ Creating new customer with data:', dataToSend);
-          const response = await axios.post(`${API}/customers`, dataToSend, config);
+          const response = await axios.post(`${API}/api/customers`, dataToSend, config);
           console.log('✅ API Response:', response.status, response.data);
         }
         
