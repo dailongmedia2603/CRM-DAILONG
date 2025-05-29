@@ -5803,6 +5803,16 @@ const DashboardLayout = ({ children }) => {
         ] : [])
       ]
     },
+    { 
+      icon: GraduationCap, 
+      label: 'Thực tập sinh', 
+      color: 'text-cyan-600',
+      hasSubmenu: true,
+      submenu: [
+        { icon: ClipboardList, label: 'Giao việc', path: '/internship/assignments', color: 'text-cyan-600' },
+        { icon: BarChart3, label: 'Hiệu suất', path: '/internship/performance', color: 'text-teal-600' }
+      ]
+    },
     { icon: CheckCircle, label: 'Công việc', path: '/tasks', color: 'text-indigo-600' },
     { icon: BarChart3, label: 'Báo cáo', path: '/analytics', color: 'text-purple-600' },
     { icon: Users, label: 'Nhân sự', path: '/staff', color: 'text-blue-600' },
