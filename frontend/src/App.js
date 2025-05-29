@@ -5132,6 +5132,7 @@ const TasksPage = () => {
           getPriorityColor={getPriorityColor}
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
+          users={users}
         />
       )}
 
