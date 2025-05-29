@@ -7545,6 +7545,26 @@ function App() {
               }
             />
             <Route
+              path="/internship/assignments"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <InternshipAssignments />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/internship/performance"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <InternshipPerformance />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/tasks"
               element={
                 <ProtectedRoute>
