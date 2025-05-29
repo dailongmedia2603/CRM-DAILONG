@@ -64,7 +64,7 @@ const LeadManagement = () => {
         }
       };
 
-      const response = await axios.get(`${API}/customers`, config);
+      const response = await axios.get(`${API}/api/customers`, config);
       setCustomers(response.data);
     } catch (error) {
       console.error('Failed to fetch customers:', error);
