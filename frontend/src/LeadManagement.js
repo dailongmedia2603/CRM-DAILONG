@@ -568,6 +568,13 @@ const LeadManagement = () => {
         if (error.response?.data?.detail) {
           if (typeof error.response.data.detail === 'string') {
             errorMessage = error.response.data.detail;
+          } else if (Array.isArray(error.response.data.detail)) {
+            // Handle validation errors array
+            errorMessage = error.response.data.detail.map(err => {
+              if (err.msg) return err.msg;
+              if (err.message) return err.message;
+              return 'Dữ liệu không hợp lệ';
+            }).join(', ');
           } else {
             errorMessage = 'Dữ liệu không hợp lệ';
           }
@@ -575,7 +582,7 @@ const LeadManagement = () => {
           errorMessage = error.message;
         }
         
-        alert(`Lỗi: ${errorMessage}`);
+        showNotification(`Lỗi: ${errorMessage}`, 'error');
       }
     };
 
