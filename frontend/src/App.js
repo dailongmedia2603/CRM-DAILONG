@@ -6605,6 +6605,9 @@ const CustomerList = () => {
     const addCareNote = async () => {
       if (!newNote.trim()) return;
       
+      console.log('Adding care note:', newNote.trim());
+      console.log('Customer ID:', customer.id);
+      
       try {
         const interactionData = {
           customer_id: customer.id,
@@ -6612,6 +6615,8 @@ const CustomerList = () => {
           title: "Ghi chú chăm sóc",
           description: newNote.trim()
         };
+
+        console.log('Sending interaction data:', interactionData);
 
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/interactions`, {
           method: 'POST',
@@ -6622,8 +6627,12 @@ const CustomerList = () => {
           body: JSON.stringify(interactionData)
         });
 
+        console.log('Add note response status:', response.status);
+
         if (response.ok) {
           const newInteraction = await response.json();
+          console.log('New interaction created:', newInteraction);
+          
           // Add the new note to the beginning of the history
           const newCareNote = {
             id: newInteraction.id,
@@ -6633,10 +6642,16 @@ const CustomerList = () => {
             type: newInteraction.type
           };
           
+          console.log('Adding to care history:', newCareNote);
           setCareHistory([newCareNote, ...careHistory]);
           setNewNote('');
+          
+          // Optionally refresh the entire history to ensure consistency
+          await fetchCareHistory();
         } else {
-          throw new Error('Failed to save care note');
+          const errorText = await response.text();
+          console.error('Add note API Error:', response.status, errorText);
+          throw new Error(`Failed to save care note: ${response.status} ${errorText}`);
         }
       } catch (error) {
         console.error('Failed to add care note:', error);
