@@ -20,7 +20,7 @@ import {
 
 const API = process.env.REACT_APP_BACKEND_URL || 'https://3b82276e-07b9-4d31-bbc2-f9a78618e89b.preview.emergentagent.com';
 
-// Enhanced Lead Management Component
+// Enhanced Lead Management Component with UI Notifications
 const LeadManagement = () => {
   const [customers, setCustomers] = useState([]);
   const [users, setUsers] = useState([]); // Sales team for filtering
@@ -29,6 +29,9 @@ const LeadManagement = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Notification system
+  const [notifications, setNotifications] = useState([]);
   
   // Enhanced filters
   const [filters, setFilters] = useState({
@@ -44,6 +47,28 @@ const LeadManagement = () => {
   
   // Bulk actions
   const [selectedIds, setSelectedIds] = useState([]);
+
+  // Notification functions
+  const showNotification = (message, type = 'info') => {
+    const id = Date.now();
+    const notification = {
+      id,
+      message,
+      type, // 'success', 'error', 'warning', 'info'
+      timestamp: new Date()
+    };
+    
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     fetchCustomers();
