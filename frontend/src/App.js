@@ -6591,16 +6591,43 @@ const CustomerList = () => {
     const addCareNote = async () => {
       if (!newNote.trim()) return;
       
-      const newCareNote = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        note: newNote,
-        user: user?.full_name || 'Admin',
-        type: 'note'
-      };
-      
-      setCareHistory([newCareNote, ...careHistory]);
-      setNewNote('');
+      try {
+        const interactionData = {
+          customer_id: customer.id,
+          type: "follow_up", // Default type for manual notes
+          title: "Ghi chú chăm sóc",
+          description: newNote.trim()
+        };
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/interactions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(interactionData)
+        });
+
+        if (response.ok) {
+          const newInteraction = await response.json();
+          // Add the new note to the beginning of the history
+          const newCareNote = {
+            id: newInteraction.id,
+            date: newInteraction.date,
+            note: newInteraction.description || newInteraction.title,
+            user: user?.full_name || 'Admin',
+            type: newInteraction.type
+          };
+          
+          setCareHistory([newCareNote, ...careHistory]);
+          setNewNote('');
+        } else {
+          throw new Error('Failed to save care note');
+        }
+      } catch (error) {
+        console.error('Failed to add care note:', error);
+        alert('Không thể lưu ghi chú. Vui lòng thử lại.');
+      }
     };
 
     const getTypeIcon = (type) => {
