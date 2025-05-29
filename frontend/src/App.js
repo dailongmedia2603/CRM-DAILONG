@@ -6327,9 +6327,9 @@ const Dashboard = () => {
   );
 };
 
-// Customer Management Component - wrapper for CustomerList
+// Customer Management Component - wrapper for new LeadManagement
 const CustomerManagement = () => {
-  return <CustomerList />;
+  return React.createElement(require('./LeadManagement').default);
 };
 
 // Customer List Component - Enhanced Lead Management
