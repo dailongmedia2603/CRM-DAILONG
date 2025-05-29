@@ -6542,50 +6542,6 @@ const CustomerList = () => {
     );
   };
 
-  const getCareStatusBadge = (careStatus) => {
-    const statusStyles = {
-      potential_close: 'bg-green-100 text-green-800 border-green-200',
-      thinking: 'bg-blue-100 text-blue-800 border-blue-200',
-      working: 'bg-orange-100 text-orange-800 border-orange-200',
-      silent: 'bg-gray-100 text-gray-800 border-gray-200',
-      rejected: 'bg-red-100 text-red-800 border-red-200'
-    };
-    
-    const statusLabels = {
-      potential_close: 'Khả năng chốt',
-      thinking: 'Đang suy nghĩ',
-      working: 'Đang làm việc',
-      silent: 'Im ru',
-      rejected: 'Từ chối'
-    };
-    
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[careStatus] || statusStyles.thinking}`}>
-        {statusLabels[careStatus] || careStatus}
-      </span>
-    );
-  };
-
-  const getSalesResultBadge = (salesResult) => {
-    if (!salesResult) return <span className="text-gray-500 text-xs">Chưa có</span>;
-    
-    const statusStyles = {
-      signed_contract: 'bg-green-100 text-green-800 border-green-200',
-      not_interested: 'bg-red-100 text-red-800 border-red-200'
-    };
-    
-    const statusLabels = {
-      signed_contract: 'Ký hợp đồng',
-      not_interested: 'Không quan tâm'
-    };
-    
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[salesResult]}`}>
-        {statusLabels[salesResult] || salesResult}
-      </span>
-    );
-  };
-
   // Care History Modal Component
   const CareHistoryModal = ({ customer, onClose }) => {
     const [careHistory, setCareHistory] = useState([]);
