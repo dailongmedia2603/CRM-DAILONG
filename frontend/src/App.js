@@ -6469,6 +6469,7 @@ const DashboardLayout = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [salesDropdownOpen, setSalesDropdownOpen] = useState(false);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
+  const [internshipDropdownOpen, setInternshipDropdownOpen] = useState(false);
 
   const menuItems = [
     { icon: Home, label: 'Trang chủ', path: '/dashboard', color: 'text-blue-600' },
