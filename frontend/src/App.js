@@ -6573,12 +6573,17 @@ const DashboardLayout = ({ children }) => {
             if (item.hasSubmenu) {
               const isProjectMenu = item.label === 'Dự án';
               const isSalesMenu = item.label === 'Bán hàng';
-              const currentDropdownOpen = isProjectMenu ? projectDropdownOpen : salesDropdownOpen;
+              const isInternshipMenu = item.label === 'Thực tập sinh';
+              const currentDropdownOpen = isProjectMenu ? projectDropdownOpen : 
+                                        isSalesMenu ? salesDropdownOpen :
+                                        isInternshipMenu ? internshipDropdownOpen : false;
               const toggleDropdown = () => {
                 if (isProjectMenu) {
                   setProjectDropdownOpen(!projectDropdownOpen);
                 } else if (isSalesMenu) {
                   setSalesDropdownOpen(!salesDropdownOpen);
+                } else if (isInternshipMenu) {
+                  setInternshipDropdownOpen(!internshipDropdownOpen);
                 }
               };
               
