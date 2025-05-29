@@ -42,7 +42,7 @@ class FocusedCRMAPITester:
             if response.status_code == 200:
                 data = response.json()
                 self.token = data.get("access_token")
-                self.log_success(f"Login successful: {credentials.get('email')}")
+                self.log_success(f"Login successful: {credentials.get('login')}")
                 return True
             else:
                 self.log_failure(f"Login failed: {response.status_code} - {response.text}")
