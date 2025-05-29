@@ -87,7 +87,7 @@ const LeadManagement = () => {
         }
       };
 
-      const response = await axios.get(`${API}/users`, config);
+      const response = await axios.get(`${API}/api/users`, config);
       // Filter only sales team members
       const salesUsers = response.data.filter(u => 
         ['sales', 'manager', 'admin'].includes(u.role)
