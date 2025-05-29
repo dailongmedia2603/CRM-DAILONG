@@ -441,7 +441,7 @@ const LeadManagement = () => {
         if (customer?.id) {
           // Update existing customer
           console.log('🔄 Updating customer:', customer.id);
-          await axios.put(`${API}/customers/${customer.id}`, formData, config);
+          await axios.put(`${API}/api/customers/${customer.id}`, formData, config);
         } else {
           // Create new customer - ensure assigned_sales_id is set
           const dataToSend = {
