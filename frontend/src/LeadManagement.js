@@ -510,7 +510,7 @@ const LeadManagement = () => {
         console.log('🔑 Token preview:', token ? token.substring(0, 50) + '...' : 'null');
         
         if (!token) {
-          alert('Bạn cần đăng nhập để thực hiện hành động này');
+          showNotification('Bạn cần đăng nhập để thực hiện hành động này', 'error');
           return;
         }
 
