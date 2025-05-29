@@ -1041,7 +1041,10 @@ const LeadManagement = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button className="text-red-600 hover:text-red-800 transition-colors">
+                        <button 
+                          onClick={() => handleDeleteLead(customer.id)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
