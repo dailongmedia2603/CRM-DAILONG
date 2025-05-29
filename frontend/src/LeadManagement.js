@@ -18,7 +18,7 @@ import {
   History
 } from 'lucide-react';
 
-const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
+const API = process.env.REACT_APP_BACKEND_URL || 'https://3b82276e-07b9-4d31-bbc2-f9a78618e89b.preview.emergentagent.com';
 
 // Enhanced Lead Management Component
 const LeadManagement = () => {
