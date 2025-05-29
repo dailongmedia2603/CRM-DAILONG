@@ -10,9 +10,9 @@ class FocusedCRMAPITester:
         # Get the backend URL from the frontend .env file
         self.base_url = "https://3b82276e-07b9-4d31-bbc2-f9a78618e89b.preview.emergentagent.com/api"
         self.token = None
-        self.admin_user = {"email": "admin@crm.com", "password": "admin123"}
-        self.sales_user = {"email": "sales@crm.com", "password": "sales123"}
-        self.manager_user = {"email": "manager@crm.com", "password": "manager123"}
+        self.admin_user = {"login": "admin@crm.com", "password": "admin123"}
+        self.sales_user = {"login": "sales@crm.com", "password": "sales123"}
+        self.manager_user = {"login": "manager@crm.com", "password": "manager123"}
         self.test_customer_id = None
         self.success_count = 0
         self.total_tests = 0
