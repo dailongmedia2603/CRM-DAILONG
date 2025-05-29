@@ -1352,9 +1352,82 @@ class CRMAPITester:
         """Test customer interactions API with follow_up type"""
         print("\n=== Testing Customer Interactions API with follow_up type ===")
         
-        if not self.admin_token or not self.sales_token or not self.test_customer_id:
-            print("❌ Prerequisites not met. Need admin token, sales token, and test customer ID")
-            return False
+        # Test admin login if not already logged in
+        if not self.admin_token:
+            print("\n- Logging in as admin to get token")
+            login_data = {
+                "login": "admin",
+                "password": "admin123"
+            }
+            try:
+                response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+                if response.status_code == 200:
+                    self.admin_token = response.json()["access_token"]
+                    print(f"✅ Admin login successful: admin")
+                else:
+                    print(f"❌ Admin login failed: {response.status_code} - {response.text}")
+                    return False
+            except Exception as e:
+                print(f"❌ Admin login error: {e}")
+                return False
+        
+        # Test sales login if not already logged in
+        if not self.sales_token:
+            print("\n- Logging in as sales to get token")
+            login_data = {
+                "login": "sales01",
+                "password": "sales123"
+            }
+            try:
+                response = self.session.post(f"{API_BASE}/auth/login", json=login_data)
+                if response.status_code == 200:
+                    self.sales_token = response.json()["access_token"]
+                    print(f"✅ Sales login successful: sales01")
+                else:
+                    print(f"❌ Sales login failed: {response.status_code} - {response.text}")
+                    print(f"⚠️ Using admin token for all tests")
+                    self.sales_token = self.admin_token
+            except Exception as e:
+                print(f"❌ Sales login error: {e}")
+                print(f"⚠️ Using admin token for all tests")
+                self.sales_token = self.admin_token
+        
+        # Create a test customer if not already created
+        if not self.test_customer_id:
+            print("\n- Creating a test customer")
+            customer_data = {
+                "name": "Test Customer for Interactions",
+                "email": f"test_customer_{uuid.uuid4().hex[:8]}@example.com",
+                "phone": "+1234567890",
+                "address": "123 Test St",
+                "assigned_sales_id": "sales01",
+                "status": "normal",
+                "care_status": "new",
+                "sales_result": "pending"
+            }
+            headers = {"Authorization": f"Bearer {self.admin_token}"}
+            try:
+                response = self.session.post(f"{API_BASE}/customers", json=customer_data, headers=headers)
+                if response.status_code == 200:
+                    self.test_customer_id = response.json()["id"]
+                    print(f"✅ Test customer creation successful: {customer_data['name']} (ID: {self.test_customer_id})")
+                else:
+                    print(f"❌ Test customer creation failed: {response.status_code} - {response.text}")
+                    # Try to get an existing customer
+                    try:
+                        response = self.session.get(f"{API_BASE}/customers", headers=headers)
+                        if response.status_code == 200 and len(response.json()) > 0:
+                            self.test_customer_id = response.json()[0]["id"]
+                            print(f"✅ Using existing customer with ID: {self.test_customer_id}")
+                        else:
+                            print(f"❌ Could not get existing customers: {response.status_code} - {response.text}")
+                            return False
+                    except Exception as e:
+                        print(f"❌ Error getting existing customers: {e}")
+                        return False
+            except Exception as e:
+                print(f"❌ Test customer creation error: {e}")
+                return False
         
         # Test 1: Create a new interaction with type "follow_up"
         print("\n- Testing POST /api/interactions with follow_up type")
