@@ -636,13 +636,7 @@ const LeadManagement = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Quản lý Lead</h1>
-          <p className="text-slate-600">Quản lý và theo dõi khách hàng tiềm năng</p>
-        </div>
-
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Sales Filter */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-slate-700 mb-2">Bộ lọc theo nhân sự</label>
@@ -660,109 +654,115 @@ const LeadManagement = () => {
           </select>
         </div>
 
-        {/* Statistics Widgets */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === '' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('')}
-          >
-            <div className="flex items-center">
-              <Users className="w-8 h-8 text-blue-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Tổng Lead</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.totalLeads}</p>
+        {/* Statistics Widgets - Rearranged Layout */}
+        <div className="mb-8 space-y-4">
+          {/* Top Row: Tổng Lead & Giá trị HĐ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div 
+              className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === '' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('')}
+            >
+              <div className="flex items-center">
+                <Users className="w-10 h-10 text-blue-600 mr-4" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Tổng Lead</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats.totalLeads}</p>
+                </div>
+              </div>
+            </div>
+
+            <div 
+              className={`bg-white p-6 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'signed_contract' ? 'border-green-500 bg-green-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('signed_contract')}
+            >
+              <div className="flex items-center">
+                <CheckCircle className="w-10 h-10 text-green-600 mr-4" />
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Giá trị HĐ</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.contractValue.toLocaleString('vi-VN')}đ</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'signed_contract' ? 'border-green-500 bg-green-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('signed_contract')}
-          >
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-green-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Giá trị HĐ</p>
-                <p className="text-xl font-bold text-slate-900">{stats.contractValue.toLocaleString('vi-VN')}đ</p>
+          {/* Bottom Row: 5 Status Widgets */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div 
+              className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'high_potential' ? 'border-yellow-500 bg-yellow-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('high_potential')}
+            >
+              <div className="flex items-center">
+                <TrendingUp className="w-8 h-8 text-yellow-600 mr-3" />
+                <div>
+                  <p className="text-xs font-medium text-slate-600">Lead tiềm năng</p>
+                  <p className="text-xl font-bold text-slate-900">{stats.highPotential}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'high_potential' ? 'border-yellow-500 bg-yellow-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('high_potential')}
-          >
-            <div className="flex items-center">
-              <TrendingUp className="w-8 h-8 text-yellow-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Lead tiềm năng</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.highPotential}</p>
+            <div 
+              className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'thinking' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('thinking')}
+            >
+              <div className="flex items-center">
+                <MessageCircle className="w-8 h-8 text-blue-600 mr-3" />
+                <div>
+                  <p className="text-xs font-medium text-slate-600">Đang suy nghĩ</p>
+                  <p className="text-xl font-bold text-slate-900">{stats.thinking}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'thinking' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('thinking')}
-          >
-            <div className="flex items-center">
-              <MessageCircle className="w-8 h-8 text-blue-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Đang suy nghĩ</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.thinking}</p>
+            <div 
+              className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'working' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('working')}
+            >
+              <div className="flex items-center">
+                <Clock className="w-8 h-8 text-orange-600 mr-3" />
+                <div>
+                  <p className="text-xs font-medium text-slate-600">Đang làm việc</p>
+                  <p className="text-xl font-bold text-slate-900">{stats.working}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'working' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('working')}
-          >
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-orange-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Đang làm việc</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.working}</p>
+            <div 
+              className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'silent' ? 'border-gray-500 bg-gray-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('silent')}
+            >
+              <div className="flex items-center">
+                <Archive className="w-8 h-8 text-gray-600 mr-3" />
+                <div>
+                  <p className="text-xs font-medium text-slate-600">Im ru</p>
+                  <p className="text-xl font-bold text-slate-900">{stats.silent}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'silent' ? 'border-gray-500 bg-gray-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('silent')}
-          >
-            <div className="flex items-center">
-              <Archive className="w-8 h-8 text-gray-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Im ru</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.silent}</p>
-              </div>
-            </div>
-          </div>
-
-          <div 
-            className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
-              activeWidget === 'rejected' ? 'border-red-500 bg-red-50' : 'border-slate-200 hover:shadow-md'
-            }`}
-            onClick={() => handleWidgetClick('rejected')}
-          >
-            <div className="flex items-center">
-              <UserX className="w-8 h-8 text-red-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-slate-600">Từ chối</p>
-                <p className="text-2xl font-bold text-slate-900">{stats.rejected}</p>
+            <div 
+              className={`bg-white p-4 rounded-lg shadow-sm border cursor-pointer transition-all ${
+                activeWidget === 'rejected' ? 'border-red-500 bg-red-50' : 'border-slate-200 hover:shadow-md'
+              }`}
+              onClick={() => handleWidgetClick('rejected')}
+            >
+              <div className="flex items-center">
+                <UserX className="w-8 h-8 text-red-600 mr-3" />
+                <div>
+                  <p className="text-xs font-medium text-slate-600">Từ chối</p>
+                  <p className="text-xl font-bold text-slate-900">{stats.rejected}</p>
+                </div>
               </div>
             </div>
           </div>
