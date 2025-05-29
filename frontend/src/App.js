@@ -6332,18 +6332,36 @@ const CustomerManagement = () => {
   return <CustomerList />;
 };
 
-// Customer List Component - Modern Table Design
+// Customer List Component - Enhanced Lead Management
 const CustomerList = () => {
   const { user } = useAuth();
   const [customers, setCustomers] = useState([]);
+  const [users, setUsers] = useState([]); // Sales team for filtering
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  
+  // Enhanced filters
+  const [filters, setFilters] = useState({
+    assignedSales: '', // Bộ lọc theo nhân sự
+    status: '', // Tiềm năng filter
+    careStatus: '', // Trạng thái chăm sóc filter  
+    salesResult: '', // Kết quả bán hàng filter
+    activeStatus: 'active' // Hoạt động/Lưu trữ filter
+  });
+  
+  // Widget filter state
+  const [activeWidget, setActiveWidget] = useState('');
+  
+  // Bulk actions
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
+    fetchUsers();
   }, []);
 
   const fetchCustomers = async () => {
@@ -6357,14 +6375,103 @@ const CustomerList = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/users`);
+      // Filter only sales team members
+      const salesUsers = response.data.filter(u => 
+        ['sales', 'manager', 'admin'].includes(u.role)
+      );
+      setUsers(salesUsers);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+
+  // Apply all filters
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (customer.source && customer.source.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = !statusFilter || customer.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    // Search filter
+    const matchesSearch = !searchTerm || 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.source && customer.source.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Sales filter
+    const matchesSales = !filters.assignedSales || customer.assigned_sales_id === filters.assignedSales;
+    
+    // Status filters
+    const matchesStatus = !filters.status || customer.status === filters.status;
+    const matchesCareStatus = !filters.careStatus || customer.care_status === filters.careStatus;
+    const matchesSalesResult = !filters.salesResult || customer.sales_result === filters.salesResult;
+    
+    // Widget filters
+    let matchesWidget = true;
+    if (activeWidget === 'signed_contract') {
+      matchesWidget = customer.sales_result === 'signed_contract';
+    } else if (activeWidget === 'high_potential') {
+      matchesWidget = customer.status === 'high';
+    } else if (activeWidget === 'thinking') {
+      matchesWidget = customer.care_status === 'thinking';
+    } else if (activeWidget === 'working') {
+      matchesWidget = customer.care_status === 'working';
+    } else if (activeWidget === 'silent') {
+      matchesWidget = customer.care_status === 'silent';
+    } else if (activeWidget === 'rejected') {
+      matchesWidget = customer.care_status === 'rejected';
+    }
+    
+    return matchesSearch && matchesSales && matchesStatus && matchesCareStatus && matchesSalesResult && matchesWidget;
   });
+
+  // Calculate statistics
+  const getStats = () => {
+    const filteredBySales = filters.assignedSales 
+      ? customers.filter(c => c.assigned_sales_id === filters.assignedSales)
+      : customers;
+      
+    return {
+      totalLeads: filteredBySales.length,
+      contractValue: filteredBySales
+        .filter(c => c.sales_result === 'signed_contract')
+        .reduce((sum, c) => sum + (c.potential_value || 0), 0),
+      highPotential: filteredBySales.filter(c => c.status === 'high').length,
+      thinking: filteredBySales.filter(c => c.care_status === 'thinking').length,
+      working: filteredBySales.filter(c => c.care_status === 'working').length,
+      silent: filteredBySales.filter(c => c.care_status === 'silent').length,
+      rejected: filteredBySales.filter(c => c.care_status === 'rejected').length
+    };
+  };
+
+  const stats = getStats();
+
+  // Widget click handlers
+  const handleWidgetClick = (widgetType) => {
+    setActiveWidget(activeWidget === widgetType ? '' : widgetType);
+  };
+
+  // Bulk select handlers
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedIds(filteredCustomers.map(c => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id, checked) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  // Get user name by ID
+  const getUserName = (userId) => {
+    const user = users.find(u => u.id === userId);
+    return user ? user.full_name || user.username : 'Không xác định';
+  };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
