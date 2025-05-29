@@ -210,14 +210,13 @@ const LeadManagement = () => {
 
   // Delete functions
   const handleDeleteLead = async (leadId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa lead này?')) {
-      return;
-    }
+    const confirmed = window.confirm('Bạn có chắc chắn muốn xóa lead này?');
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Bạn cần đăng nhập để thực hiện hành động này');
+        showNotification('Bạn cần đăng nhập để thực hiện hành động này', 'error');
         return;
       }
 
@@ -231,27 +230,26 @@ const LeadManagement = () => {
       
       // Refresh the customer list
       fetchCustomers();
-      alert('Xóa lead thành công!');
+      showNotification('Xóa lead thành công!', 'success');
     } catch (error) {
       console.error('Failed to delete lead:', error);
-      alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa lead'}`);
+      showNotification(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa lead'}`, 'error');
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) {
-      alert('Vui lòng chọn ít nhất một lead để xóa');
+      showNotification('Vui lòng chọn ít nhất một lead để xóa', 'warning');
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} lead(s) được chọn?`)) {
-      return;
-    }
+    const confirmed = window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} lead(s) được chọn?`);
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Bạn cần đăng nhập để thực hiện hành động này');
+        showNotification('Bạn cần đăng nhập để thực hiện hành động này', 'error');
         return;
       }
 
@@ -271,10 +269,10 @@ const LeadManagement = () => {
       // Clear selection and refresh
       setSelectedIds([]);
       fetchCustomers();
-      alert(`Đã xóa thành công ${selectedIds.length} lead(s)!`);
+      showNotification(`Đã xóa thành công ${selectedIds.length} lead(s)!`, 'success');
     } catch (error) {
       console.error('Failed to bulk delete leads:', error);
-      alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa leads'}`);
+      showNotification(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa leads'}`, 'error');
     }
   };
 
