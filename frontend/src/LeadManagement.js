@@ -735,6 +735,65 @@ const LeadManagement = () => {
     );
   };
 
+  // Notification Component
+  const NotificationContainer = () => {
+    return (
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`
+              max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5
+              transform transition-all duration-300 ease-in-out
+              ${notification.type === 'success' ? 'border-l-4 border-green-500' : ''}
+              ${notification.type === 'error' ? 'border-l-4 border-red-500' : ''}
+              ${notification.type === 'warning' ? 'border-l-4 border-yellow-500' : ''}
+              ${notification.type === 'info' ? 'border-l-4 border-blue-500' : ''}
+            `}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && (
+                    <CheckCircle className="h-6 w-6 text-green-500" />
+                  )}
+                  {notification.type === 'error' && (
+                    <X className="h-6 w-6 text-red-500" />
+                  )}
+                  {notification.type === 'warning' && (
+                    <AlertCircle className="h-6 w-6 text-yellow-500" />
+                  )}
+                  {notification.type === 'info' && (
+                    <MessageCircle className="h-6 w-6 text-blue-500" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.type === 'success' && 'Thành công'}
+                    {notification.type === 'error' && 'Lỗi'}
+                    {notification.type === 'warning' && 'Cảnh báo'}
+                    {notification.type === 'info' && 'Thông tin'}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {notification.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => removeNotification(notification.id)}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -748,6 +807,9 @@ const LeadManagement = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Notification Container */}
+      <NotificationContainer />
+      
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Sales Filter */}
         <div className="mb-6">
