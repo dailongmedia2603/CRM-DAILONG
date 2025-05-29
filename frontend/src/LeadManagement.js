@@ -379,7 +379,7 @@ const LeadManagement = () => {
       sales_result: customer?.sales_result || '',
       notes: customer?.notes || '',
       source: customer?.source || '',
-      assigned_sales_id: customer?.assigned_sales_id || user?.id || ''
+      assigned_sales_id: customer?.assigned_sales_id || ''
     });
 
     const handleSave = async () => {
