@@ -259,7 +259,7 @@ const LeadManagement = () => {
             id: 3,
             date: new Date(Date.now() - 172800000).toISOString(),
             note: 'Khách hàng quan tâm đến sản phẩm, hẹn gặp vào tuần sau',
-            user: user?.full_name || 'Admin',
+            user: 'Admin',
             type: 'meeting'
           }
         ];
