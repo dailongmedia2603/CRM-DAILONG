@@ -384,17 +384,41 @@ const LeadManagement = () => {
 
     const handleSave = async () => {
       try {
+        // Get authentication token from localStorage
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          alert('Bạn cần đăng nhập để thực hiện hành động này');
+          return;
+        }
+
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        };
+
         if (customer?.id) {
           // Update existing customer
-          await axios.put(`${API}/customers/${customer.id}`, formData);
+          await axios.put(`${API}/customers/${customer.id}`, formData, config);
         } else {
-          // Create new customer
-          await axios.post(`${API}/customers`, formData);
+          // Create new customer - set default assigned_sales_id if not provided
+          const dataToSend = {
+            ...formData,
+            assigned_sales_id: formData.assigned_sales_id || token // Use token as fallback
+          };
+          await axios.post(`${API}/customers`, dataToSend, config);
         }
-        await fetchCustomers();
+        
+        // Refresh the customer list
+        fetchCustomers();
         onClose();
+        
+        // Show success message
+        alert(customer?.id ? 'Cập nhật lead thành công!' : 'Thêm lead thành công!');
       } catch (error) {
         console.error('Failed to save customer:', error);
+        alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể lưu lead'}`);
       }
     };
 
