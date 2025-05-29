@@ -413,6 +413,8 @@ const LeadManagement = () => {
         // Get authentication token from localStorage
         const token = localStorage.getItem('token');
         console.log('🔑 Token exists:', !!token);
+        console.log('🔑 Token length:', token ? token.length : 0);
+        console.log('🔑 Token preview:', token ? token.substring(0, 50) + '...' : 'null');
         
         if (!token) {
           alert('Bạn cần đăng nhập để thực hiện hành động này');
@@ -453,13 +455,14 @@ const LeadManagement = () => {
           }
           
           console.log('➕ Creating new customer with data:', dataToSend);
-          await axios.post(`${API}/customers`, dataToSend, config);
+          const response = await axios.post(`${API}/customers`, dataToSend, config);
+          console.log('✅ API Response:', response.status, response.data);
         }
         
         console.log('✅ Save successful, refreshing list...');
         
         // Refresh the customer list
-        fetchCustomers();
+        await fetchCustomers();
         onClose();
         
         // Show success message
