@@ -351,6 +351,7 @@ test_plan:
     - "Client Management API"
     - "Client Detail Functionality"
     - "Role-Based Statistics Filtering"
+    - "Enhanced Lead Management System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
