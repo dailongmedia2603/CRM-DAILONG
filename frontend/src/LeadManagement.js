@@ -252,7 +252,7 @@ const LeadManagement = () => {
             id: 2,
             date: new Date(Date.now() - 86400000).toISOString(),
             note: 'Gửi thông tin báo giá qua email',
-            user: user?.full_name || 'Admin',
+            user: 'Admin',
             type: 'email'
           },
           {
