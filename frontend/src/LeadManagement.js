@@ -52,7 +52,7 @@ const LeadManagement = () => {
 
   const fetchCustomers = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       if (!token) {
         console.log('No token found');
         return;
@@ -75,7 +75,7 @@ const LeadManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       if (!token) {
         console.log('No token found');
         return;
