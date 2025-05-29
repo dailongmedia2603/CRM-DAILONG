@@ -470,7 +470,19 @@ const LeadManagement = () => {
       } catch (error) {
         console.error('❌ Failed to save customer:', error);
         console.error('❌ Error response:', error.response?.data);
-        alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể lưu lead'}`);
+        
+        let errorMessage = 'Không thể lưu lead';
+        if (error.response?.data?.detail) {
+          if (typeof error.response.data.detail === 'string') {
+            errorMessage = error.response.data.detail;
+          } else {
+            errorMessage = 'Dữ liệu không hợp lệ';
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        alert(`Lỗi: ${errorMessage}`);
       }
     };
 
