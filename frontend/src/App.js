@@ -5768,7 +5768,7 @@ const TaskFeedbackModal = ({ isOpen, onClose, task, currentUser }) => {
 };
 
 // Task Detail Modal Component
-const TaskDetailModal = ({ isOpen, onClose, task, formatDate, getPriorityColor, getStatusColor, getStatusText }) => {
+const TaskDetailModal = ({ isOpen, onClose, task, formatDate, getPriorityColor, getStatusColor, getStatusText, users = [] }) => {
   if (!isOpen || !task) return null;
 
   return (
