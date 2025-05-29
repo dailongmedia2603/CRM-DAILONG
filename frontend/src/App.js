@@ -6586,7 +6586,147 @@ const CustomerList = () => {
     );
   };
 
-  const CustomerModal = ({ customer, onClose, onSave }) => {
+  // Care History Modal Component
+  const CareHistoryModal = ({ customer, onClose }) => {
+    const [careHistory, setCareHistory] = useState([]);
+    const [newNote, setNewNote] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      if (customer?.id) {
+        fetchCareHistory();
+      }
+    }, [customer]);
+
+    const fetchCareHistory = async () => {
+      try {
+        // Mock data for now - you can implement actual API call
+        const mockHistory = [
+          {
+            id: 1,
+            date: new Date().toISOString(),
+            note: 'Đã gọi điện thoại để tư vấn sản phẩm',
+            user: user?.full_name || 'Admin',
+            type: 'call'
+          },
+          {
+            id: 2,
+            date: new Date(Date.now() - 86400000).toISOString(),
+            note: 'Gửi thông tin báo giá qua email',
+            user: user?.full_name || 'Admin',
+            type: 'email'
+          },
+          {
+            id: 3,
+            date: new Date(Date.now() - 172800000).toISOString(),
+            note: 'Khách hàng quan tâm đến sản phẩm, hẹn gặp vào tuần sau',
+            user: user?.full_name || 'Admin',
+            type: 'meeting'
+          }
+        ];
+        setCareHistory(mockHistory);
+      } catch (error) {
+        console.error('Failed to fetch care history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const addCareNote = async () => {
+      if (!newNote.trim()) return;
+      
+      const newCareNote = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        note: newNote,
+        user: user?.full_name || 'Admin',
+        type: 'note'
+      };
+      
+      setCareHistory([newCareNote, ...careHistory]);
+      setNewNote('');
+    };
+
+    const getTypeIcon = (type) => {
+      switch (type) {
+        case 'call': return '📞';
+        case 'email': return '📧';
+        case 'meeting': return '🤝';
+        case 'note': return '📝';
+        default: return '💬';
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Lịch sử chăm sóc - {customer?.name}
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="p-6 max-h-96 overflow-y-auto">
+            {/* Add new note */}
+            <div className="mb-6 p-4 bg-slate-50 rounded-lg">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Thêm ghi chú chăm sóc mới..."
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                rows={3}
+              />
+              <button
+                onClick={addCareNote}
+                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Thêm ghi chú
+              </button>
+            </div>
+
+            {/* History timeline */}
+            <div className="space-y-4">
+              {loading ? (
+                <div className="text-center py-8 text-slate-500">Đang tải...</div>
+              ) : careHistory.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">Chưa có lịch sử chăm sóc</div>
+              ) : (
+                careHistory.map((item) => (
+                  <div key={item.id} className="flex items-start space-x-3 p-3 bg-white border border-slate-200 rounded-lg">
+                    <div className="text-2xl">{getTypeIcon(item.type)}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-slate-900">{item.user}</span>
+                        <span className="text-sm text-slate-500">
+                          {new Date(item.date).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                      <p className="text-slate-700 text-sm">{item.note}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="p-6 border-t border-slate-200">
+            <button
+              onClick={onClose}
+              className="w-full bg-slate-600 text-white py-3 rounded-lg hover:bg-slate-700 transition-colors"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
     const [formData, setFormData] = useState({
       name: customer?.name || '',
       phone: customer?.phone || '',
