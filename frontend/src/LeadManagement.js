@@ -183,6 +183,76 @@ const LeadManagement = () => {
     return user ? user.full_name || user.username : 'Không xác định';
   };
 
+  // Delete functions
+  const handleDeleteLead = async (leadId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa lead này?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Bạn cần đăng nhập để thực hiện hành động này');
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      await axios.delete(`${API}/api/customers/${leadId}`, config);
+      
+      // Refresh the customer list
+      fetchCustomers();
+      alert('Xóa lead thành công!');
+    } catch (error) {
+      console.error('Failed to delete lead:', error);
+      alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa lead'}`);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert('Vui lòng chọn ít nhất một lead để xóa');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} lead(s) được chọn?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Bạn cần đăng nhập để thực hiện hành động này');
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      // Delete each selected lead
+      const deletePromises = selectedIds.map(id => 
+        axios.delete(`${API}/api/customers/${id}`, config)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Clear selection and refresh
+      setSelectedIds([]);
+      fetchCustomers();
+      alert(`Đã xóa thành công ${selectedIds.length} lead(s)!`);
+    } catch (error) {
+      console.error('Failed to bulk delete leads:', error);
+      alert(`Lỗi: ${error.response?.data?.detail || error.message || 'Không thể xóa leads'}`);
+    }
+  };
+
   // Helper functions for status badges
   const getStatusBadge = (status) => {
     const statusStyles = {
