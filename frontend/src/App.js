@@ -17,6 +17,7 @@ import {
   ArrowLeft, Tag, Briefcase, Send, Bold, Italic, Underline,
   MessageCircle, FolderOpen, CalendarDays, Banknote
 } from 'lucide-react';
+import LeadManagement from './LeadManagement';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
