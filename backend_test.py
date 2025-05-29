@@ -1314,6 +1314,9 @@ class CRMAPITester:
         test_results.append(("Client Authentication", self.test_client_authentication_required()))
         test_results.append(("Client Error Handling", self.test_client_error_handling()))
         
+        # Lead Management API tests
+        test_results.append(("Lead Management API", self.test_lead_management_api()))
+        
         # Print summary
         print("\n" + "="*60)
         print("🏁 TEST SUMMARY")
