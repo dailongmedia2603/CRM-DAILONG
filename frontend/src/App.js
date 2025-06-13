@@ -4002,7 +4002,8 @@ const InternshipAssignments = () => {
         description: '',
         intern_id: '',
         deadline: '',
-        priority: 'normal'
+        priority: 'normal',
+        work_link: ''
       });
       setShowCreateModal(false);
     } catch (error) {
