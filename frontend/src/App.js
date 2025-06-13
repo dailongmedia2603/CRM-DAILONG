@@ -3920,7 +3920,10 @@ const InternshipAssignments = () => {
           priority: 'high',
           status: 'in_progress',
           created_at: '2024-12-01',
-          completion_percentage: 65
+          completion_percentage: 65,
+          work_link: 'https://docs.google.com/spreadsheets/d/abc123',
+          comment_count: 8,
+          post_count: 3
         },
         {
           id: 2,
@@ -3932,7 +3935,25 @@ const InternshipAssignments = () => {
           priority: 'normal',
           status: 'pending',
           created_at: '2024-12-02',
-          completion_percentage: 20
+          completion_percentage: 20,
+          work_link: 'https://trello.com/b/xyz789',
+          comment_count: 3,
+          post_count: 1
+        },
+        {
+          id: 3,
+          title: 'Nghiên cứu thị trường sản phẩm mới',
+          description: 'Phân tích đối thủ cạnh tranh và xu hướng thị trường',
+          intern_name: 'Lê Văn C',
+          intern_id: 'intern3',
+          deadline: '2024-12-25',
+          priority: 'low',
+          status: 'completed',
+          created_at: '2024-12-03',
+          completion_percentage: 100,
+          work_link: 'https://notion.so/market-research-456',
+          comment_count: 12,
+          post_count: 5
         }
       ];
       setAssignments(mockAssignments);
