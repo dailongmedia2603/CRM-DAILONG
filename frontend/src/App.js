@@ -4243,6 +4243,17 @@ const InternshipAssignments = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Link làm việc</label>
+                  <input
+                    type="url"
+                    value={newAssignment.work_link}
+                    onChange={(e) => setNewAssignment({...newAssignment, work_link: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                    placeholder="https://docs.google.com/... hoặc https://trello.com/..."
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Thực tập sinh</label>
                   <select
                     value={newAssignment.intern_id}
