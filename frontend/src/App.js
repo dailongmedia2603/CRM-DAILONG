@@ -3938,6 +3938,9 @@ const InternshipAssignments = () => {
           completion_percentage: 20,
           work_link: 'https://trello.com/b/xyz789',
           comment_count: 3,
+          post_count: 1,
+          work_link: 'https://trello.com/b/xyz789',
+          comment_count: 3,
           post_count: 1
         },
         {
