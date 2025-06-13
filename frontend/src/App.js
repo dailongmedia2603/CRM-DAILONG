@@ -3889,13 +3889,15 @@ const InternshipAssignments = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [newAssignment, setNewAssignment] = useState({
     title: '',
     description: '',
     intern_id: '',
     deadline: '',
-    priority: 'normal'
+    priority: 'normal',
+    work_link: ''
   });
 
   useEffect(() => {
