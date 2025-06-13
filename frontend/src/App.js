@@ -3923,6 +3923,9 @@ const InternshipAssignments = () => {
           completion_percentage: 65,
           work_link: 'https://docs.google.com/spreadsheets/d/abc123',
           comment_count: 8,
+          post_count: 3,
+          work_link: 'https://docs.google.com/spreadsheets/d/abc123',
+          comment_count: 8,
           post_count: 3
         },
         {
