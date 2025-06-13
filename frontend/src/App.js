@@ -8594,6 +8594,129 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Assignment Detail Modal */}
+      {showDetailModal && selectedAssignment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="text-xl font-semibold text-slate-900">Chi tiết công việc</h3>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedAssignment(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Title and Status */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-lg font-medium text-slate-900 mb-2">{selectedAssignment.title}</h4>
+                    <p className="text-slate-600">{selectedAssignment.description}</p>
+                  </div>
+                  <span className={`ml-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedAssignment.status)}`}>
+                    {selectedAssignment.status === 'completed' ? 'Hoàn thành' : 
+                     selectedAssignment.status === 'in_progress' ? 'Đang làm' :
+                     selectedAssignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
+                  </span>
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Thực tập sinh</label>
+                    <p className="text-sm text-slate-900">{selectedAssignment.intern_name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Deadline</label>
+                    <p className="text-sm text-slate-900">{new Date(selectedAssignment.deadline).toLocaleDateString('vi-VN')}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Ưu tiên</label>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(selectedAssignment.priority)}`}>
+                      {selectedAssignment.priority === 'high' ? 'Cao' : selectedAssignment.priority === 'normal' ? 'Bình thường' : 'Thấp'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Ngày tạo</label>
+                    <p className="text-sm text-slate-900">{new Date(selectedAssignment.created_at).toLocaleDateString('vi-VN')}</p>
+                  </div>
+                </div>
+
+                {/* Progress */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Tiến độ hoàn thành</label>
+                  <div className="flex items-center">
+                    <div className="flex-1 bg-slate-200 rounded-full h-3 mr-3">
+                      <div 
+                        className="bg-cyan-600 h-3 rounded-full transition-all duration-300" 
+                        style={{ width: `${selectedAssignment.completion_percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium text-slate-900">{selectedAssignment.completion_percentage}%</span>
+                  </div>
+                </div>
+
+                {/* Work Link */}
+                {selectedAssignment.work_link && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Link làm việc</label>
+                    <a 
+                      href={selectedAssignment.work_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-cyan-600 hover:text-cyan-800 text-sm"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      {selectedAssignment.work_link}
+                    </a>
+                  </div>
+                )}
+
+                {/* Engagement Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <MessageCircle className="h-5 w-5 text-blue-600 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">Comments</p>
+                        <p className="text-lg font-semibold text-blue-600">{selectedAssignment.comment_count || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-green-600 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-green-900">Bài viết</p>
+                        <p className="text-lg font-semibold text-green-600">{selectedAssignment.post_count || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedAssignment(null);
+                  }}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 }
 
