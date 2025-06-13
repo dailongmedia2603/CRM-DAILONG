@@ -4178,7 +4178,15 @@ const InternshipAssignments = () => {
                 <tr key={assignment.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-slate-900">{assignment.title}</div>
+                      <div 
+                        className="text-sm font-medium text-slate-900 cursor-pointer hover:text-cyan-600 transition-colors"
+                        onClick={() => {
+                          setSelectedAssignment(assignment);
+                          setShowDetailModal(true);
+                        }}
+                      >
+                        {assignment.title}
+                      </div>
                       <div className="text-sm text-slate-500 truncate max-w-xs">{assignment.description}</div>
                     </div>
                   </td>
