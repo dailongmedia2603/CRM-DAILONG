@@ -1597,6 +1597,8 @@ async def get_tasks(
             all_conditions.extend(priority_conditions)
         if deadline_conditions:
             all_conditions.extend(deadline_conditions)
+        if date_conditions:
+            all_conditions.extend(date_conditions)
         
         # Build final query
         if all_conditions:
