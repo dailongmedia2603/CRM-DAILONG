@@ -4972,7 +4972,7 @@ const TasksPage = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'todo': return 'Chưa làm';
+      case 'pending': return 'Chờ xử lý';
       case 'in_progress': return 'Đang làm';
       case 'completed': return 'Hoàn thành';
       default: return 'Không xác định';
