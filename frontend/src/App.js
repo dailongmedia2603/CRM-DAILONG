@@ -8351,13 +8351,9 @@ function App() {
     </div>
   );
 };
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setSelectedAssignment(null);
-                  }}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="h-6 w-6" />
+
+// Internship Performance Page - Hiệu suất thực tập sinh
+const InternshipPerformance = () => {
                 </button>
               </div>
 
