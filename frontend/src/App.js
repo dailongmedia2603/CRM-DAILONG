@@ -5313,13 +5313,16 @@ const TasksListView = ({
                 Deadline
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Feedback
+                POST
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Trạng thái
+                COMMENT
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Thực hiện
+                FILE LÀM VIỆC
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                TIẾN ĐỘ
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Thao tác
