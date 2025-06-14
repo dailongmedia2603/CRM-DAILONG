@@ -4859,16 +4859,10 @@ const TasksPage = () => {
     }
   };
 
-  const handleUpdateTaskExecution = async (taskId, execution) => {
+  const handleUpdateTaskExecution = async (taskId, status) => {
     try {
-      // Convert execution to status
-      const statusMapping = {
-        'doing': 'in_progress',
-        'done': 'completed'
-      };
-      
       await axios.put(`${API}/tasks/${taskId}`, { 
-        status: statusMapping[execution] || 'in_progress'
+        status: status  // Direct status update
       });
       await fetchTasks();
       await fetchStatistics();
