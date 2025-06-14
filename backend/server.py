@@ -1617,7 +1617,12 @@ async def get_tasks(
         raise HTTPException(status_code=500, detail=f"Error fetching tasks: {str(e)}")
 
 @api_router.get("/tasks/statistics")
-async def get_task_statistics(current_user: User = Depends(get_current_active_user)):
+async def get_task_statistics(
+    date_filter: str = None,  # today, yesterday, last_7_days, custom
+    date_from: str = None,    # for custom date range
+    date_to: str = None,      # for custom date range
+    current_user: User = Depends(get_current_active_user)
+):
     try:
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow = today + timedelta(days=1)
