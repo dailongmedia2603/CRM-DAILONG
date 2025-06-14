@@ -4922,6 +4922,10 @@ const TasksPage = () => {
     setDeadlineFilter('');
     setTaskStatusFilter('');
     setFilterStatus('active');
+    setDateFilter('');
+    setCustomDateFrom('');
+    setCustomDateTo('');
+    setShowCustomDatePicker(false);
   };
 
   const filteredTasks = tasks.filter(task => {
