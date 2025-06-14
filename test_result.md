@@ -67,6 +67,18 @@
 #   d. Minimize bundle size
 
 backend:
+  - task: "Task Module Updates"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "Task module updates partially implemented. TaskStatus enum has been updated with new values (pending, in_progress, completed) and works correctly for updating task status. However, the new fields (post_count, comment_count, work_file_link) are defined in the Task model but are not being returned in API responses or properly updated when using the update endpoint."
+
   - task: "JWT Authentication System"
     implemented: true
     working: true
