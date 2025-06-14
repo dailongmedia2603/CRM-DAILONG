@@ -1560,6 +1560,29 @@ async def get_tasks(
                     {"status": {"$ne": "completed"}}
                 ]
         
+        # Date filtering (based on created_at)
+        date_conditions = []
+        if date_filter:
+            today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            if date_filter == "today":
+                tomorrow = today + timedelta(days=1)
+                date_conditions = [{"created_at": {"$gte": today, "$lt": tomorrow}}]
+            elif date_filter == "yesterday":
+                yesterday = today - timedelta(days=1)
+                date_conditions = [{"created_at": {"$gte": yesterday, "$lt": today}}]
+            elif date_filter == "last_7_days":
+                seven_days_ago = today - timedelta(days=7)
+                date_conditions = [{"created_at": {"$gte": seven_days_ago, "$lt": today + timedelta(days=1)}}]
+            elif date_filter == "custom" and date_from and date_to:
+                try:
+                    from_date = datetime.fromisoformat(date_from.replace('Z', '+00:00')).replace(hour=0, minute=0, second=0, microsecond=0)
+                    to_date = datetime.fromisoformat(date_to.replace('Z', '+00:00')).replace(hour=23, minute=59, second=59, microsecond=999999)
+                    date_conditions = [{"created_at": {"$gte": from_date, "$lte": to_date}}]
+                except Exception as e:
+                    # If date parsing fails, ignore custom filter
+                    pass
+        
         # Combine all conditions
         all_conditions = []
         
