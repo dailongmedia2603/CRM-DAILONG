@@ -8353,8 +8353,6 @@ function App() {
 }
 
 export default App;
-
-// Internship Performance Page - Hiệu suất thực tập sinh
 const InternshipPerformance = () => {>
                 {/* Title and Status */}
                 <div className="flex items-start justify-between">
