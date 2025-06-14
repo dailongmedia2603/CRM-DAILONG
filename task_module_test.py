@@ -22,10 +22,10 @@ class TaskModuleTest:
         """Authenticate with admin user"""
         try:
             login_data = {
-                "username": "admin@crm.com",
+                "login": "admin@crm.com",
                 "password": "admin123"
             }
-            response = requests.post(f"{self.base_url}/auth/login", data=login_data)
+            response = requests.post(f"{self.base_url}/auth/login", json=login_data)
             if response.status_code == 200:
                 self.token = response.json()["access_token"]
                 self.headers = {"Authorization": f"Bearer {self.token}"}
