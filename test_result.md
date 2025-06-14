@@ -328,8 +328,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend API Stability Testing"
-    - "Enhanced Lead Management System"
+    - "Task Module Updates"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
