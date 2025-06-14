@@ -8347,10 +8347,12 @@ function App() {
             />
           </Routes>
         </BrowserRouter>
-      )}
-    </div>
+      </div>
+    </AuthProvider>
   );
-};
+}
+
+export default App;
 
 // Internship Performance Page - Hiệu suất thực tập sinh
 const InternshipPerformance = () => {>
