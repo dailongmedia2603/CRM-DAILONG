@@ -19,6 +19,8 @@ import {
   GraduationCap, ClipboardList
 } from 'lucide-react';
 import LeadManagement from './LeadManagement';
+import DateFilter from './components/DateFilter';
+import TaskDetailModal from './components/TaskDetailModal';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
