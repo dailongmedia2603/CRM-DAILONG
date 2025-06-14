@@ -4713,6 +4713,10 @@ const TasksPage = () => {
   const [taskStatusFilter, setTaskStatusFilter] = useState(''); // 'todo', 'in_progress', 'completed'
   const [priorityFilter, setPriorityFilter] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(''); // 'today', 'yesterday', 'last_7_days', 'custom'
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
   const [statistics, setStatistics] = useState({
     urgent: 0,
