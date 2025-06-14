@@ -5357,37 +5357,41 @@ const TasksListView = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                     {task.deadline ? formatDate(task.deadline) : 'Không có'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => onOpenFeedback(task)}
-                      className={`inline-flex items-center px-3 py-1.5 border text-sm rounded-lg transition-colors ${
-                        taskCommentCounts[task.id] && taskCommentCounts[task.id] > 0
-                          ? 'border-red-300 text-red-600 hover:bg-red-50'
-                          : 'border-blue-300 text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-1" />
-                      Feedback {taskCommentCounts[task.id] && taskCommentCounts[task.id] > 0 && (
-                        <span className="ml-1 bg-red-100 text-red-600 text-xs rounded-full px-1.5 py-0.5">
-                          {taskCommentCounts[task.id]}
-                        </span>
-                      )}
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {task.post_count || 0}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                      {getStatusText(task.status)}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {task.comment_count || 0}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    {task.work_file_link ? (
+                      <a 
+                        href={task.work_file_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                      >
+                        Link File
+                      </a>
+                    ) : (
+                      <span className="text-slate-400 text-sm">Chưa có file</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <select
-                      value={task.status === 'completed' ? 'done' : task.status === 'in_progress' ? 'doing' : ''}
+                      value={task.status}
                       onChange={(e) => onUpdateExecution(task.id, e.target.value)}
                       className="text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Chọn...</option>
-                      <option value="doing">Đang làm</option>
-                      <option value="done">Hoàn thành</option>
+                      <option value="pending">Chờ xử lý</option>
+                      <option value="in_progress">Đang làm</option>
+                      <option value="completed">Hoàn thành</option>
+                    </select>
+                  </td>
                     </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
