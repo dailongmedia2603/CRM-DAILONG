@@ -1534,7 +1534,7 @@ async def get_tasks(
         # Filter by status
         status_conditions = []
         if status == "active":
-            status_conditions = [{"status": {"$in": ["todo", "in_progress"]}}]
+            status_conditions = [{"status": {"$in": ["pending", "in_progress"]}}]
         elif status == "completed":
             status_conditions = [{"status": "completed"}]
         
