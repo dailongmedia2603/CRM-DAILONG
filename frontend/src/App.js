@@ -8465,8 +8465,11 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </AuthProvider>
   );
-};
+}
 
 export default App;
