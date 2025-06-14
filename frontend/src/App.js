@@ -5126,6 +5126,22 @@ const TasksPage = () => {
               />
             </div>
 
+            {/* Date Filter */}
+            <DateFilter
+              dateFilter={dateFilter}
+              setDateFilter={setDateFilter}
+              customDateFrom={customDateFrom}
+              setCustomDateFrom={setCustomDateFrom}
+              customDateTo={customDateTo}
+              setCustomDateTo={setCustomDateTo}
+              showCustomDatePicker={showCustomDatePicker}
+              setShowCustomDatePicker={setShowCustomDatePicker}
+              onFilterChange={() => {
+                fetchTasks();
+                fetchStatistics();
+              }}
+            />
+
             {/* View Mode Toggle */}
             <button
               onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}
