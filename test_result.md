@@ -341,6 +341,7 @@ metadata:
 test_plan:
   current_focus:
     - "Task Module Updates"
+    - "CRM Frontend Navigation and Tasks Module"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
