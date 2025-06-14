@@ -1666,6 +1666,7 @@ async def get_task_statistics(
         # Urgent tasks
         urgent_filter = {
             **role_filter,
+            **date_filter_condition,
             "priority": "urgent",
             "status": {"$ne": "completed"}
         }
@@ -1674,6 +1675,7 @@ async def get_task_statistics(
         # Pending tasks (replacing Todo tasks)
         pending_filter = {
             **role_filter,
+            **date_filter_condition,
             "status": "pending"
         }
         pending_count = await db.tasks.count_documents(pending_filter)
@@ -1681,6 +1683,7 @@ async def get_task_statistics(
         # In progress tasks
         in_progress_filter = {
             **role_filter,
+            **date_filter_condition,
             "status": "in_progress"
         }
         in_progress_count = await db.tasks.count_documents(in_progress_filter)
@@ -1688,6 +1691,7 @@ async def get_task_statistics(
         # Due today
         due_today_filter = {
             **role_filter,
+            **date_filter_condition,
             "deadline": {"$gte": today, "$lt": tomorrow},
             "status": {"$ne": "completed"}
         }
@@ -1696,6 +1700,7 @@ async def get_task_statistics(
         # Overdue
         overdue_filter = {
             **role_filter,
+            **date_filter_condition,
             "deadline": {"$lt": today},
             "status": {"$ne": "completed"}
         }
