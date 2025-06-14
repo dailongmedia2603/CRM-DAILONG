@@ -4736,9 +4736,9 @@ const TasksPage = () => {
 
   useEffect(() => {
     // Check if there are active filters
-    const hasFilters = priorityFilter || deadlineFilter || filterStatus === 'completed';
+    const hasFilters = priorityFilter || deadlineFilter || filterStatus === 'completed' || dateFilter;
     setHasActiveFilters(hasFilters);
-  }, [priorityFilter, deadlineFilter, filterStatus]);
+  }, [priorityFilter, deadlineFilter, filterStatus, dateFilter]);
 
   const fetchUsers = async () => {
     try {
