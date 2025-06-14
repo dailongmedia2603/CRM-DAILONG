@@ -1617,12 +1617,12 @@ async def get_task_statistics(current_user: User = Depends(get_current_active_us
         }
         urgent_count = await db.tasks.count_documents(urgent_filter)
         
-        # Todo tasks
-        todo_filter = {
+        # Pending tasks (replacing Todo tasks)
+        pending_filter = {
             **role_filter,
-            "status": "todo"
+            "status": "pending"
         }
-        todo_count = await db.tasks.count_documents(todo_filter)
+        pending_count = await db.tasks.count_documents(pending_filter)
         
         # In progress tasks
         in_progress_filter = {
@@ -1649,7 +1649,7 @@ async def get_task_statistics(current_user: User = Depends(get_current_active_us
         
         return {
             "urgent": urgent_count,
-            "todo": todo_count,
+            "pending": pending_count,
             "inProgress": in_progress_count,
             "dueToday": due_today_count,
             "overdue": overdue_count
