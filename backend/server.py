@@ -1746,6 +1746,13 @@ async def update_task(task_id: str, task_data: dict, current_user: User = Depend
             update_data["status"] = task_data["status"]
         if "assigned_to" in task_data:
             update_data["assigned_to"] = task_data["assigned_to"]
+        # Update new fields
+        if "post_count" in task_data:
+            update_data["post_count"] = task_data["post_count"]
+        if "comment_count" in task_data:
+            update_data["comment_count"] = task_data["comment_count"]
+        if "work_file_link" in task_data:
+            update_data["work_file_link"] = task_data["work_file_link"]
         
         result = await db.tasks.update_one(
             {"id": task_id},
