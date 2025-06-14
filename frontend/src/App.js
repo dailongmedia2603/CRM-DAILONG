@@ -4262,7 +4262,7 @@ const InternshipAssignments = () => {
                         className="inline-flex items-center text-cyan-600 hover:text-cyan-800 text-sm"
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
-                        File
+                        Link File
                       </a>
                     ) : (
                       <span className="text-slate-400 text-sm">Chưa có</span>
