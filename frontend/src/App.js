@@ -8353,11 +8353,7 @@ function App() {
 };
 
 // Internship Performance Page - Hiệu suất thực tập sinh
-const InternshipPerformance = () => {
-                </button>
-              </div>
-
-              <div className="space-y-6">
+const InternshipPerformance = () => {>
                 {/* Title and Status */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
