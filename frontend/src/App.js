@@ -5392,7 +5392,6 @@ const TasksListView = ({
                       <option value="completed">Hoàn thành</option>
                     </select>
                   </td>
-                    </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
