@@ -4756,6 +4756,13 @@ const TasksPage = () => {
       if (filterStatus) params.append('status', filterStatus);
       if (priorityFilter) params.append('priority', priorityFilter);
       if (deadlineFilter) params.append('deadline_filter', deadlineFilter);
+      if (dateFilter) {
+        params.append('date_filter', dateFilter);
+        if (dateFilter === 'custom' && customDateFrom && customDateTo) {
+          params.append('date_from', customDateFrom);
+          params.append('date_to', customDateTo);
+        }
+      }
       
       const response = await axios.get(`${API}/tasks?${params.toString()}`);
       setTasks(response.data);
@@ -4769,7 +4776,16 @@ const TasksPage = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get(`${API}/tasks/statistics`);
+      const params = new URLSearchParams();
+      if (dateFilter) {
+        params.append('date_filter', dateFilter);
+        if (dateFilter === 'custom' && customDateFrom && customDateTo) {
+          params.append('date_from', customDateFrom);
+          params.append('date_to', customDateTo);
+        }
+      }
+      
+      const response = await axios.get(`${API}/tasks/statistics?${params.toString()}`);
       setStatistics(response.data);
     } catch (error) {
       console.error('Failed to fetch statistics:', error);
