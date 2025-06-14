@@ -6339,92 +6339,38 @@ const Analytics = () => {
 
 // Account Management Component - Quản lý Tài khoản
 const AccountManagement = () => {
-  const { user, token, setUser, setToken } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { user, logout } = useAuth();
 
-  // Setup axios interceptor
-  useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  // Check if user is logged in on app start
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (token) {
-        try {
-          const response = await axios.get(`${API}/auth/me`);
-          setUser(response.data);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          logout();
-        }
-      }
-      setLoading(false);
-    };
-    checkAuth();
-  }, [token]);
-
-  const login = async (emailOrUsername, password) => {
-    try {
-      const response = await axios.post(`${API}/auth/login`, { login: emailOrUsername, password });
-      const { access_token, user: userData } = response.data;
-      
-      setToken(access_token);
-      setUser(userData);
-      localStorage.setItem('token', access_token);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
-      };
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      const response = await axios.post(`${API}/auth/register`, userData);
-      const { access_token, user: newUser } = response.data;
-      
-      setToken(access_token);
-      setUser(newUser);
-      localStorage.setItem('token', access_token);
-      
-      return { success: true };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Registration failed' 
-      };
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
-  };
-
-  const value = {
-    user,
-    token,
-    loading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!user
-  };
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold text-slate-800 mb-6">Quản lý Tài khoản</h2>
+      
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <User className="w-8 h-8 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-slate-800">{user.full_name}</h3>
+            <p className="text-slate-600">{user.email}</p>
+            <p className="text-sm text-slate-500 capitalize">{user.role}</p>
+          </div>
+        </div>
+        
+        <div className="border-t pt-6">
+          <button
+            onClick={logout}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
