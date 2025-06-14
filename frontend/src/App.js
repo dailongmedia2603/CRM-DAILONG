@@ -6322,7 +6322,7 @@ const Analytics = () => {
 
 // Account Management Component - Quản lý Tài khoản
 const AccountManagement = () => {
-  const { user, token, setUser } = useAuth();
+  const { user, token, setUser, setToken } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Setup axios interceptor
