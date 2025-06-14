@@ -253,6 +253,9 @@ class Task(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
+    post_count: int = 0  # Số lượng post
+    comment_count: int = 0  # Số lượng comment
+    work_file_link: Optional[str] = None  # Link file làm việc
 
 class Client(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
