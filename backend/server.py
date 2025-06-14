@@ -1687,11 +1687,14 @@ async def create_task(task_data: dict, current_user: User = Depends(get_current_
             "description": task_data.get("description", ""),
             "priority": task_data.get("priority", "normal"),
             "deadline": datetime.fromisoformat(task_data["deadline"]) if task_data.get("deadline") else None,
-            "status": "todo",  # Always start with todo status
+            "status": "pending",  # Start with pending status
             "assigned_to": task_data.get("assigned_to", ""),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
-            "created_by": current_user.id
+            "created_by": current_user.id,
+            "post_count": task_data.get("post_count", 0),  # Số lượng post
+            "comment_count": task_data.get("comment_count", 0),  # Số lượng comment
+            "work_file_link": task_data.get("work_file_link")  # Link file làm việc
         }
         
         result = await db.tasks.insert_one(task)
