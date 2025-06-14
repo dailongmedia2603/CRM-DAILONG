@@ -1514,6 +1514,9 @@ async def get_tasks(
     status: str = "active", 
     priority: str = None, 
     deadline_filter: str = None,
+    date_filter: str = None,  # today, yesterday, last_7_days, custom
+    date_from: str = None,    # for custom date range
+    date_to: str = None,      # for custom date range
     current_user: User = Depends(get_current_active_user)
 ):
     try:
