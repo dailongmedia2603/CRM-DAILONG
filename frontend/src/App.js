@@ -4233,15 +4233,11 @@ const InternshipAssignments = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-1 bg-slate-200 rounded-full h-2 mr-2">
-                        <div 
-                          className="bg-cyan-600 h-2 rounded-full" 
-                          style={{ width: `${assignment.completion_percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-slate-600">{assignment.completion_percentage}%</span>
-                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                      {assignment.status === 'completed' ? 'Hoàn thành' : 
+                       assignment.status === 'in_progress' ? 'Đang làm' :
+                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
