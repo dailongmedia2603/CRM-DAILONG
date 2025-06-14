@@ -3913,7 +3913,9 @@ const InternshipAssignments = () => {
     intern_id: '',
     deadline: '',
     priority: 'normal',
-    work_link: ''
+    work_link: '',
+    comment_count: 0,
+    post_count: 0
   });
 
   useEffect(() => {
