@@ -85,9 +85,9 @@ class TaskPriority(str, Enum):
     URGENT = "urgent"
 
 class TaskStatus(str, Enum):
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
+    PENDING = "pending"  # Chờ xử lý
+    IN_PROGRESS = "in_progress"  # Đang làm
+    COMPLETED = "completed"  # Hoàn thành
 
 # Models
 class User(BaseModel):
