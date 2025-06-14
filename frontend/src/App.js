@@ -5126,21 +5126,67 @@ const TasksPage = () => {
               />
             </div>
 
-            {/* Date Filter */}
-            <DateFilter
-              dateFilter={dateFilter}
-              setDateFilter={setDateFilter}
-              customDateFrom={customDateFrom}
-              setCustomDateFrom={setCustomDateFrom}
-              customDateTo={customDateTo}
-              setCustomDateTo={setCustomDateTo}
-              showCustomDatePicker={showCustomDatePicker}
-              setShowCustomDatePicker={setShowCustomDatePicker}
-              onFilterChange={() => {
-                fetchTasks();
-                fetchStatistics();
-              }}
-            />
+            {/* Date Filter - Inline Component */}
+            <div className="relative">
+              <select
+                value={dateFilter}
+                onChange={(e) => {
+                  setDateFilter(e.target.value);
+                  setTimeout(() => {
+                    fetchTasks();
+                    fetchStatistics();
+                  }, 100);
+                }}
+                className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
+                  dateFilter 
+                    ? 'border-blue-300 bg-blue-50 text-blue-600' 
+                    : 'border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <option value="">Lọc theo thời gian</option>
+                <option value="today">Hôm nay</option>
+                <option value="yesterday">Hôm qua</option>
+                <option value="last_7_days">7 ngày trước</option>
+                <option value="custom">Tuỳ chỉnh</option>
+              </select>
+              
+              {/* Custom Date Range */}
+              {dateFilter === 'custom' && (
+                <div className="absolute top-full left-0 mt-2 flex items-center space-x-2 bg-white border border-slate-200 rounded-lg p-3 shadow-lg z-10">
+                  <input
+                    type="date"
+                    value={customDateFrom}
+                    onChange={(e) => {
+                      setCustomDateFrom(e.target.value);
+                      setTimeout(() => {
+                        if (customDateTo) {
+                          fetchTasks();
+                          fetchStatistics();
+                        }
+                      }, 100);
+                    }}
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Từ ngày"
+                  />
+                  <span className="text-slate-500">đến</span>
+                  <input
+                    type="date"
+                    value={customDateTo}
+                    onChange={(e) => {
+                      setCustomDateTo(e.target.value);
+                      setTimeout(() => {
+                        if (customDateFrom) {
+                          fetchTasks();
+                          fetchStatistics();
+                        }
+                      }, 100);
+                    }}
+                    className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Đến ngày"
+                  />
+                </div>
+              )}
+            </div>
 
             {/* View Mode Toggle */}
             <button
