@@ -476,18 +476,18 @@ const ClientsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                        {task.comment_count || 0}
+                        {client.comment_count || 0}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                        {assignment.post_count || 0}
+                        {client.post_count || 0}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {assignment.work_link ? (
+                      {client.work_file_link ? (
                         <a 
-                          href={assignment.work_link} 
+                          href={client.work_file_link} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="inline-flex items-center text-cyan-600 hover:text-cyan-800 text-sm"
