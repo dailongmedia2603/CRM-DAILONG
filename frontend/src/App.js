@@ -4304,6 +4304,31 @@ const InternshipAssignments = () => {
                     <option value="high">Cao</option>
                   </select>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Số lượng Comment</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newAssignment.comment_count}
+                      onChange={(e) => setNewAssignment({...newAssignment, comment_count: parseInt(e.target.value) || 0})}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Số lượng Post</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={newAssignment.post_count}
+                      onChange={(e) => setNewAssignment({...newAssignment, post_count: parseInt(e.target.value) || 0})}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
