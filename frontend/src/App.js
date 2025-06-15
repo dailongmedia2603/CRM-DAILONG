@@ -6288,7 +6288,7 @@ const AccountManagement = () => {
       if (token) {
         try {
           const response = await axios.get(`${API}/auth/me`);
-          setUser(response.data);
+          // User data is managed by useAuth context
         } catch (error) {
           console.error('Auth check failed:', error);
           logout();
