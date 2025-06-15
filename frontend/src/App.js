@@ -7539,34 +7539,8 @@ const CustomerList = () => {
       </div>
     );
   };
-      source: customer?.source || '',
-      assigned_sales_id: customer?.assigned_sales_id || user?.id || ''
-    });
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-        if (customer) {
-          await axios.put(`${API}/customers/${customer.id}`, formData);
-        } else {
-          await axios.post(`${API}/customers`, formData);
-        }
-        onSave();
-        onClose();
-      } catch (error) {
-        console.error('Failed to save customer:', error);
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-        <div className="bg-white rounded-2xl w-full max-w-4xl mx-auto my-8 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-slate-200 flex-shrink-0">
-            <h3 className="text-xl font-semibold text-slate-900">
-              {customer ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới'}
-            </h3>
-            <p className="text-slate-500 mt-1">Điền thông tin khách hàng bên dưới</p>
-          </div>
+// Customer Form Component
           
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
