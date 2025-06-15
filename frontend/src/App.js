@@ -6336,7 +6336,7 @@ const AccountManagement = () => {
   };
 
   const logout = () => {
-    setUser(null);
+    // User data is managed by useAuth context
     setToken(null);
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
