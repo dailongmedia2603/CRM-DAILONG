@@ -6305,7 +6305,7 @@ const AccountManagement = () => {
       const { access_token, user: userData } = response.data;
       
       setToken(access_token);
-      setUser(userData);
+      // User data is managed by useAuth context
       localStorage.setItem('token', access_token);
       
       return { success: true };
