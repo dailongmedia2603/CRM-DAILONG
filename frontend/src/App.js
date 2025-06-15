@@ -7539,15 +7539,6 @@ const CustomerList = () => {
       </div>
     );
   };
-    const [formData, setFormData] = useState({
-      name: customer?.name || '',
-      phone: customer?.phone || '',
-      company: customer?.company || '', // Sẽ đổi thành Sản phẩm
-      status: customer?.status || 'high', // Đổi thành Tiềm năng
-      potential_value: customer?.potential_value || 0, // Đổi thành Giá trị hợp đồng
-      care_status: customer?.care_status || 'potential_close', // Trạng thái chăm sóc
-      sales_result: customer?.sales_result || '', // Kết quả bán hàng
-      notes: customer?.notes || '',
       source: customer?.source || '',
       assigned_sales_id: customer?.assigned_sales_id || user?.id || ''
     });
