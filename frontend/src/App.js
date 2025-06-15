@@ -6262,7 +6262,7 @@ const Analytics = () => {
   );
 };
 
-// Account Management Component - Quản lý Tài khoản
+/* // Account Management Component - Quản lý Tài khoản
 const AccountManagement = () => {
   const { user, token } = useAuth();
 
