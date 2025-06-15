@@ -6323,7 +6323,7 @@ const AccountManagement = () => {
       const { access_token, user: newUser } = response.data;
       
       setToken(access_token);
-      setUser(newUser);
+      // User data is managed by useAuth context
       localStorage.setItem('token', access_token);
       
       return { success: true };
