@@ -4204,13 +4204,6 @@ const InternshipAssignments = () => {
                        assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                      {assignment.status === 'completed' ? 'Hoàn thành' : 
-                       assignment.status === 'in_progress' ? 'Đang làm' :
-                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                       {assignment.comment_count || 0}
