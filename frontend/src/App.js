@@ -4197,6 +4197,20 @@ const InternshipAssignments = () => {
                       {assignment.priority === 'high' ? 'Cao' : assignment.priority === 'normal' ? 'Bình thường' : 'Thấp'}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                      {assignment.status === 'completed' ? 'Hoàn thành' : 
+                       assignment.status === 'in_progress' ? 'Đang làm' :
+                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                      {assignment.status === 'completed' ? 'Hoàn thành' : 
+                       assignment.status === 'in_progress' ? 'Đang làm' :
+                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                       {assignment.comment_count || 0}
@@ -4221,13 +4235,6 @@ const InternshipAssignments = () => {
                     ) : (
                       <span className="text-slate-400 text-sm">Chưa có</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                      {assignment.status === 'completed' ? 'Hoàn thành' : 
-                       assignment.status === 'in_progress' ? 'Đang làm' :
-                       assignment.status === 'pending' ? 'Chờ xử lý' : 'Quá hạn'}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
@@ -6262,7 +6269,6 @@ const Analytics = () => {
   );
 };
 
-/*
 // Account Management Component - Quản lý Tài khoản
 const AccountManagement = () => {
   const { user, token } = useAuth();
@@ -6352,7 +6358,6 @@ const AccountManagement = () => {
     </AuthContext.Provider>
   );
 };
-*/
 
 // Login Component - Professional Design
 const Login = () => {
@@ -7539,8 +7544,43 @@ const CustomerList = () => {
       </div>
     );
   };
+    const [formData, setFormData] = useState({
+      name: customer?.name || '',
+      phone: customer?.phone || '',
+      company: customer?.company || '', // Sẽ đổi thành Sản phẩm
+      status: customer?.status || 'high', // Đổi thành Tiềm năng
+      potential_value: customer?.potential_value || 0, // Đổi thành Giá trị hợp đồng
+      care_status: customer?.care_status || 'potential_close', // Trạng thái chăm sóc
+      sales_result: customer?.sales_result || '', // Kết quả bán hàng
+      notes: customer?.notes || '',
+      source: customer?.source || '',
+      assigned_sales_id: customer?.assigned_sales_id || user?.id || ''
+    });
 
-// Customer Form Component
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        if (customer) {
+          await axios.put(`${API}/customers/${customer.id}`, formData);
+        } else {
+          await axios.post(`${API}/customers`, formData);
+        }
+        onSave();
+        onClose();
+      } catch (error) {
+        console.error('Failed to save customer:', error);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="bg-white rounded-2xl w-full max-w-4xl mx-auto my-8 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-slate-200 flex-shrink-0">
+            <h3 className="text-xl font-semibold text-slate-900">
+              {customer ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới'}
+            </h3>
+            <p className="text-slate-500 mt-1">Điền thông tin khách hàng bên dưới</p>
+          </div>
           
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
