@@ -474,31 +474,6 @@ const ClientsPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-slate-700">{client.contact_person || 'Chưa có'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                        {assignment.comment_count || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                        {assignment.post_count || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {assignment.work_link ? (
-                        <a 
-                          href={assignment.work_link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-cyan-600 hover:text-cyan-800 text-sm"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          Link File
-                        </a>
-                      ) : (
-                        <span className="text-slate-400 text-sm">Chưa có</span>
-                      )}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-slate-900">
                         {formatCurrency(client.contract_value)}
