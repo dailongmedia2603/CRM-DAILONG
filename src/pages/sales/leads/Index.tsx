@@ -44,7 +44,8 @@ import {
   Clock,
   X,
   FileCheck,
-  Archive
+  Archive,
+  RotateCcw
 } from "lucide-react";
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
@@ -472,6 +473,27 @@ const LeadsPage = () => {
     showSuccess(`Đã lưu trữ ${selectedLeads.length} lead`);
   };
 
+  // Xử lý khôi phục hàng loạt
+  const handleBulkRestore = () => {
+    if (selectedLeads.length === 0) {
+      showError("Vui lòng chọn ít nhất một lead để khôi phục");
+      return;
+    }
+    
+    const updatedLeads = leads.map(lead => {
+      if (selectedLeads.includes(lead.id)) {
+        return { ...lead, archived: false };
+      }
+      return lead;
+    });
+    
+    setLeadsState(updatedLeads);
+    setLeads(updatedLeads); // Lưu vào localStorage
+    setSelectedLeads([]);
+    setSelectAll(false);
+    showSuccess(`Đã khôi phục ${selectedLeads.length} lead`);
+  };
+
   // Xử lý xóa hàng loạt
   const handleBulkDelete = () => {
     if (selectedLeads.length === 0) {
@@ -578,6 +600,9 @@ const LeadsPage = () => {
   const handleOpenAddLeadForm = () => {
     setFormDialogOpen(true);
   };
+
+  // Kiểm tra xem đang ở chế độ xem nào (đã lưu trữ hay đang hoạt động)
+  const isArchivedView = archivedFilter === "archived";
 
   return (
     <MainLayout>
@@ -724,14 +749,25 @@ const LeadsPage = () => {
           <div className="flex space-x-2">
             {selectedLeads.length > 0 && (
               <>
-                <Button 
-                  variant="outline" 
-                  onClick={handleBulkArchive}
-                  className="flex items-center"
-                >
-                  <Archive className="h-4 w-4 mr-2" />
-                  Lưu trữ ({selectedLeads.length})
-                </Button>
+                {isArchivedView ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBulkRestore}
+                    className="flex items-center"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Khôi phục ({selectedLeads.length})
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleBulkArchive}
+                    className="flex items-center"
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Lưu trữ ({selectedLeads.length})
+                  </Button>
+                )}
                 <Button 
                   variant="destructive" 
                   onClick={handleBulkDelete}
