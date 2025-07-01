@@ -1,5 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Bar, BarChart, Line, LineChart, Pie, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  PieChart, 
+  Pie, 
+  ResponsiveContainer, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  CartesianGrid 
+} from "recharts";
 import { cn } from "@/lib/utils";
 
 type ChartType = "line" | "bar" | "area" | "pie";
@@ -90,7 +104,12 @@ export const ChartCard = ({
                   <stop offset="95%" stopColor={colors[0]} stopOpacity={0.1} />
                 </linearGradient>
               </defs>
-              <Area type="monotone" dataKey={dataKey} stroke={colors[0]} fill="url(#colorGradient)" />
+              <Area 
+                type="monotone" 
+                dataKey={dataKey} 
+                stroke={colors[0]} 
+                fill="url(#colorGradient)" 
+              />
             </AreaChart>
           </ResponsiveContainer>
         );
