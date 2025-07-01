@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
+import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { getLeads, setLeads } from "@/utils/storage";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,9 @@ const LeadsPage = () => {
   const [selectedLeadHistory, setSelectedLeadHistory] = useState<LeadHistory[]>([]);
   const [selectedLeadName, setSelectedLeadName] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState("");
+
+  // State cho dialog thêm lead mới
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
 
   // Dữ liệu mẫu cho leads
   const sampleLeads: Lead[] = [
@@ -512,6 +516,25 @@ const LeadsPage = () => {
     }
   };
 
+  // Xử lý thêm lead mới
+  const handleAddLead = (newLead: Omit<Lead, "id" | "createdAt" | "history">) => {
+    const id = `lead-${Date.now()}`;
+    const createdAt = new Date().toISOString();
+    
+    const leadToAdd: Lead = {
+      id,
+      createdAt,
+      history: [],
+      ...newLead
+    };
+    
+    const updatedLeads = [...leads, leadToAdd];
+    setLeadsState(updatedLeads);
+    setLeads(updatedLeads); // Lưu vào localStorage
+    showSuccess("Đã thêm lead mới thành công");
+    setFormDialogOpen(false);
+  };
+
   // Xử lý lọc theo widget thống kê
   const handleFilterByStats = (type: string) => {
     switch (type) {
@@ -549,6 +572,11 @@ const LeadsPage = () => {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  // Xử lý mở form thêm lead
+  const handleOpenAddLeadForm = () => {
+    setFormDialogOpen(true);
   };
 
   return (
@@ -716,7 +744,10 @@ const LeadsPage = () => {
             )}
           </div>
           
-          <Button className="flex items-center">
+          <Button 
+            className="flex items-center" 
+            onClick={handleOpenAddLeadForm}
+          >
             <PlusCircle className="h-4 w-4 mr-2" />
             Thêm Lead
           </Button>
@@ -877,6 +908,16 @@ const LeadsPage = () => {
         history={selectedLeadHistory}
         onAddHistory={handleAddHistory}
       />
+
+      {/* Dialog Thêm Lead mới */}
+      {formDialogOpen && (
+        <LeadFormDialog
+          open={formDialogOpen}
+          onOpenChange={setFormDialogOpen}
+          onAddLead={handleAddLead}
+          salesPersons={salesPersons}
+        />
+      )}
     </MainLayout>
   );
 };
