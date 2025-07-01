@@ -50,21 +50,9 @@ import {
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
 import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
-import LeadDetailDialog from "@/components/sales/leads/LeadDetailDialog";
-import LeadEditDialog from "@/components/sales/leads/LeadEditDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { getLeads, setLeads } from "@/utils/storage";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Định nghĩa kiểu dữ liệu
 interface Lead {
@@ -137,18 +125,6 @@ const LeadsPage = () => {
 
   // State cho dialog thêm lead mới
   const [formDialogOpen, setFormDialogOpen] = useState(false);
-  
-  // State cho dialog chi tiết lead
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [viewLead, setViewLead] = useState<Lead | null>(null);
-  
-  // State cho dialog chỉnh sửa lead
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editLead, setEditLead] = useState<Lead | null>(null);
-  
-  // State cho alert dialog xóa lead
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
 
   // Dữ liệu mẫu cho leads
   const sampleLeads: Lead[] = [
@@ -581,50 +557,6 @@ const LeadsPage = () => {
     setFormDialogOpen(false);
   };
 
-  // Xử lý xem chi tiết lead
-  const handleViewLead = (lead: Lead) => {
-    setViewLead(lead);
-    setViewDialogOpen(true);
-  };
-  
-  // Xử lý mở form chỉnh sửa lead
-  const handleEditLead = (lead: Lead) => {
-    setEditLead(lead);
-    setEditDialogOpen(true);
-  };
-  
-  // Xử lý lưu chỉnh sửa lead
-  const handleSaveLead = (updatedLead: Lead) => {
-    const updatedLeads = leads.map(lead => {
-      if (lead.id === updatedLead.id) {
-        return updatedLead;
-      }
-      return lead;
-    });
-    
-    setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
-    showSuccess("Đã cập nhật lead thành công");
-  };
-  
-  // Xử lý xác nhận xóa lead
-  const handleConfirmDelete = (leadId: string) => {
-    setDeleteLeadId(leadId);
-    setDeleteDialogOpen(true);
-  };
-  
-  // Xử lý xóa lead
-  const handleDeleteLead = () => {
-    if (!deleteLeadId) return;
-    
-    const updatedLeads = leads.filter(lead => lead.id !== deleteLeadId);
-    setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
-    showSuccess("Đã xóa lead thành công");
-    setDeleteDialogOpen(false);
-    setDeleteLeadId(null);
-  };
-
   // Xử lý lọc theo widget thống kê
   const handleFilterByStats = (type: string) => {
     switch (type) {
@@ -956,11 +888,7 @@ const LeadsPage = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => handleViewLead(lead)}
-                                  >
+                                  <Button variant="ghost" size="icon">
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -973,11 +901,7 @@ const LeadsPage = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => handleEditLead(lead)}
-                                  >
+                                  <Button variant="ghost" size="icon">
                                     <PenLine className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -990,11 +914,7 @@ const LeadsPage = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => handleConfirmDelete(lead.id)}
-                                  >
+                                  <Button variant="ghost" size="icon">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -1034,41 +954,6 @@ const LeadsPage = () => {
           salesPersons={salesPersons}
         />
       )}
-      
-      {/* Dialog Chi tiết Lead */}
-      <LeadDetailDialog
-        open={viewDialogOpen}
-        onOpenChange={setViewDialogOpen}
-        lead={viewLead}
-        onViewHistory={handleOpenHistory}
-      />
-      
-      {/* Dialog Chỉnh sửa Lead */}
-      <LeadEditDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        lead={editLead}
-        salesPersons={salesPersons}
-        onSaveLead={handleSaveLead}
-      />
-      
-      {/* Alert Dialog Xác nhận xóa */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Lead sẽ bị xóa vĩnh viễn khỏi hệ thống.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLead} className="bg-red-600 hover:bg-red-700">
-              Xóa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MainLayout>
   );
 };
