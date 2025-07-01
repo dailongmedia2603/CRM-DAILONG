@@ -1,13 +1,25 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Phone, Mail, Users } from "lucide-react";
+import { Calendar, Phone, Mail, Users, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { showSuccess } from "@/utils/toast";
 
 interface LeadHistory {
   id: string;
@@ -24,15 +36,23 @@ interface LeadHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   leadName: string;
+  leadId: string;
   history: LeadHistory[];
+  onAddHistory: (leadId: string, newHistory: LeadHistory) => void;
 }
 
 export const LeadHistoryDialog = ({
   open,
   onOpenChange,
   leadName,
+  leadId,
   history,
+  onAddHistory,
 }: LeadHistoryDialogProps) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [content, setContent] = useState("");
+  const [type, setType] = useState<"note" | "call" | "email" | "meeting">("note");
+  
   // Sắp xếp lịch sử theo thời gian gần nhất
   const sortedHistory = [...history].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -78,12 +98,83 @@ export const LeadHistoryDialog = ({
     }
   };
 
+  // Xử lý khi thêm lịch sử mới
+  const handleAddHistory = () => {
+    if (!content.trim()) {
+      return;
+    }
+
+    const newHistory: LeadHistory = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      user: {
+        id: "1", // Giả định user hiện tại có ID là 1
+        name: "Trần Thị B", // Giả định user hiện tại
+      },
+      content: content.trim(),
+      type,
+    };
+
+    onAddHistory(leadId, newHistory);
+    showSuccess("Đã thêm lịch sử chăm sóc mới");
+    
+    // Reset form
+    setContent("");
+    setType("note");
+    setIsAdding(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Lịch sử chăm sóc: {leadName}</DialogTitle>
         </DialogHeader>
+        
+        <div className="flex justify-end mb-2">
+          <Button 
+            variant={isAdding ? "outline" : "default"} 
+            size="sm" 
+            onClick={() => setIsAdding(!isAdding)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {isAdding ? "Hủy" : "Thêm mới"}
+          </Button>
+        </div>
+
+        {isAdding && (
+          <div className="space-y-4 border rounded-lg p-4 mb-4">
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Loại hoạt động</div>
+              <Select value={type} onValueChange={(value: any) => setType(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn loại hoạt động" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="note">Ghi chú</SelectItem>
+                  <SelectItem value="call">Cuộc gọi</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="meeting">Cuộc họp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Nội dung</div>
+              <Textarea 
+                value={content} 
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Nhập nội dung lịch sử chăm sóc..."
+                rows={3}
+              />
+            </div>
+            
+            <Button onClick={handleAddHistory} disabled={!content.trim()}>
+              Lưu lịch sử
+            </Button>
+          </div>
+        )}
+
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
             {sortedHistory.length === 0 ? (
@@ -133,3 +224,52 @@ export const LeadHistoryDialog = ({
     </Dialog>
   );
 };
+</dyad-file>
+
+<dyad-write path="src/utils/storage.ts" description="Creating a utility for local storage operations">
+// Storage keys
+const LEADS_STORAGE_KEY = 'agency-crm-leads';
+
+// Generic type-safe get function
+export function getFromStorage<T>(key: string, defaultValue: T): T {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error(`Error getting item from storage: ${error}`);
+    return defaultValue;
+  }
+}
+
+// Generic type-safe set function
+export function setToStorage<T>(key: string, value: T): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error setting item to storage: ${error}`);
+  }
+}
+
+// Get leads from storage
+export function getLeads() {
+  return getFromStorage(LEADS_STORAGE_KEY, []);
+}
+
+// Set leads to storage
+export function setLeads(leads: any[]) {
+  setToStorage(LEADS_STORAGE_KEY, leads);
+}
+
+// Update a specific lead in storage
+export function updateLead(leadId: string, updatedLead: any) {
+  const leads = getLeads();
+  const index = leads.findIndex((lead: any) => lead.id === leadId);
+  
+  if (index !== -1) {
+    leads[index] = updatedLead;
+    setLeads(leads);
+    return true;
+  }
+  
+  return false;
+}

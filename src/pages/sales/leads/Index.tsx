@@ -26,12 +26,6 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -39,14 +33,11 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Eye,
-  Filter,
   PenLine,
   PlusCircle,
   Search,
   Trash2,
   History,
-  MessageSquare,
-  User,
   Users,
   Briefcase,
   AlertCircle,
@@ -58,6 +49,7 @@ import {
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
 import { showSuccess, showError } from "@/utils/toast";
+import { getLeads, setLeads } from "@/utils/storage";
 import { cn } from "@/lib/utils";
 
 // Định nghĩa kiểu dữ liệu
@@ -96,7 +88,7 @@ interface SalesPerson {
 
 const LeadsPage = () => {
   // State cho dữ liệu và lọc
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeadsState] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   
@@ -127,6 +119,7 @@ const LeadsPage = () => {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedLeadHistory, setSelectedLeadHistory] = useState<LeadHistory[]>([]);
   const [selectedLeadName, setSelectedLeadName] = useState("");
+  const [selectedLeadId, setSelectedLeadId] = useState("");
 
   // Dữ liệu mẫu cho leads
   const sampleLeads: Lead[] = [
@@ -362,8 +355,17 @@ const LeadsPage = () => {
 
   // Khởi tạo dữ liệu
   useEffect(() => {
-    // Trong thực tế, dữ liệu sẽ được lấy từ API
-    setLeads(sampleLeads);
+    // Kiểm tra xem đã có dữ liệu trong localStorage chưa
+    const storedLeads = getLeads();
+    
+    if (storedLeads && storedLeads.length > 0) {
+      setLeadsState(storedLeads);
+    } else {
+      // Nếu chưa có, khởi tạo bằng dữ liệu mẫu và lưu vào localStorage
+      setLeadsState(sampleLeads);
+      setLeads(sampleLeads);
+    }
+    
     setSalesPersons(sampleSalesPersons);
   }, []);
 
@@ -452,7 +454,6 @@ const LeadsPage = () => {
       return;
     }
     
-    // Trong thực tế, sẽ gọi API để cập nhật trạng thái lưu trữ
     const updatedLeads = leads.map(lead => {
       if (selectedLeads.includes(lead.id)) {
         return { ...lead, archived: true };
@@ -460,7 +461,8 @@ const LeadsPage = () => {
       return lead;
     });
     
-    setLeads(updatedLeads);
+    setLeadsState(updatedLeads);
+    setLeads(updatedLeads); // Lưu vào localStorage
     setSelectedLeads([]);
     setSelectAll(false);
     showSuccess(`Đã lưu trữ ${selectedLeads.length} lead`);
@@ -473,9 +475,9 @@ const LeadsPage = () => {
       return;
     }
     
-    // Trong thực tế, sẽ gọi API để xóa
     const updatedLeads = leads.filter(lead => !selectedLeads.includes(lead.id));
-    setLeads(updatedLeads);
+    setLeadsState(updatedLeads);
+    setLeads(updatedLeads); // Lưu vào localStorage
     setSelectedLeads([]);
     setSelectAll(false);
     showSuccess(`Đã xóa ${selectedLeads.length} lead`);
@@ -485,7 +487,29 @@ const LeadsPage = () => {
   const handleOpenHistory = (lead: Lead) => {
     setSelectedLeadHistory(lead.history);
     setSelectedLeadName(lead.name);
+    setSelectedLeadId(lead.id);
     setHistoryDialogOpen(true);
+  };
+
+  // Xử lý thêm lịch sử mới
+  const handleAddHistory = (leadId: string, newHistory: LeadHistory) => {
+    const updatedLeads = leads.map(lead => {
+      if (lead.id === leadId) {
+        return {
+          ...lead,
+          history: [...lead.history, newHistory]
+        };
+      }
+      return lead;
+    });
+    
+    setLeadsState(updatedLeads);
+    setLeads(updatedLeads); // Lưu vào localStorage
+    
+    // Cập nhật state hiển thị
+    if (leadId === selectedLeadId) {
+      setSelectedLeadHistory([...selectedLeadHistory, newHistory]);
+    }
   };
 
   // Xử lý lọc theo widget thống kê
@@ -755,7 +779,7 @@ const LeadsPage = () => {
                             className="flex items-center"
                           >
                             <History className="h-4 w-4 mr-1" />
-                            Lịch sử
+                            Lịch sử ({lead.history.length})
                           </Button>
                         </TableCell>
                         <TableCell>{lead.createdBy.name}</TableCell>
@@ -849,7 +873,9 @@ const LeadsPage = () => {
         open={historyDialogOpen}
         onOpenChange={setHistoryDialogOpen}
         leadName={selectedLeadName}
+        leadId={selectedLeadId}
         history={selectedLeadHistory}
+        onAddHistory={handleAddHistory}
       />
     </MainLayout>
   );
