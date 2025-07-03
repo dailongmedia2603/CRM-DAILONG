@@ -26,12 +26,25 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
+import { 
   Eye,
   PenLine,
   PlusCircle,
@@ -45,7 +58,9 @@ import {
   X,
   FileCheck,
   Archive,
-  RotateCcw
+  RotateCcw,
+  Calendar as CalendarIcon,
+  ChevronDown
 } from "lucide-react";
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
@@ -53,6 +68,8 @@ import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { getLeads, setLeads } from "@/utils/storage";
 import { cn } from "@/lib/utils";
+import { format, startOfDay, isEqual } from "date-fns";
+import { vi } from 'date-fns/locale';
 
 // Định nghĩa kiểu dữ liệu
 interface Lead {
@@ -70,6 +87,7 @@ interface Lead {
   result: "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi";
   archived: boolean;
   history: LeadHistory[];
+  nextFollowUpDate?: string;
 }
 
 interface LeadHistory {
@@ -81,6 +99,7 @@ interface LeadHistory {
   };
   content: string;
   type: "note" | "call" | "email" | "meeting";
+  nextFollowUpDate?: string;
 }
 
 interface SalesPerson {
@@ -100,7 +119,9 @@ const LeadsPage = () => {
   const [potentialFilter, setPotentialFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [resultFilter, setResultFilter] = useState("all");
-  const [archivedFilter, setArchivedFilter] = useState("active"); // 'active', 'archived', 'all'
+  const [archivedFilter, setArchivedFilter] = useState("active");
+  const [followUpFilter, setFollowUpFilter] = useState("all");
+  const [specificDateFilter, setSpecificDateFilter] = useState<Date | undefined>();
 
   // State cho widget thống kê
   const [stats, setStats] = useState({
@@ -133,244 +154,60 @@ const LeadsPage = () => {
       name: "Nguyễn Văn A",
       phone: "0901234567",
       product: "Website bán hàng",
-      createdBy: {
-        id: "1",
-        name: "Trần Thị B"
-      },
+      createdBy: { id: "1", name: "Trần Thị B" },
       createdAt: "2025-06-28T08:30:00",
       potential: "tiềm năng",
       status: "đang làm việc",
       result: "đang trao đổi",
       archived: false,
-      history: [
-        {
-          id: "h1",
-          date: "2025-06-28T08:30:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Đã liên hệ lần đầu, khách hàng quan tâm đến dịch vụ website bán hàng",
-          type: "call"
-        },
-        {
-          id: "h2",
-          date: "2025-06-29T10:15:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Đã gửi email báo giá cho khách hàng",
-          type: "email"
-        }
-      ]
+      history: [],
+      nextFollowUpDate: new Date().toISOString(),
     },
     {
       id: "2",
       name: "Lê Thị C",
       phone: "0912345678",
       product: "App di động",
-      createdBy: {
-        id: "2",
-        name: "Phạm Văn D"
-      },
+      createdBy: { id: "2", name: "Phạm Văn D" },
       createdAt: "2025-06-25T14:45:00",
       potential: "tiềm năng",
       status: "đang suy nghĩ",
       result: "chưa quyết định",
       archived: false,
-      history: [
-        {
-          id: "h3",
-          date: "2025-06-25T14:45:00",
-          user: {
-            id: "2",
-            name: "Phạm Văn D"
-          },
-          content: "Đã tư vấn qua điện thoại về dịch vụ phát triển app di động",
-          type: "call"
-        }
-      ]
+      history: [],
+      nextFollowUpDate: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
     },
     {
       id: "3",
       name: "Đỗ Văn E",
       phone: "0978123456",
       product: "Thiết kế logo",
-      createdBy: {
-        id: "1",
-        name: "Trần Thị B"
-      },
+      createdBy: { id: "1", name: "Trần Thị B" },
       createdAt: "2025-06-20T09:00:00",
       potential: "không tiềm năng",
       status: "từ chối",
       result: "từ chối",
       archived: false,
-      history: [
-        {
-          id: "h4",
-          date: "2025-06-20T09:00:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Đã liên hệ lần đầu, khách hàng quan tâm đến dịch vụ thiết kế logo",
-          type: "call"
-        },
-        {
-          id: "h5",
-          date: "2025-06-21T11:30:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Khách hàng từ chối vì giá cao hơn đối thủ cạnh tranh",
-          type: "call"
-        }
-      ]
+      history: [],
     },
-    {
-      id: "4",
-      name: "Hoàng Thị F",
-      phone: "0965432109",
-      product: "Website giới thiệu công ty",
-      createdBy: {
-        id: "2",
-        name: "Phạm Văn D"
-      },
-      createdAt: "2025-06-18T16:20:00",
-      potential: "tiềm năng",
-      status: "im ru",
-      result: "chưa quyết định",
-      archived: false,
-      history: [
-        {
-          id: "h6",
-          date: "2025-06-18T16:20:00",
-          user: {
-            id: "2",
-            name: "Phạm Văn D"
-          },
-          content: "Đã gặp trực tiếp và tư vấn về dịch vụ thiết kế website giới thiệu công ty",
-          type: "meeting"
-        },
-        {
-          id: "h7",
-          date: "2025-06-19T09:45:00",
-          user: {
-            id: "2",
-            name: "Phạm Văn D"
-          },
-          content: "Đã gửi email báo giá, khách hàng chưa phản hồi",
-          type: "email"
-        }
-      ]
-    },
-    {
-      id: "5",
-      name: "Trần Văn G",
-      phone: "0943210987",
-      product: "Dịch vụ SEO",
-      createdBy: {
-        id: "1",
-        name: "Trần Thị B"
-      },
-      createdAt: "2025-06-15T10:10:00",
-      potential: "tiềm năng",
-      status: "đang làm việc",
-      result: "ký hợp đồng",
-      archived: false,
-      history: [
-        {
-          id: "h8",
-          date: "2025-06-15T10:10:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Đã liên hệ lần đầu, khách hàng quan tâm đến dịch vụ SEO",
-          type: "call"
-        },
-        {
-          id: "h9",
-          date: "2025-06-16T14:30:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Đã gửi hợp đồng cho khách hàng",
-          type: "email"
-        },
-        {
-          id: "h10",
-          date: "2025-06-17T09:00:00",
-          user: {
-            id: "1",
-            name: "Trần Thị B"
-          },
-          content: "Khách hàng đã ký hợp đồng và thanh toán đợt 1",
-          type: "meeting"
-        }
-      ]
-    },
-    {
-      id: "6",
-      name: "Phạm Thị H",
-      phone: "0932109876",
-      product: "Landing Page",
-      createdBy: {
-        id: "2",
-        name: "Phạm Văn D"
-      },
-      createdAt: "2025-06-10T11:05:00",
-      potential: "chưa xác định",
-      status: "đang suy nghĩ",
-      result: "chưa quyết định",
-      archived: true,
-      history: [
-        {
-          id: "h11",
-          date: "2025-06-10T11:05:00",
-          user: {
-            id: "2",
-            name: "Phạm Văn D"
-          },
-          content: "Đã liên hệ lần đầu, khách hàng hỏi về dịch vụ thiết kế landing page",
-          type: "call"
-        }
-      ]
-    }
   ];
 
   // Dữ liệu mẫu cho nhân viên sale
   const sampleSalesPersons: SalesPerson[] = [
-    {
-      id: "1",
-      name: "Trần Thị B"
-    },
-    {
-      id: "2",
-      name: "Phạm Văn D"
-    },
-    {
-      id: "3",
-      name: "Nguyễn Văn X"
-    }
+    { id: "1", name: "Trần Thị B" },
+    { id: "2", name: "Phạm Văn D" },
+    { id: "3", name: "Nguyễn Văn X" },
   ];
 
   // Khởi tạo dữ liệu
   useEffect(() => {
-    // Kiểm tra xem đã có dữ liệu trong localStorage chưa
     const storedLeads = getLeads();
-    
     if (storedLeads && storedLeads.length > 0) {
       setLeadsState(storedLeads);
     } else {
-      // Nếu chưa có, khởi tạo bằng dữ liệu mẫu và lưu vào localStorage
       setLeadsState(sampleLeads);
       setLeads(sampleLeads);
     }
-    
     setSalesPersons(sampleSalesPersons);
   }, []);
 
@@ -378,49 +215,37 @@ const LeadsPage = () => {
   useEffect(() => {
     let filtered = [...leads];
     
-    // Lọc theo nhân viên sale
-    if (salesFilter !== "all") {
-      filtered = filtered.filter(lead => lead.createdBy.id === salesFilter);
-    }
-    
-    // Lọc theo từ khóa tìm kiếm
-    if (searchTerm) {
-      filtered = filtered.filter(lead => 
+    if (salesFilter !== "all") filtered = filtered.filter(lead => lead.createdBy.id === salesFilter);
+    if (searchTerm) filtered = filtered.filter(lead => 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.phone.includes(searchTerm) ||
         lead.product.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-    
-    // Lọc theo tiềm năng
-    if (potentialFilter !== "all") {
-      filtered = filtered.filter(lead => lead.potential === potentialFilter);
-    }
-    
-    // Lọc theo trạng thái chăm sóc
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(lead => lead.status === statusFilter);
-    }
-    
-    // Lọc theo kết quả bán hàng
-    if (resultFilter !== "all") {
-      filtered = filtered.filter(lead => lead.result === resultFilter);
-    }
-    
-    // Lọc theo trạng thái lưu trữ
-    if (archivedFilter === "active") {
-      filtered = filtered.filter(lead => !lead.archived);
-    } else if (archivedFilter === "archived") {
-      filtered = filtered.filter(lead => lead.archived);
+    if (potentialFilter !== "all") filtered = filtered.filter(lead => lead.potential === potentialFilter);
+    if (statusFilter !== "all") filtered = filtered.filter(lead => lead.status === statusFilter);
+    if (resultFilter !== "all") filtered = filtered.filter(lead => lead.result === resultFilter);
+    if (archivedFilter === "active") filtered = filtered.filter(lead => !lead.archived);
+    else if (archivedFilter === "archived") filtered = filtered.filter(lead => lead.archived);
+
+    // Lọc theo ngày chăm sóc
+    if (followUpFilter !== "all" || specificDateFilter) {
+      const today = startOfDay(new Date());
+      filtered = filtered.filter(lead => {
+        if (!lead.nextFollowUpDate) return false;
+        const followUpDate = startOfDay(new Date(lead.nextFollowUpDate));
+        if (specificDateFilter) {
+          return isEqual(followUpDate, startOfDay(specificDateFilter));
+        }
+        if (followUpFilter === 'today') return isEqual(followUpDate, today);
+        if (followUpFilter === 'overdue') return followUpDate < today;
+        return false;
+      });
     }
     
     setFilteredLeads(filtered);
-    
-    // Cập nhật thống kê
     updateStats(filtered);
-  }, [leads, searchTerm, salesFilter, potentialFilter, statusFilter, resultFilter, archivedFilter]);
+  }, [leads, searchTerm, salesFilter, potentialFilter, statusFilter, resultFilter, archivedFilter, followUpFilter, specificDateFilter]);
 
-  // Hàm cập nhật thống kê
   const updateStats = (filteredData: Lead[]) => {
     setStats({
       totalLeads: filteredData.length,
@@ -433,83 +258,45 @@ const LeadsPage = () => {
     });
   };
 
-  // Xử lý chọn tất cả
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
-    if (!selectAll) {
-      setSelectedLeads(filteredLeads.map(lead => lead.id));
-    } else {
-      setSelectedLeads([]);
-    }
+    setSelectedLeads(!selectAll ? filteredLeads.map(lead => lead.id) : []);
   };
 
-  // Xử lý chọn từng lead
   const handleSelectLead = (id: string) => {
-    if (selectedLeads.includes(id)) {
-      setSelectedLeads(selectedLeads.filter(leadId => leadId !== id));
-    } else {
-      setSelectedLeads([...selectedLeads, id]);
-    }
+    setSelectedLeads(selectedLeads.includes(id) ? selectedLeads.filter(leadId => leadId !== id) : [...selectedLeads, id]);
   };
 
-  // Xử lý lưu trữ hàng loạt
   const handleBulkArchive = () => {
-    if (selectedLeads.length === 0) {
-      showError("Vui lòng chọn ít nhất một lead để lưu trữ");
-      return;
-    }
-    
-    const updatedLeads = leads.map(lead => {
-      if (selectedLeads.includes(lead.id)) {
-        return { ...lead, archived: true };
-      }
-      return lead;
-    });
-    
+    if (selectedLeads.length === 0) return showError("Vui lòng chọn lead");
+    const updatedLeads = leads.map(lead => selectedLeads.includes(lead.id) ? { ...lead, archived: true } : lead);
     setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
+    setLeads(updatedLeads);
     setSelectedLeads([]);
     setSelectAll(false);
     showSuccess(`Đã lưu trữ ${selectedLeads.length} lead`);
   };
 
-  // Xử lý khôi phục hàng loạt
   const handleBulkRestore = () => {
-    if (selectedLeads.length === 0) {
-      showError("Vui lòng chọn ít nhất một lead để khôi phục");
-      return;
-    }
-    
-    const updatedLeads = leads.map(lead => {
-      if (selectedLeads.includes(lead.id)) {
-        return { ...lead, archived: false };
-      }
-      return lead;
-    });
-    
+    if (selectedLeads.length === 0) return showError("Vui lòng chọn lead");
+    const updatedLeads = leads.map(lead => selectedLeads.includes(lead.id) ? { ...lead, archived: false } : lead);
     setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
+    setLeads(updatedLeads);
     setSelectedLeads([]);
     setSelectAll(false);
     showSuccess(`Đã khôi phục ${selectedLeads.length} lead`);
   };
 
-  // Xử lý xóa hàng loạt
   const handleBulkDelete = () => {
-    if (selectedLeads.length === 0) {
-      showError("Vui lòng chọn ít nhất một lead để xóa");
-      return;
-    }
-    
+    if (selectedLeads.length === 0) return showError("Vui lòng chọn lead");
     const updatedLeads = leads.filter(lead => !selectedLeads.includes(lead.id));
     setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
+    setLeads(updatedLeads);
     setSelectedLeads([]);
     setSelectAll(false);
     showSuccess(`Đã xóa ${selectedLeads.length} lead`);
   };
 
-  // Xử lý mở dialog lịch sử chăm sóc
   const handleOpenHistory = (lead: Lead) => {
     setSelectedLeadHistory(lead.history);
     setSelectedLeadName(lead.name);
@@ -517,188 +304,101 @@ const LeadsPage = () => {
     setHistoryDialogOpen(true);
   };
 
-  // Xử lý thêm lịch sử mới
-  const handleAddHistory = (leadId: string, newHistory: LeadHistory) => {
+  const handleAddHistory = (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string }) => {
     const updatedLeads = leads.map(lead => {
       if (lead.id === leadId) {
+        const newHistoryEntry: LeadHistory = {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          user: { id: "1", name: "Trần Thị B" }, // Giả định user
+          ...newHistoryData,
+        };
         return {
           ...lead,
-          history: [...lead.history, newHistory]
+          history: [...lead.history, newHistoryEntry],
+          nextFollowUpDate: newHistoryData.nextFollowUpDate || lead.nextFollowUpDate,
         };
       }
       return lead;
     });
-    
     setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
-    
-    // Cập nhật state hiển thị
+    setLeads(updatedLeads);
     if (leadId === selectedLeadId) {
-      setSelectedLeadHistory([...selectedLeadHistory, newHistory]);
+      const updatedLead = updatedLeads.find(l => l.id === leadId);
+      if (updatedLead) setSelectedLeadHistory(updatedLead.history);
     }
   };
 
-  // Xử lý thêm lead mới
   const handleAddLead = (newLead: Omit<Lead, "id" | "createdAt" | "history">) => {
-    const id = `lead-${Date.now()}`;
-    const createdAt = new Date().toISOString();
-    
     const leadToAdd: Lead = {
-      id,
-      createdAt,
+      id: `lead-${Date.now()}`,
+      createdAt: new Date().toISOString(),
       history: [],
       ...newLead
     };
-    
     const updatedLeads = [...leads, leadToAdd];
     setLeadsState(updatedLeads);
-    setLeads(updatedLeads); // Lưu vào localStorage
+    setLeads(updatedLeads);
     showSuccess("Đã thêm lead mới thành công");
     setFormDialogOpen(false);
   };
 
-  // Xử lý lọc theo widget thống kê
   const handleFilterByStats = (type: string) => {
+    setResultFilter("all");
+    setPotentialFilter("all");
+    setStatusFilter("all");
     switch (type) {
-      case "contractValue":
-        setResultFilter("ký hợp đồng");
-        break;
-      case "potentialLeads":
-        setPotentialFilter("tiềm năng");
-        break;
-      case "thinking":
-        setStatusFilter("đang suy nghĩ");
-        break;
-      case "working":
-        setStatusFilter("đang làm việc");
-        break;
-      case "silent":
-        setStatusFilter("im ru");
-        break;
-      case "rejected":
-        setStatusFilter("từ chối");
-        break;
-      default:
-        // Reset all filters
-        setResultFilter("all");
-        setPotentialFilter("all");
-        setStatusFilter("all");
+      case "contractValue": setResultFilter("ký hợp đồng"); break;
+      case "potentialLeads": setPotentialFilter("tiềm năng"); break;
+      case "thinking": setStatusFilter("đang suy nghĩ"); break;
+      case "working": setStatusFilter("đang làm việc"); break;
+      case "silent": setStatusFilter("im ru"); break;
+      case "rejected": setStatusFilter("từ chối"); break;
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  const formatDateDisplay = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return format(new Date(dateString), "dd/MM/yyyy");
   };
 
-  // Xử lý mở form thêm lead
-  const handleOpenAddLeadForm = () => {
-    setFormDialogOpen(true);
+  const handleFollowUpFilterChange = (value: string) => {
+    setSpecificDateFilter(undefined);
+    setFollowUpFilter(value);
   };
 
-  // Kiểm tra xem đang ở chế độ xem nào (đã lưu trữ hay đang hoạt động)
+  const handleSpecificDateSelect = (date?: Date) => {
+    setFollowUpFilter("all");
+    setSpecificDateFilter(date);
+  };
+
   const isArchivedView = archivedFilter === "archived";
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Quản lý Lead</h1>
-            <p className="text-muted-foreground">
-              Quản lý và theo dõi các lead tiềm năng
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Select value={salesFilter} onValueChange={setSalesFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Lọc theo nhân sự" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả nhân sự</SelectItem>
-                {salesPersons.map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý Lead</h1>
+          <p className="text-muted-foreground">Quản lý và theo dõi các lead tiềm năng</p>
         </div>
         
-        {/* Widget thống kê */}
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-7">
-          <LeadStatsCard 
-            title="Tổng Lead" 
-            value={stats.totalLeads.toString()}
-            icon={Users}
-            onClick={() => handleFilterByStats("total")}
-          />
-          <LeadStatsCard 
-            title="Giá trị hợp đồng" 
-            value={stats.contractValue.toString()}
-            icon={FileCheck}
-            variant="success"
-            onClick={() => handleFilterByStats("contractValue")}
-          />
-          <LeadStatsCard 
-            title="Lead tiềm năng" 
-            value={stats.potentialLeads.toString()}
-            icon={Briefcase}
-            variant="primary"
-            onClick={() => handleFilterByStats("potentialLeads")}
-          />
-          <LeadStatsCard 
-            title="Đang suy nghĩ" 
-            value={stats.thinking.toString()}
-            icon={AlertCircle}
-            variant="warning"
-            onClick={() => handleFilterByStats("thinking")}
-          />
-          <LeadStatsCard 
-            title="Đang làm việc" 
-            value={stats.working.toString()}
-            icon={Clock}
-            variant="info"
-            onClick={() => handleFilterByStats("working")}
-          />
-          <LeadStatsCard 
-            title="Im ru" 
-            value={stats.silent.toString()}
-            icon={X}
-            variant="secondary"
-            onClick={() => handleFilterByStats("silent")}
-          />
-          <LeadStatsCard 
-            title="Từ chối" 
-            value={stats.rejected.toString()}
-            icon={X}
-            variant="destructive"
-            onClick={() => handleFilterByStats("rejected")}
-          />
+          <LeadStatsCard title="Tổng Lead" value={stats.totalLeads.toString()} icon={Users} onClick={() => handleFilterByStats("total")} />
+          <LeadStatsCard title="Giá trị hợp đồng" value={stats.contractValue.toString()} icon={FileCheck} variant="success" onClick={() => handleFilterByStats("contractValue")} />
+          <LeadStatsCard title="Lead tiềm năng" value={stats.potentialLeads.toString()} icon={Briefcase} variant="primary" onClick={() => handleFilterByStats("potentialLeads")} />
+          <LeadStatsCard title="Đang suy nghĩ" value={stats.thinking.toString()} icon={AlertCircle} variant="warning" onClick={() => handleFilterByStats("thinking")} />
+          <LeadStatsCard title="Đang làm việc" value={stats.working.toString()} icon={Clock} variant="info" onClick={() => handleFilterByStats("working")} />
+          <LeadStatsCard title="Im ru" value={stats.silent.toString()} icon={X} variant="secondary" onClick={() => handleFilterByStats("silent")} />
+          <LeadStatsCard title="Từ chối" value={stats.rejected.toString()} icon={X} variant="destructive" onClick={() => handleFilterByStats("rejected")} />
         </div>
         
-        {/* Thanh công cụ */}
         <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm theo tên, số điện thoại, sản phẩm..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          
           <Select value={potentialFilter} onValueChange={setPotentialFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tiềm năng" />
-            </SelectTrigger>
+            <SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiềm năng" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả tiềm năng</SelectItem>
               <SelectItem value="tiềm năng">Tiềm năng</SelectItem>
@@ -706,11 +406,8 @@ const LeadsPage = () => {
               <SelectItem value="chưa xác định">Chưa xác định</SelectItem>
             </SelectContent>
           </Select>
-          
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái chăm sóc" />
-            </SelectTrigger>
+            <SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
               <SelectItem value="đang làm việc">Đang làm việc</SelectItem>
@@ -719,24 +416,29 @@ const LeadsPage = () => {
               <SelectItem value="từ chối">Từ chối</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Select value={resultFilter} onValueChange={setResultFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Kết quả bán hàng" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả kết quả</SelectItem>
-              <SelectItem value="ký hợp đồng">Ký hợp đồng</SelectItem>
-              <SelectItem value="chưa quyết định">Chưa quyết định</SelectItem>
-              <SelectItem value="từ chối">Từ chối</SelectItem>
-              <SelectItem value="đang trao đổi">Đang trao đổi</SelectItem>
-            </SelectContent>
-          </Select>
-          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full md:w-auto">
+                Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Select value={archivedFilter} onValueChange={setArchivedFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
+            <SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="active">Đang hoạt động</SelectItem>
               <SelectItem value="archived">Đã lưu trữ</SelectItem>
@@ -750,179 +452,60 @@ const LeadsPage = () => {
             {selectedLeads.length > 0 && (
               <>
                 {isArchivedView ? (
-                  <Button 
-                    variant="outline" 
-                    onClick={handleBulkRestore}
-                    className="flex items-center"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Khôi phục ({selectedLeads.length})
-                  </Button>
+                  <Button variant="outline" onClick={handleBulkRestore}><RotateCcw className="h-4 w-4 mr-2" />Khôi phục ({selectedLeads.length})</Button>
                 ) : (
-                  <Button 
-                    variant="outline" 
-                    onClick={handleBulkArchive}
-                    className="flex items-center"
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Lưu trữ ({selectedLeads.length})
-                  </Button>
+                  <Button variant="outline" onClick={handleBulkArchive}><Archive className="h-4 w-4 mr-2" />Lưu trữ ({selectedLeads.length})</Button>
                 )}
-                <Button 
-                  variant="destructive" 
-                  onClick={handleBulkDelete}
-                  className="flex items-center"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Xóa ({selectedLeads.length})
-                </Button>
+                <Button variant="destructive" onClick={handleBulkDelete}><Trash2 className="h-4 w-4 mr-2" />Xóa ({selectedLeads.length})</Button>
               </>
             )}
           </div>
-          
-          <Button 
-            className="flex items-center" 
-            onClick={handleOpenAddLeadForm}
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Thêm Lead
-          </Button>
+          <Button onClick={() => setFormDialogOpen(true)}><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
         </div>
         
-        {/* Danh sách Lead */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Danh sách Lead</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle>Danh sách Lead</CardTitle></CardHeader>
           <CardContent>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectAll}
-                        onCheckedChange={handleSelectAll}
-                        aria-label="Chọn tất cả"
-                      />
-                    </TableHead>
+                    <TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead>
                     <TableHead>Tên Lead</TableHead>
-                    <TableHead>Số điện thoại</TableHead>
+                    <TableHead>SĐT</TableHead>
                     <TableHead>Sản phẩm</TableHead>
-                    <TableHead>Lịch sử chăm sóc</TableHead>
+                    <TableHead>Lịch sử</TableHead>
                     <TableHead>Sale tạo</TableHead>
                     <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Ngày CS tiếp</TableHead>
                     <TableHead>Tiềm năng</TableHead>
-                    <TableHead>Trạng thái chăm sóc</TableHead>
-                    <TableHead>Kết quả bán hàng</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Kết quả</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={11} className="text-center h-24">
-                        Không tìm thấy lead nào phù hợp
-                      </TableCell>
-                    </TableRow>
+                    <TableRow><TableCell colSpan={12} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>
                   ) : (
                     filteredLeads.map((lead) => (
                       <TableRow key={lead.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedLeads.includes(lead.id)}
-                            onCheckedChange={() => handleSelectLead(lead.id)}
-                            aria-label={`Chọn lead ${lead.name}`}
-                          />
-                        </TableCell>
+                        <TableCell><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={() => handleSelectLead(lead.id)} /></TableCell>
                         <TableCell className="font-medium">{lead.name}</TableCell>
                         <TableCell>{lead.phone}</TableCell>
                         <TableCell>{lead.product}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleOpenHistory(lead)}
-                            className="flex items-center"
-                          >
-                            <History className="h-4 w-4 mr-1" />
-                            Lịch sử ({lead.history.length})
-                          </Button>
-                        </TableCell>
+                        <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.history.length})</Button></TableCell>
                         <TableCell>{lead.createdBy.name}</TableCell>
-                        <TableCell>{formatDate(lead.createdAt)}</TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "capitalize",
-                            lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" :
-                            lead.potential === "không tiềm năng" ? "bg-red-100 text-red-800" :
-                            "bg-gray-100 text-gray-800"
-                          )}>
-                            {lead.potential}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "capitalize",
-                            lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" :
-                            lead.status === "đang suy nghĩ" ? "bg-amber-100 text-amber-800" :
-                            lead.status === "im ru" ? "bg-gray-100 text-gray-800" :
-                            "bg-red-100 text-red-800"
-                          )}>
-                            {lead.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "capitalize",
-                            lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" :
-                            lead.result === "đang trao đổi" ? "bg-blue-100 text-blue-800" :
-                            lead.result === "chưa quyết định" ? "bg-amber-100 text-amber-800" :
-                            "bg-red-100 text-red-800"
-                          )}>
-                            {lead.result}
-                          </Badge>
-                        </TableCell>
+                        <TableCell>{formatDateDisplay(lead.createdAt)}</TableCell>
+                        <TableCell>{formatDateDisplay(lead.nextFollowUpDate)}</TableCell>
+                        <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : lead.potential === "không tiềm năng" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
+                        <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : lead.status === "đang suy nghĩ" ? "bg-amber-100 text-amber-800" : lead.status === "im ru" ? "bg-gray-100 text-gray-800" : "bg-red-100 text-red-800")}>{lead.status}</Badge></TableCell>
+                        <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : lead.result === "đang trao đổi" ? "bg-blue-100 text-blue-800" : lead.result === "chưa quyết định" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800")}>{lead.result}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-1">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Xem chi tiết</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <PenLine className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Chỉnh sửa</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Xóa</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Xem</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><PenLine className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Sửa</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Xóa</p></TooltipContent></Tooltip></TooltipProvider>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -935,25 +518,8 @@ const LeadsPage = () => {
         </Card>
       </div>
       
-      {/* Dialog Lịch sử chăm sóc */}
-      <LeadHistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={setHistoryDialogOpen}
-        leadName={selectedLeadName}
-        leadId={selectedLeadId}
-        history={selectedLeadHistory}
-        onAddHistory={handleAddHistory}
-      />
-
-      {/* Dialog Thêm Lead mới */}
-      {formDialogOpen && (
-        <LeadFormDialog
-          open={formDialogOpen}
-          onOpenChange={setFormDialogOpen}
-          onAddLead={handleAddLead}
-          salesPersons={salesPersons}
-        />
-      )}
+      <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLeadName} leadId={selectedLeadId} history={selectedLeadHistory} onAddHistory={handleAddHistory} />
+      {formDialogOpen && (<LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onAddLead={handleAddLead} salesPersons={salesPersons} />)}
     </MainLayout>
   );
 };

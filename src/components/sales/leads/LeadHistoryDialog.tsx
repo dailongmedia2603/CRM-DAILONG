@@ -4,11 +4,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Phone, Mail, Users, Plus } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Calendar as CalendarIcon, Phone, Mail, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -18,8 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { showSuccess } from "@/utils/toast";
+import { format } from "date-fns";
+import { vi } from 'date-fns/locale';
 
 interface LeadHistory {
   id: string;
@@ -30,6 +33,7 @@ interface LeadHistory {
   };
   content: string;
   type: "note" | "call" | "email" | "meeting";
+  nextFollowUpDate?: string;
 }
 
 interface LeadHistoryDialogProps {
@@ -38,7 +42,7 @@ interface LeadHistoryDialogProps {
   leadName: string;
   leadId: string;
   history: LeadHistory[];
-  onAddHistory: (leadId: string, newHistory: LeadHistory) => void;
+  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string }) => void;
 }
 
 export const LeadHistoryDialog = ({
@@ -52,13 +56,12 @@ export const LeadHistoryDialog = ({
   const [isAdding, setIsAdding] = useState(false);
   const [content, setContent] = useState("");
   const [type, setType] = useState<"note" | "call" | "email" | "meeting">("note");
+  const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | undefined>();
   
-  // Sắp xếp lịch sử theo thời gian gần nhất
   const sortedHistory = [...history].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
@@ -70,7 +73,6 @@ export const LeadHistoryDialog = ({
     });
   };
 
-  // Lấy icon theo loại hoạt động
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "call":
@@ -80,11 +82,10 @@ export const LeadHistoryDialog = ({
       case "meeting":
         return <Users className="h-4 w-4" />;
       default:
-        return <Calendar className="h-4 w-4" />;
+        return <CalendarIcon className="h-4 w-4" />;
     }
   };
 
-  // Lấy màu theo loại hoạt động
   const getActivityColor = (type: string) => {
     switch (type) {
       case "call":
@@ -98,29 +99,21 @@ export const LeadHistoryDialog = ({
     }
   };
 
-  // Xử lý khi thêm lịch sử mới
   const handleAddHistory = () => {
     if (!content.trim()) {
       return;
     }
 
-    const newHistory: LeadHistory = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      user: {
-        id: "1", // Giả định user hiện tại có ID là 1
-        name: "Trần Thị B", // Giả định user hiện tại
-      },
+    onAddHistory(leadId, {
       content: content.trim(),
       type,
-    };
-
-    onAddHistory(leadId, newHistory);
+      nextFollowUpDate: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
+    });
     showSuccess("Đã thêm lịch sử chăm sóc mới");
     
-    // Reset form
     setContent("");
     setType("note");
+    setNextFollowUpDate(undefined);
     setIsAdding(false);
   };
 
@@ -160,13 +153,39 @@ export const LeadHistoryDialog = ({
             </div>
             
             <div className="space-y-2">
-              <div className="font-medium text-sm">Nội dung</div>
+              <div className="font-medium text-sm">Nội dung chăm sóc</div>
               <Textarea 
                 value={content} 
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Nhập nội dung lịch sử chăm sóc..."
+                placeholder="Nhập nội dung chăm sóc..."
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Ngày chăm sóc tiếp theo</div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !nextFollowUpDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {nextFollowUpDate ? format(nextFollowUpDate, "PPP", { locale: vi }) : <span>Chọn ngày</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={nextFollowUpDate}
+                    onSelect={setNextFollowUpDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             
             <Button onClick={handleAddHistory} disabled={!content.trim()}>
@@ -214,6 +233,11 @@ export const LeadHistoryDialog = ({
                     <div className="text-xs text-muted-foreground">
                       {formatDate(item.date)}
                     </div>
+                    {item.nextFollowUpDate && (
+                      <div className="text-xs text-blue-600 font-medium">
+                        Chăm sóc tiếp theo: {formatDate(item.nextFollowUpDate)}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
