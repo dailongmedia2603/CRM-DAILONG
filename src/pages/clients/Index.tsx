@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
-import { ClientDetailsDialog } from "@/components/clients/ClientDetailsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,10 +75,8 @@ const ClientsPage = () => {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
-  const [clientToView, setClientToView] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
   useEffect(() => {
@@ -123,11 +121,6 @@ const ClientsPage = () => {
   const handleOpenDeleteAlert = (client: Client) => {
     setClientToDelete(client);
     setIsDeleteAlertOpen(true);
-  };
-  
-  const handleOpenViewDialog = (client: Client) => {
-    setClientToView(client);
-    setIsDetailsOpen(true);
   };
 
   const handleSaveClient = (clientToSave: Client) => {
@@ -228,11 +221,13 @@ const ClientsPage = () => {
               {filteredClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
-                  <TableCell className="flex items-center">
-                    <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
-                      <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    {client.name}
+                  <TableCell>
+                    <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
+                      <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
+                        <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      {client.name}
+                    </Link>
                   </TableCell>
                   <TableCell>{client.contactPerson}</TableCell>
                   <TableCell>{formatCurrency(client.contractValue)}</TableCell>
@@ -245,7 +240,9 @@ const ClientsPage = () => {
                   <TableCell>{formatDate(client.creationDate)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenViewDialog(client)}><Eye className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4" /></Link>
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(client)}><Pen className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(client)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                     </div>
@@ -262,11 +259,6 @@ const ClientsPage = () => {
         onOpenChange={setIsFormOpen}
         onSave={handleSaveClient}
         client={clientToEdit}
-      />
-      <ClientDetailsDialog
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        client={clientToView}
       />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>

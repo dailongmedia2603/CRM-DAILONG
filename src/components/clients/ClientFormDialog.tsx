@@ -50,8 +50,8 @@ export const ClientFormDialog = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (value: "active" | "inactive") => {
-    setFormData((prev) => ({ ...prev, status: value }));
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -87,34 +87,36 @@ export const ClientFormDialog = ({
               <Input id="contactPerson" name="contactPerson" value={formData.contactPerson || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
-              <Input id="contractValue" name="contractValue" type="number" value={formData.contractValue || ""} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contractLink" className="text-right">Link HĐ</Label>
-              <Input id="contractLink" name="contractLink" value={formData.contractLink || ""} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
               <Input id="email" name="email" type="email" value={formData.email || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">Điện thoại</Label>
-              <Input id="phone" name="phone" value={formData.phone || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="invoiceEmail" className="text-right">Mail hóa đơn</Label>
+              <Input id="invoiceEmail" name="invoiceEmail" type="email" value={formData.invoiceEmail || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="creationDate" className="text-right">Ngày tạo</Label>
-              <Input id="creationDate" name="creationDate" type="date" value={formData.creationDate || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
+              <Input id="contractValue" name="contractValue" type="number" value={formData.contractValue || 0} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">Trạng thái</Label>
-              <Select value={formData.status || "active"} onValueChange={handleSelectChange}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
+              <Label htmlFor="classification" className="text-right">Phân loại</Label>
+              <Select value={formData.classification} onValueChange={(value) => handleSelectChange("classification", value)}>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn phân loại" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="Cá nhân">Cá nhân</SelectItem>
+                  <SelectItem value="Doanh nghiệp">Doanh nghiệp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="source" className="text-right">Nguồn</Label>
+              <Select value={formData.source} onValueChange={(value) => handleSelectChange("source", value)}>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn nguồn" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Giới thiệu">Giới thiệu</SelectItem>
+                  <SelectItem value="Website">Website</SelectItem>
+                  <SelectItem value="Sự kiện">Sự kiện</SelectItem>
+                  <SelectItem value="Khác">Khác</SelectItem>
                 </SelectContent>
               </Select>
             </div>

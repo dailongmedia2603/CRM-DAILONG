@@ -10,7 +10,10 @@ export interface Client {
   contractValue: number;
   contractLink: string;
   creationDate: string;
-  companyName: string; // Giữ lại để tương thích với form dự án
+  companyName: string;
+  invoiceEmail?: string;
+  classification?: string;
+  source?: string;
 }
 
 export const clientsData: Client[] = [
@@ -18,14 +21,17 @@ export const clientsData: Client[] = [
       id: "1",
       name: "Updated Client Name",
       contactPerson: "John Doe",
-      email: "john.smith@abccorp.com",
+      email: "john.doe@testclient.com",
       phone: "+1 (555) 123-4567",
       location: "New York, USA",
       status: "active",
-      contractValue: 200000,
+      contractValue: 0,
       contractLink: "#",
       creationDate: "2025-05-29",
-      companyName: "ABC Corporation",
+      companyName: "Updated Client Name",
+      invoiceEmail: "invoice@testclient.com",
+      classification: "Cá nhân",
+      source: "Giới thiệu"
     },
     {
       id: "2",
@@ -39,5 +45,8 @@ export const clientsData: Client[] = [
       contractLink: "#",
       creationDate: "2025-04-15",
       companyName: "XYZ Industries",
+      invoiceEmail: "billing@xyz.com",
+      classification: "Doanh nghiệp",
+      source: "Website"
     },
 ];
