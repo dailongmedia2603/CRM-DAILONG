@@ -120,6 +120,13 @@ const ProjectsPage = () => {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
+  const statusTextMap: { [key: string]: string } = {
+    planning: "Pending",
+    "in-progress": "Đang chạy",
+    completed: "Hoàn thành",
+    overdue: "Quá hạn",
+  };
+
   useEffect(() => {
     const storedProjects = getProjects();
     if (storedProjects && storedProjects.length > 0) {
@@ -301,7 +308,6 @@ const ProjectsPage = () => {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "capitalize",
                         {
                           "bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress",
                           "bg-green-100 text-green-800 border-green-200": project.status === "completed",
@@ -310,7 +316,7 @@ const ProjectsPage = () => {
                         }
                       )}
                     >
-                      {project.status.replace('-', ' ')}
+                      {statusTextMap[project.status]}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right px-2">
