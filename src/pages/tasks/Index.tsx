@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,19 @@ import { TaskStatsCard } from "@/components/tasks/TaskStatsCard";
 import { TaskDetailsDialog } from "@/components/tasks/TaskDetailsDialog";
 import { FeedbackDialog } from "@/components/tasks/FeedbackDialog";
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog";
-import { Task, tasksData as initialTasks, FeedbackMessage } from "@/data/tasks";
-import { Personnel, personnelData as initialPersonnel } from "@/data/personnel";
-import { getTasks, setTasks } from "@/utils/storage";
+import { Task, FeedbackMessage } from "@/data/tasks";
+import { Personnel } from "@/data/personnel";
 import { showSuccess } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { Clock, AlertTriangle, Calendar, Zap, PlusCircle, Search, LayoutGrid, CheckCircle, Trash2, Eye, Edit, MessageSquare } from "lucide-react";
 
-const TasksPage = () => {
-  const [tasks, setTasksState] = useState<Task[]>([]);
-  const [personnel] = useState<Personnel[]>(initialPersonnel); // Assuming personnel data is static for now
+interface TasksPageProps {
+  tasks: Task[];
+  setTasks: (tasks: Task[]) => void;
+  personnel: Personnel[];
+}
+
+const TasksPage = ({ tasks, setTasks, personnel }: TasksPageProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -34,16 +37,6 @@ const TasksPage = () => {
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
-
-  useEffect(() => {
-    const storedTasks = getTasks();
-    setTasksState(storedTasks ?? initialTasks);
-  }, []);
-
-  const handleSetTasks = (newTasks: Task[]) => {
-    setTasksState(newTasks);
-    setTasks(newTasks);
-  };
 
   const stats = useMemo(() => {
     const today = new Date().setHours(0, 0, 0, 0);
@@ -117,13 +110,13 @@ const TasksPage = () => {
       newTasks = [...tasks, newTask];
       showSuccess("Đã thêm công việc mới.");
     }
-    handleSetTasks(newTasks);
+    setTasks(newTasks);
   };
 
   const handleDelete = () => {
     const idsToDelete = currentTask ? [currentTask.id] : selectedTasks;
     const newTasks = tasks.filter(t => !idsToDelete.includes(t.id));
-    handleSetTasks(newTasks);
+    setTasks(newTasks);
     showSuccess(`Đã xóa ${idsToDelete.length} công việc.`);
     setSelectedTasks([]);
     setDeleteAlertOpen(false);
@@ -141,18 +134,18 @@ const TasksPage = () => {
       version: `v${currentTask.feedback.length + 1}`,
     };
     const newTasks = tasks.map(t => t.id === currentTask.id ? { ...t, feedback: [...t.feedback, newFeedback] } : t);
-    handleSetTasks(newTasks);
+    setTasks(newTasks);
     setCurrentTask(newTasks.find(t => t.id === currentTask.id) || null);
   };
 
   const handleAssigneeChange = (taskId: string, assigneeId: string) => {
     const newTasks = tasks.map(t => t.id === taskId ? { ...t, assigneeId } : t);
-    handleSetTasks(newTasks);
+    setTasks(newTasks);
   };
 
   const handleStatusChange = (taskId: string, status: Task['status']) => {
     const newTasks = tasks.map(t => t.id === taskId ? { ...t, status, completed: status === 'Hoàn thành' } : t);
-    handleSetTasks(newTasks);
+    setTasks(newTasks);
   };
 
   const priorityBadge = (priority: Task['priority']) => {
