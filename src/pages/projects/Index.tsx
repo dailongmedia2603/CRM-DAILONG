@@ -122,6 +122,7 @@ const ProjectsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const statusTextMap: { [key: string]: string } = {
@@ -236,8 +237,24 @@ const ProjectsPage = () => {
 
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
   const handleSelectRow = (id: string, checked: boolean) => setSelectedProjects(checked ? [...selectedProjects, id] : selectedProjects.filter((pId) => pId !== id));
-  const handleBulkDelete = () => { setProjects(projects.filter(p => !selectedProjects.includes(p.id))); setSelectedProjects([]); };
-  const handleBulkArchive = () => { setProjects(projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: true } : p)); setSelectedProjects([]); };
+  
+  const handleBulkArchive = () => {
+    const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: true } : p);
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
+    setSelectedProjects([]);
+    showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
+  };
+
+  const handleBulkDeleteConfirm = () => {
+    const updatedProjects = projects.filter(p => !selectedProjects.includes(p.id));
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
+    setSelectedProjects([]);
+    setIsBulkDeleteAlertOpen(false);
+    showSuccess(`${selectedProjects.length} dự án đã được xóa vĩnh viễn.`);
+  };
+
   const handleStatusFilterClick = (status: string) => setStatusFilter(prev => prev === status ? "all" : status);
 
   // --- HELPER FUNCTIONS ---
@@ -285,7 +302,17 @@ const ProjectsPage = () => {
             <Button variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
-            {selectedProjects.length > 0 && (<DropdownMenu><DropdownMenuTrigger asChild><Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem><DropdownMenuItem onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu>)}
+            {selectedProjects.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button onClick={handleOpenAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Thêm dự án</Button>
           </div>
         </div>
@@ -380,6 +407,20 @@ const ProjectsPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn {selectedProjects.length} dự án đã chọn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
