@@ -129,6 +129,7 @@ const ProjectsPage = () => {
         payment: Number(p.payment || 0),
         debt: Number(p.debt || 0),
         progress: Number(p.progress || 0),
+        team: Array.isArray(p.team) ? p.team : [],
       }));
       setProjectsState(sanitizedProjects);
     } else {
@@ -178,7 +179,7 @@ const ProjectsPage = () => {
 
   const handleSaveProject = (formData: any) => {
     // Ensure numeric values are correctly parsed from the form
-    const projectData = {
+    const parsedData = {
       ...formData,
       contractValue: parseFloat(formData.contractValue || '0'),
       payment: parseFloat(formData.payment || '0'),
@@ -188,7 +189,7 @@ const ProjectsPage = () => {
     let updatedProjects;
     if (projectToEdit) {
       // Editing existing project
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...projectToEdit, ...projectData } : p);
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...projectToEdit, ...parsedData } : p);
       showSuccess("Dự án đã được cập nhật!");
     } else {
       // Adding new project
@@ -197,7 +198,8 @@ const ProjectsPage = () => {
         team: [],
         progress: 0,
         archived: false,
-        ...projectData,
+        createdAt: new Date().toISOString().split('T')[0], // FIX: Add createdAt
+        ...parsedData,
       };
       updatedProjects = [...projects, newProject];
       showSuccess("Dự án mới đã được thêm!");
@@ -226,7 +228,10 @@ const ProjectsPage = () => {
 
   // --- HELPER FUNCTIONS ---
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  }
 
   return (
     <MainLayout>
