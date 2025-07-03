@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -53,6 +64,8 @@ import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { clientsData } from "@/data/clients";
+import { getProjects, setProjects } from "@/utils/storage";
+import { showSuccess } from "@/utils/toast";
 
 // --- DATA TYPES ---
 interface TeamMember {
@@ -85,24 +98,36 @@ const personnelData: TeamMember[] = [
   { id: "4", name: "Diana" },
 ];
 
-const projectsData: Project[] = [
+const initialProjects: Project[] = [
   { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payment: 90000000, debt: 30000000, link: "https://www.figma.com/", archived: false },
   { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payment: 0, debt: 85000000, link: "https://www.figma.com/", archived: false },
   { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payment: 350000000, debt: 0, link: "https://www.figma.com/", archived: false },
-  { id: "4", name: "Brand Identity", client: "Global Enterprises", progress: 10, createdAt: "2024-07-01", dueDate: "2024-09-10", status: "planning", team: [personnelData[1]], contractValue: 150000000, payment: 15000000, debt: 135000000, link: "https://www.figma.com/", archived: false },
-  { id: "5", name: "SEO Optimization", client: "Digital World", progress: 90, createdAt: "2024-04-01", dueDate: "2024-06-30", status: "overdue", team: [personnelData[3]], contractValue: 50000000, payment: 40000000, debt: 10000000, link: "https://www.figma.com/", archived: false },
-  { id: "6", name: "Old Archived Project", client: "Past Inc", progress: 100, createdAt: "2023-01-20", dueDate: "2023-05-30", status: "completed", team: [personnelData[0]], contractValue: 100000000, payment: 100000000, debt: 0, link: "https://www.figma.com/", archived: true },
 ];
 
 const ProjectsPage = () => {
   // --- STATE MANAGEMENT ---
-  const [projects, setProjects] = useState<Project[]>(projectsData);
+  const [projects, setProjectsState] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [personnelFilter, setPersonnelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [showArchived, setShowArchived] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  
+  // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  useEffect(() => {
+    const storedProjects = getProjects();
+    if (storedProjects && storedProjects.length > 0) {
+      setProjectsState(storedProjects);
+    } else {
+      setProjectsState(initialProjects);
+      setProjects(initialProjects);
+    }
+  }, []);
 
   // --- FILTERING LOGIC ---
   const filteredProjects = useMemo(() => {
@@ -128,6 +153,54 @@ const ProjectsPage = () => {
   }, [projects]);
 
   // --- HANDLERS ---
+  const handleOpenAddDialog = () => {
+    setProjectToEdit(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditDialog = (project: Project) => {
+    setProjectToEdit(project);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDeleteAlert = (project: Project) => {
+    setProjectToDelete(project);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleSaveProject = (projectData: Omit<Project, 'id' | 'team' | 'progress' | 'archived'> & { id?: string }) => {
+    let updatedProjects;
+    if (projectToEdit) {
+      // Update existing project
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...projectData } : p);
+      showSuccess("Dự án đã được cập nhật!");
+    } else {
+      // Add new project
+      const newProject: Project = {
+        id: new Date().toISOString(),
+        ...projectData,
+        team: [], // Default empty team
+        progress: 0, // Default progress
+        archived: false,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      updatedProjects = [...projects, newProject];
+      showSuccess("Dự án mới đã được thêm!");
+    }
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!projectToDelete) return;
+    const updatedProjects = projects.filter(p => p.id !== projectToDelete.id);
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
+    setIsDeleteAlertOpen(false);
+    setProjectToDelete(null);
+    showSuccess("Dự án đã được xóa.");
+  };
+
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
   const handleSelectRow = (id: string, checked: boolean) => setSelectedProjects(checked ? [...selectedProjects, id] : selectedProjects.filter((pId) => pId !== id));
   const handleBulkDelete = () => { setProjects(projects.filter(p => !selectedProjects.includes(p.id))); setSelectedProjects([]); };
@@ -180,7 +253,7 @@ const ProjectsPage = () => {
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
             {selectedProjects.length > 0 && (<DropdownMenu><DropdownMenuTrigger asChild><Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem><DropdownMenuItem onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem></DropdownMenuContent></DropdownMenu>)}
-            <Button onClick={() => setIsFormOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Thêm dự án</Button>
+            <Button onClick={handleOpenAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Thêm dự án</Button>
           </div>
         </div>
 
@@ -207,7 +280,7 @@ const ProjectsPage = () => {
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client}</TableCell>
-                  <TableCell className="font-medium"><a href="#" className="hover:underline">{project.name}</a></TableCell>
+                  <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
                   <TableCell>{formatDate(project.createdAt)} - {formatDate(project.dueDate)}</TableCell>
                   <TableCell>
                     <div className="flex -space-x-2">
@@ -223,10 +296,10 @@ const ProjectsPage = () => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem>Chi tiết</DropdownMenuItem>
-                        <DropdownMenuItem>Sửa</DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link to={`/projects/${project.id}`}>Chi tiết</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Sửa</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500">Xóa</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenDeleteAlert(project)} className="text-red-500">Xóa</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -236,7 +309,21 @@ const ProjectsPage = () => {
           </Table>
         </div>
       </div>
-      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={(data) => console.log(data)} clients={clientsData} />
+      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clientsData} />
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };

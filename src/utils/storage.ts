@@ -1,6 +1,7 @@
 // Storage keys
 const LEADS_STORAGE_KEY = 'agency-crm-leads';
 const CLIENTS_STORAGE_KEY = 'agency-crm-clients';
+const PROJECTS_STORAGE_KEY = 'agency-crm-projects';
 
 // Generic type-safe get function
 export function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -22,36 +23,26 @@ export function setToStorage<T>(key: string, value: T): void {
   }
 }
 
-// Get leads from storage
+// --- Leads ---
 export function getLeads() {
   return getFromStorage(LEADS_STORAGE_KEY, []);
 }
-
-// Set leads to storage
 export function setLeads(leads: any[]) {
   setToStorage(LEADS_STORAGE_KEY, leads);
 }
 
-// Update a specific lead in storage
-export function updateLead(leadId: string, updatedLead: any) {
-  const leads = getLeads();
-  const index = leads.findIndex((lead: any) => lead.id === leadId);
-  
-  if (index !== -1) {
-    leads[index] = updatedLead;
-    setLeads(leads);
-    return true;
-  }
-  
-  return false;
-}
-
-// Get clients from storage
+// --- Clients ---
 export function getClients() {
   return getFromStorage(CLIENTS_STORAGE_KEY, []);
 }
-
-// Set clients to storage
 export function setClients(clients: any[]) {
   setToStorage(CLIENTS_STORAGE_KEY, clients);
+}
+
+// --- Projects ---
+export function getProjects() {
+  return getFromStorage(PROJECTS_STORAGE_KEY, []);
+}
+export function setProjects(projects: any[]) {
+  setToStorage(PROJECTS_STORAGE_KEY, projects);
 }
