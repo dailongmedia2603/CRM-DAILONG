@@ -232,7 +232,7 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
                   </TableCell>
                 </TableRow>
               ))}
-            </Body>
+            </TableBody>
           </Table>
         </Card>
       </div>
