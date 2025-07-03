@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,6 +33,7 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
+import React from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -40,6 +42,7 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const { pathname } = useLocation();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -80,31 +83,33 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               icon={<Home className="mr-3 h-5 w-5" />} 
               href="/" 
               label="Dashboard" 
-              active={true}
+              active={pathname === "/"}
             />
             <NavItem 
               icon={<Users className="mr-3 h-5 w-5" />} 
               href="/clients" 
               label="Clients" 
               badge="36"
+              active={pathname.startsWith("/clients")}
             />
             <NavItem 
               icon={<Briefcase className="mr-3 h-5 w-5" />} 
               href="/projects" 
               label="Projects" 
               badge="12"
+              active={pathname.startsWith("/projects")}
             />
             
             <NavGroup label="Sales & Marketing" icon={<DollarSign className="mr-3 h-5 w-5" />}>
-              <NavItem href="/sales/leads" label="Lead Management" indent />
-              <NavItem href="/sales/performance" label="Sales Performance" indent />
-              <NavItem href="/sales/pipeline" label="Sales Pipeline" indent />
+              <NavItem href="/sales/leads" label="Lead Management" indent active={pathname.startsWith("/sales/leads")} />
+              <NavItem href="/sales/performance" label="Sales Performance" indent active={pathname.startsWith("/sales/performance")} />
+              <NavItem href="/sales/pipeline" label="Sales Pipeline" indent active={pathname.startsWith("/sales/pipeline")} />
             </NavGroup>
             
             <NavGroup label="Team Management" icon={<GraduationCap className="mr-3 h-5 w-5" />}>
-              <NavItem href="/interns/tasks" label="Task Assignment" indent />
-              <NavItem href="/interns/reports" label="Progress Reports" indent />
-              <NavItem href="/interns/schedule" label="Schedule Management" indent />
+              <NavItem href="/interns/tasks" label="Task Assignment" indent active={pathname.startsWith("/interns/tasks")} />
+              <NavItem href="/interns/reports" label="Progress Reports" indent active={pathname.startsWith("/interns/reports")} />
+              <NavItem href="/interns/schedule" label="Schedule Management" indent active={pathname.startsWith("/interns/schedule")} />
             </NavGroup>
             
             <NavItem 
@@ -112,16 +117,19 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               href="/tasks" 
               label="Task Management" 
               badge="24"
+              active={pathname.startsWith("/tasks")}
             />
             <NavItem 
               icon={<BarChart2 className="mr-3 h-5 w-5" />} 
               href="/reports" 
               label="Analytics & Reports" 
+              active={pathname.startsWith("/reports")}
             />
             <NavItem 
               icon={<UserCog className="mr-3 h-5 w-5" />} 
               href="/hr" 
               label="Human Resources" 
+              active={pathname.startsWith("/hr")}
             />
           </nav>
 
@@ -321,7 +329,17 @@ const NavGroup = ({
   label: string; 
   children: React.ReactNode;
 }) => {
-  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const isChildActive = React.Children.toArray(children).some(
+    (child) => React.isValidElement(child) && pathname.startsWith(child.props.href)
+  );
+  const [open, setOpen] = useState(isChildActive);
+
+  useEffect(() => {
+    if (isChildActive) {
+      setOpen(true);
+    }
+  }, [isChildActive, pathname]);
 
   return (
     <div>
