@@ -22,7 +22,7 @@ interface ProjectFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (formData: any) => void;
-  project?: any; // Pass existing project data for editing
+  project?: any;
   clients: Client[];
 }
 
@@ -46,55 +46,41 @@ export const ProjectFormDialog = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{project ? "Sửa dự án" : "Thêm dự án mới"}</DialogTitle>
-          <DialogDescription>
-            Điền thông tin chi tiết của dự án vào form bên dưới.
-          </DialogDescription>
+          <DialogDescription>Điền thông tin chi tiết của dự án vào form bên dưới.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="client" className="text-right">
-                Client
-              </Label>
+              <Label htmlFor="client" className="text-right">Client</Label>
               <Select name="client" defaultValue={project?.client}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Chọn client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.companyName}>
-                      {client.name} ({client.companyName})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn client" /></SelectTrigger>
+                <SelectContent>{clients.map((client) => (<SelectItem key={client.id} value={client.companyName}>{client.name} ({client.companyName})</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Tên dự án
-              </Label>
+              <Label htmlFor="name" className="text-right">Tên dự án</Label>
               <Input id="name" name="name" defaultValue={project?.name} className="col-span-3" />
             </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contractValue" className="text-right">
-                Giá trị HĐ
-              </Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="link" className="text-right">Link</Label>
+              <Input id="link" name="link" type="url" defaultValue={project?.link} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
               <Input id="contractValue" name="contractValue" type="number" defaultValue={project?.contractValue} className="col-span-3" />
             </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="debt" className="text-right">
-                Công nợ
-              </Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="payment" className="text-right">Thanh toán</Label>
+              <Input id="payment" name="payment" type="number" defaultValue={project?.payment} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="debt" className="text-right">Công nợ</Label>
               <Input id="debt" name="debt" type="number" defaultValue={project?.debt} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
-                Tiến độ
-              </Label>
+              <Label htmlFor="status" className="text-right">Tiến độ</Label>
               <Select name="status" defaultValue={project?.status}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
+                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="planning">Pending</SelectItem>
                   <SelectItem value="in-progress">Đang chạy</SelectItem>
@@ -103,17 +89,13 @@ export const ProjectFormDialog = ({
                 </SelectContent>
               </Select>
             </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dueDate" className="text-right">
-                Hạn chót
-              </Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="dueDate" className="text-right">Hạn chót</Label>
               <Input id="dueDate" name="dueDate" type="date" defaultValue={project?.dueDate} className="col-span-3" />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Hủy
-            </Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
             <Button type="submit">Lưu dự án</Button>
           </DialogFooter>
         </form>
