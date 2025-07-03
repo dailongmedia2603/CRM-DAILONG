@@ -74,6 +74,10 @@ interface TeamMember {
   image?: string;
 }
 
+interface Payment {
+  amount: number;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -84,7 +88,7 @@ interface Project {
   status: "planning" | "in-progress" | "completed" | "overdue";
   team: TeamMember[];
   contractValue: number;
-  payment: number;
+  payments: Payment[];
   debt: number;
   link: string;
   archived: boolean;
@@ -99,9 +103,9 @@ const personnelData: TeamMember[] = [
 ];
 
 const initialProjects: Project[] = [
-  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payment: 90000000, debt: 30000000, link: "https://www.figma.com/", archived: false },
-  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payment: 0, debt: 85000000, link: "https://www.figma.com/", archived: false },
-  { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payment: 350000000, debt: 0, link: "https://www.figma.com/", archived: false },
+  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payments: [{amount: 50000000}, {amount: 40000000}], debt: 30000000, link: "https://www.figma.com/", archived: false },
+  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payments: [], debt: 85000000, link: "https://www.figma.com/", archived: false },
+  { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payments: [{amount: 350000000}], debt: 0, link: "https://www.figma.com/", archived: false },
 ];
 
 const ProjectsPage = () => {
@@ -144,7 +148,11 @@ const ProjectsPage = () => {
 
   // --- FILTERING LOGIC ---
   const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
+    return projects.map(p => {
+      const totalPaid = (p.payments || []).reduce((sum, payment) => sum + payment.amount, 0);
+      const newDebt = p.contractValue - totalPaid;
+      return {...p, debt: newDebt};
+    }).filter((project) => {
       if (project.archived !== showArchived) return false;
       if (searchTerm && !`${project.client} ${project.name}`.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (personnelFilter !== "all" && !project.team.some(member => member.id === personnelFilter)) return false;
@@ -181,19 +189,23 @@ const ProjectsPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveProject = (projectData: Omit<Project, 'id' | 'team' | 'progress' | 'archived'> & { id?: string }) => {
+  const handleSaveProject = (projectData: any) => {
     let updatedProjects;
+    const saveData = {
+      ...projectData,
+      contractValue: Number(projectData.contractValue || 0),
+      debt: Number(projectData.debt || 0),
+    }
+
     if (projectToEdit) {
-      // Update existing project
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...projectData } : p);
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData } : p);
       showSuccess("Dự án đã được cập nhật!");
     } else {
-      // Add new project
       const newProject: Project = {
         id: new Date().toISOString(),
-        ...projectData,
-        team: [], // Default empty team
-        progress: 0, // Default progress
+        ...saveData,
+        team: [],
+        progress: 0,
         archived: false,
         createdAt: new Date().toISOString().split('T')[0],
       };
@@ -289,7 +301,9 @@ const ProjectsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProjects.map(project => (
+              {filteredProjects.map(project => {
+                const totalPaid = (project.payments || []).reduce((sum, p) => sum + p.amount, 0);
+                return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client}</TableCell>
@@ -302,7 +316,7 @@ const ProjectsPage = () => {
                   </TableCell>
                   <TableCell>{formatCurrency(project.contractValue)}</TableCell>
                   <TableCell className={cn(project.debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(project.debt)}</TableCell>
-                  <TableCell className="text-green-600">{formatCurrency(project.payment)}</TableCell>
+                  <TableCell className="text-green-600">{formatCurrency(totalPaid)}</TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
                   <TableCell>
                     <Badge
@@ -331,7 +345,7 @@ const ProjectsPage = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </div>

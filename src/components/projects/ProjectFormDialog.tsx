@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Client } from "@/data/clients";
+import { PlusCircle, X } from "lucide-react";
 
 interface ProjectFormDialogProps {
   open: boolean;
@@ -33,10 +35,56 @@ export const ProjectFormDialog = ({
   project,
   clients,
 }: ProjectFormDialogProps) => {
+  const [payments, setPayments] = useState<string[]>([""]);
+
+  useEffect(() => {
+    if (project && project.payments) {
+      setPayments(project.payments.map((p: any) => p.amount.toString()));
+    } else if (project && project.payment) {
+      setPayments([project.payment.toString()]);
+    } else {
+      setPayments([""]);
+    }
+  }, [project, open]);
+
+  const handleAddPayment = () => {
+    setPayments([...payments, ""]);
+  };
+
+  const handleRemovePayment = (index: number) => {
+    const newPayments = payments.filter((_, i) => i !== index);
+    setPayments(newPayments);
+  };
+
+  const handlePaymentChange = (index: number, value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, "");
+    const newPayments = [...payments];
+    newPayments[index] = numericValue;
+    setPayments(newPayments);
+  };
+
+  const formatCurrency = (value: string) => {
+    if (!value) return "";
+    return new Intl.NumberFormat('vi-VN').format(Number(value));
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
+    
+    // Collect payments
+    const paymentData = payments.map(p => ({ amount: Number(p || 0) }));
+    
+    // Remove individual payment fields from form data and add the array
+    Object.keys(data).forEach(key => {
+      if (key.startsWith('payment-')) {
+        delete data[key];
+      }
+    });
+    
+    data.payments = paymentData;
+    
     onSave(data);
     onOpenChange(false);
   };
@@ -50,6 +98,7 @@ export const ProjectFormDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {/* Other fields */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="client" className="text-right">Client</Label>
               <Select name="client" defaultValue={project?.client}>
@@ -69,10 +118,36 @@ export const ProjectFormDialog = ({
               <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
               <Input id="contractValue" name="contractValue" type="number" defaultValue={project?.contractValue} className="col-span-3" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="payment" className="text-right">Thanh toán</Label>
-              <Input id="payment" name="payment" type="number" defaultValue={project?.payment} className="col-span-3" />
+            
+            {/* Dynamic Payment Fields */}
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Thanh toán</Label>
+              <div className="col-span-3 space-y-2">
+                {payments.map((payment, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Label htmlFor={`payment-${index}`} className="min-w-[50px]">Đợt {index + 1}</Label>
+                    <Input
+                      id={`payment-${index}`}
+                      name={`payment-${index}`}
+                      value={formatCurrency(payment)}
+                      onChange={(e) => handlePaymentChange(index, e.target.value)}
+                      className="flex-1"
+                      placeholder="Nhập số tiền"
+                    />
+                    {payments.length > 1 && (
+                      <Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePayment(index)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={handleAddPayment}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Thêm đợt thanh toán
+                </Button>
+              </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="debt" className="text-right">Công nợ</Label>
               <Input id="debt" name="debt" type="number" defaultValue={project?.debt} className="col-span-3" />
