@@ -20,6 +20,11 @@ import {
 import { Client } from "@/data/clients";
 import { PlusCircle, X } from "lucide-react";
 
+interface Payment {
+  amount: number;
+  paid: boolean;
+}
+
 interface ProjectFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,20 +40,18 @@ export const ProjectFormDialog = ({
   project,
   clients,
 }: ProjectFormDialogProps) => {
-  const [payments, setPayments] = useState<string[]>([""]);
+  const [payments, setPayments] = useState<Payment[]>([{ amount: 0, paid: false }]);
 
   useEffect(() => {
     if (project && project.payments) {
-      setPayments(project.payments.map((p: any) => p.amount.toString()));
-    } else if (project && project.payment) {
-      setPayments([project.payment.toString()]);
+      setPayments(project.payments);
     } else {
-      setPayments([""]);
+      setPayments([{ amount: 0, paid: false }]);
     }
   }, [project, open]);
 
   const handleAddPayment = () => {
-    setPayments([...payments, ""]);
+    setPayments([...payments, { amount: 0, paid: false }]);
   };
 
   const handleRemovePayment = (index: number) => {
@@ -57,15 +60,15 @@ export const ProjectFormDialog = ({
   };
 
   const handlePaymentChange = (index: number, value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, "");
+    const numericValue = Number(value.replace(/[^0-9]/g, ""));
     const newPayments = [...payments];
-    newPayments[index] = numericValue;
+    newPayments[index] = { ...newPayments[index], amount: numericValue };
     setPayments(newPayments);
   };
 
-  const formatCurrency = (value: string) => {
-    if (!value) return "";
-    return new Intl.NumberFormat('vi-VN').format(Number(value));
+  const formatCurrency = (value: number) => {
+    if (!value && value !== 0) return "";
+    return new Intl.NumberFormat('vi-VN').format(value);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -73,17 +76,7 @@ export const ProjectFormDialog = ({
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
     
-    // Collect payments
-    const paymentData = payments.map(p => ({ amount: Number(p || 0) }));
-    
-    // Remove individual payment fields from form data and add the array
-    Object.keys(data).forEach(key => {
-      if (key.startsWith('payment-')) {
-        delete data[key];
-      }
-    });
-    
-    data.payments = paymentData;
+    data.payments = payments;
     
     onSave(data);
     onOpenChange(false);
@@ -129,7 +122,7 @@ export const ProjectFormDialog = ({
                     <Input
                       id={`payment-${index}`}
                       name={`payment-${index}`}
-                      value={formatCurrency(payment)}
+                      value={formatCurrency(payment.amount)}
                       onChange={(e) => handlePaymentChange(index, e.target.value)}
                       className="flex-1"
                       placeholder="Nhập số tiền"
@@ -148,10 +141,6 @@ export const ProjectFormDialog = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="debt" className="text-right">Công nợ</Label>
-              <Input id="debt" name="debt" type="number" defaultValue={project?.debt} className="col-span-3" />
-            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Tiến độ</Label>
               <Select name="status" defaultValue={project?.status}>

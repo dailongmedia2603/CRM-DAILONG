@@ -190,11 +190,10 @@ const ProjectsPage = () => {
     const saveData = {
       ...projectData,
       contractValue: Number(projectData.contractValue || 0),
-      payments: projectData.payments.map((p: {amount: number}) => ({ amount: p.amount, paid: false })),
     };
 
     if (projectToEdit) {
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData, payments: projectData.payments.map((p: {amount: number}, i: number) => ({ amount: p.amount, paid: projectToEdit.payments[i]?.paid || false })) } : p);
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData } : p);
       showSuccess("Dự án đã được cập nhật!");
     } else {
       const newProject: Project = {
