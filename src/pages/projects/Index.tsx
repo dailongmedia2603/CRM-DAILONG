@@ -63,8 +63,8 @@ import {
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
-import { clientsData } from "@/data/clients";
-import { getProjects, setProjects } from "@/utils/storage";
+import { getProjects, setProjects, getClients } from "@/utils/storage";
+import { Client } from "@/data/clients";
 import { showSuccess } from "@/utils/toast";
 
 // --- DATA TYPES ---
@@ -107,6 +107,7 @@ const initialProjects: Project[] = [
 const ProjectsPage = () => {
   // --- STATE MANAGEMENT ---
   const [projects, setProjectsState] = useState<Project[]>([]);
+  const [clients, setClientsList] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [personnelFilter, setPersonnelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
@@ -126,6 +127,11 @@ const ProjectsPage = () => {
     } else {
       setProjectsState(initialProjects);
       setProjects(initialProjects);
+    }
+
+    const storedClients = getClients();
+    if (storedClients && storedClients.length > 0) {
+      setClientsList(storedClients);
     }
   }, []);
 
@@ -309,7 +315,7 @@ const ProjectsPage = () => {
           </Table>
         </div>
       </div>
-      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clientsData} />
+      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
