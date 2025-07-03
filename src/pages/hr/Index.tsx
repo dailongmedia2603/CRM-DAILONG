@@ -1,0 +1,247 @@
+import { useState, useMemo } from "react";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { PlusCircle, Search, MoreHorizontal, Users, UserCheck, UserX } from "lucide-react";
+import { Personnel } from "@/data/personnel";
+import { PersonnelFormDialog } from "@/components/hr/PersonnelFormDialog";
+import { showSuccess } from "@/utils/toast";
+import { cn } from "@/lib/utils";
+
+interface HRPageProps {
+  personnel: Personnel[];
+  setPersonnel: (personnel: Personnel[]) => void;
+}
+
+const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
+  const [personnelToDelete, setPersonnelToDelete] = useState<Personnel | null>(null);
+
+  const filteredPersonnel = useMemo(() =>
+    personnel.filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.position.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [personnel, searchTerm]);
+
+  const stats = useMemo(() => ({
+    total: personnel.length,
+    active: personnel.filter(p => p.status === 'active').length,
+    inactive: personnel.filter(p => p.status === 'inactive').length,
+  }), [personnel]);
+
+  const handleOpenAddDialog = () => {
+    setPersonnelToEdit(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditDialog = (p: Personnel) => {
+    setPersonnelToEdit(p);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDeleteAlert = (p: Personnel) => {
+    setPersonnelToDelete(p);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleSavePersonnel = (data: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => {
+    let updatedPersonnel;
+    if (data.id) {
+      // Edit
+      updatedPersonnel = personnel.map(p =>
+        p.id === data.id ? { ...p, ...data, email: data.email, name: data.name, position: data.position, role: data.role, status: data.status } : p
+      );
+      showSuccess("Cập nhật thông tin nhân sự thành công!");
+    } else {
+      // Add
+      const newPersonnel: Personnel = {
+        id: `user-${new Date().getTime()}`,
+        createdAt: new Date().toISOString(),
+        ...data,
+        role: data.role,
+        status: data.status,
+      };
+      updatedPersonnel = [...personnel, newPersonnel];
+      showSuccess("Thêm nhân sự mới thành công!");
+    }
+    setPersonnel(updatedPersonnel);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!personnelToDelete) return;
+    const updatedPersonnel = personnel.filter(p => p.id !== personnelToDelete.id);
+    setPersonnel(updatedPersonnel);
+    setIsDeleteAlertOpen(false);
+    setPersonnelToDelete(null);
+    showSuccess("Đã xóa nhân sự.");
+  };
+
+  const getRoleBadge = (role: Personnel['role']) => {
+    switch (role) {
+      case 'admin': return "bg-red-100 text-red-800";
+      case 'member': return "bg-blue-100 text-blue-800";
+      case 'intern': return "bg-yellow-100 text-yellow-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Quản lý Nhân sự</h1>
+          <p className="text-muted-foreground">Xem, thêm, sửa, và xóa thông tin nhân sự.</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tổng số Nhân sự</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent><div className="text-2xl font-bold">{stats.total}</div></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent><div className="text-2xl font-bold">{stats.active}</div></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ngừng hoạt động</CardTitle>
+              <UserX className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent><div className="text-2xl font-bold">{stats.inactive}</div></CardContent>
+          </Card>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm theo tên, email, vị trí..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleOpenAddDialog}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Thêm Nhân sự
+          </Button>
+        </div>
+
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nhân sự</TableHead>
+                <TableHead>Vị trí</TableHead>
+                <TableHead>Quyền hạn</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Ngày tham gia</TableHead>
+                <TableHead className="text-right">Hành động</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPersonnel.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={p.avatar} />
+                        <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{p.name}</div>
+                        <div className="text-sm text-muted-foreground">{p.email}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{p.position}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>
+                      {p.status === 'active' ? 'Hoạt động' : 'Ngừng'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{new Date(p.createdAt).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleOpenEditDialog(p)}>Sửa</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenDeleteAlert(p)} className="text-red-500">Xóa</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
+
+      <PersonnelFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSavePersonnel}
+        personnel={personnelToEdit}
+      />
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Nhân sự "{personnelToDelete?.name}" sẽ bị xóa vĩnh viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </MainLayout>
+  );
+};
+
+export default HRPage;

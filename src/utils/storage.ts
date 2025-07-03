@@ -2,6 +2,7 @@
 const LEADS_STORAGE_KEY = 'agency-crm-leads';
 const CLIENTS_STORAGE_KEY = 'agency-crm-clients';
 const PROJECTS_STORAGE_KEY = 'agency-crm-projects';
+const PERSONNEL_STORAGE_KEY = 'agency-crm-personnel';
 
 // Generic type-safe get function
 export function getFromStorage<T>(key: string): T | null {
@@ -45,4 +46,12 @@ export function getProjects() {
 }
 export function setProjects(projects: any[]) {
   setToStorage(PROJECTS_STORAGE_KEY, projects);
+}
+
+// --- Personnel ---
+export function getPersonnel() {
+  return getFromStorage<any[]>(PERSONNEL_STORAGE_KEY);
+}
+export function setPersonnel(personnel: any[]) {
+  setToStorage(PERSONNEL_STORAGE_KEY, personnel);
 }

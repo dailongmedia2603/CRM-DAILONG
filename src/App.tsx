@@ -9,33 +9,33 @@ import ClientsPage from "./pages/clients/Index";
 import ClientDetailsPage from "./pages/clients/Details";
 import ProjectsPage from "./pages/projects/Index";
 import LeadsPage from "./pages/sales/leads/Index";
+import TasksPage from "./pages/tasks/Index";
+import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
-import { getClients, setClients, getProjects, setProjects } from "@/utils/storage";
+import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel } from "@/utils/storage";
 import { clientsData as initialClients, Client } from "@/data/clients";
-import { projectsData as initialProjects, Project } from "@/data/projects"; // Assuming projects data is exported
+import { projectsData as initialProjects, Project } from "@/data/projects";
+import { personnelData as initialPersonnel, Personnel } from "@/data/personnel";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [clients, setClientsState] = useState<Client[]>([]);
   const [projects, setProjectsState] = useState<Project[]>([]);
+  const [personnel, setPersonnelState] = useState<Personnel[]>([]);
 
   useEffect(() => {
+    // Load clients
     const storedClients = getClients();
-    if (storedClients !== null) {
-      setClientsState(storedClients);
-    } else {
-      setClientsState(initialClients);
-      setClients(initialClients);
-    }
+    setClientsState(storedClients ?? initialClients);
 
+    // Load projects
     const storedProjects = getProjects();
-    if (storedProjects !== null) {
-      setProjectsState(storedProjects);
-    } else {
-      setProjectsState(initialProjects);
-      setProjects(initialProjects);
-    }
+    setProjectsState(storedProjects ?? initialProjects);
+
+    // Load personnel
+    const storedPersonnel = getPersonnel();
+    setPersonnelState(storedPersonnel ?? initialPersonnel);
   }, []);
 
   const handleSetClients = (newClients: Client[]) => {
@@ -46,6 +46,11 @@ const App = () => {
   const handleSetProjects = (newProjects: Project[]) => {
     setProjectsState(newProjects);
     setProjects(newProjects);
+  };
+
+  const handleSetPersonnel = (newPersonnel: Personnel[]) => {
+    setPersonnelState(newPersonnel);
+    setPersonnel(newPersonnel);
   };
 
   return (
@@ -60,6 +65,9 @@ const App = () => {
             <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
             <Route path="/projects" element={<ProjectsPage projects={projects} clients={clients} setProjects={handleSetProjects} />} />
             <Route path="/sales/leads" element={<LeadsPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/interns/tasks" element={<TasksPage />} />
+            <Route path="/hr" element={<HRPage personnel={personnel} setPersonnel={handleSetPersonnel} />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
