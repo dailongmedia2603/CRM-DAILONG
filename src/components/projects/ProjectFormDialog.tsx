@@ -66,8 +66,12 @@ export const ProjectFormDialog = ({
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  const handleClientChange = (clientCompanyName: string) => {
+    setFormData((prev: any) => ({ ...prev, client: clientCompanyName }));
+  };
+
+  const handleStatusChange = (statusValue: string) => {
+    setFormData((prev: any) => ({ ...prev, status: statusValue }));
   };
 
   const handleAddPayment = () => {
@@ -114,9 +118,8 @@ export const ProjectFormDialog = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="client" className="text-right">Client</Label>
               <Select 
-                name="client" 
                 value={formData.client || ""} 
-                onValueChange={(value) => handleSelectChange("client", value)}
+                onValueChange={handleClientChange}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Chọn client" />
@@ -177,9 +180,8 @@ export const ProjectFormDialog = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Tiến độ</Label>
               <Select 
-                name="status" 
                 value={formData.status || "planning"} 
-                onValueChange={(value) => handleSelectChange("status", value)}
+                onValueChange={handleStatusChange}
               >
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
                 <SelectContent>
