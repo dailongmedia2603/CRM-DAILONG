@@ -23,6 +23,7 @@ export interface Client {
   classification?: string;
   source?: string;
   profiles?: Profile[];
+  archived?: boolean;
 }
 
 export const clientsData: Client[] = [
@@ -44,7 +45,8 @@ export const clientsData: Client[] = [
       profiles: [
         { id: 'p1', name: 'Hợp đồng dịch vụ', link: '#', status: 'Đã ký', createdAt: '2025-06-15' },
         { id: 'p2', name: 'Biên bản nghiệm thu', link: '#', status: 'KH check', createdAt: '2025-07-01' },
-      ]
+      ],
+      archived: false,
     },
     {
       id: "2",
@@ -61,6 +63,7 @@ export const clientsData: Client[] = [
       invoiceEmail: "billing@xyz.com",
       classification: "Doanh nghiệp",
       source: "Website",
-      profiles: []
+      profiles: [],
+      archived: false,
     },
 ];

@@ -31,6 +31,9 @@ import {
   Pen,
   Trash2,
   ExternalLink,
+  Archive,
+  RotateCcw,
+  List,
 } from "lucide-react";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import {
@@ -73,6 +76,7 @@ const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -90,18 +94,20 @@ const ClientsPage = () => {
   }, []);
 
   const filteredClients = useMemo(() => clients.filter((client) => {
+    if (!!client.archived !== showArchived) return false;
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
     return matchesSearch && matchesStatus;
-  }), [clients, searchTerm, statusFilter]);
+  }), [clients, searchTerm, statusFilter, showArchived]);
 
   const stats = useMemo(() => {
-    const totalValue = clients.reduce((sum, client) => sum + client.contractValue, 0);
+    const activeClients = clients.filter(c => !c.archived);
+    const totalValue = activeClients.reduce((sum, client) => sum + client.contractValue, 0);
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     return {
-      totalClients: clients.length,
+      totalClients: activeClients.length,
       totalContractValue: formatCurrency(totalValue),
       clientsThisMonth: 0, // Placeholder
       valueThisMonth: formatCurrency(0), // Placeholder
@@ -129,7 +135,7 @@ const ClientsPage = () => {
       updatedClients = clients.map(c => c.id === clientToSave.id ? clientToSave : c);
       showSuccess("Client đã được cập nhật!");
     } else {
-      updatedClients = [...clients, clientToSave];
+      updatedClients = [...clients, { ...clientToSave, archived: false }];
       showSuccess("Client mới đã được thêm!");
     }
     setClientsState(updatedClients);
@@ -144,6 +150,22 @@ const ClientsPage = () => {
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
     showSuccess("Client đã được xóa.");
+  };
+
+  const handleBulkArchive = () => {
+    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: true } : c);
+    setClientsState(updatedClients);
+    setClients(updatedClients);
+    setSelectedClients([]);
+    showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
+  };
+
+  const handleBulkRestore = () => {
+    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: false } : c);
+    setClientsState(updatedClients);
+    setClients(updatedClients);
+    setSelectedClients([]);
+    showSuccess(`${selectedClients.length} client đã được khôi phục.`);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -197,11 +219,30 @@ const ClientsPage = () => {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+              {showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
+              {showArchived ? "Client hoạt động" : "Client lưu trữ"}
+            </Button>
           </div>
-          <Button onClick={handleOpenAddDialog} className="bg-blue-600 hover:bg-blue-700">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Thêm Client
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedClients.length > 0 && (
+              showArchived ? (
+                <Button variant="outline" onClick={handleBulkRestore}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Khôi phục ({selectedClients.length})
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleBulkArchive}>
+                  <Archive className="mr-2 h-4 w-4" />
+                  Lưu trữ ({selectedClients.length})
+                </Button>
+              )
+            )}
+            <Button onClick={handleOpenAddDialog} className="bg-blue-600 hover:bg-blue-700">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Thêm Client
+            </Button>
+          </div>
         </div>
 
         <Card>
