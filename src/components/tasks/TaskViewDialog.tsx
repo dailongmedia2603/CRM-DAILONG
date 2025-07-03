@@ -23,9 +23,10 @@ export const TaskViewDialog = ({ open, onOpenChange, taskName, description }: Ta
           <DialogDescription>Chi tiết mô tả công việc.</DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-grow mt-4 pr-4">
-          <div className="prose max-w-none whitespace-pre-wrap">
-            {description}
-          </div>
+          <div 
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: description }} 
+          />
         </ScrollArea>
       </DialogContent>
     </Dialog>

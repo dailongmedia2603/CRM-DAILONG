@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,9 +12,8 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError } from '@/utils/toast';
 import { Task } from '@/data/tasks';
-import { Project } from '@/data/clients';
+import { Project } from '@/data/projects';
 import { Personnel } from '@/data/personnel';
-import { Textarea } from '@/components/ui/textarea';
 
 interface TaskFormDialogProps {
   open: boolean;
@@ -21,7 +22,7 @@ interface TaskFormDialogProps {
   task?: Task | null;
   projects: Project[];
   personnel: Personnel[];
-  currentUser: Personnel;
+  currentUser: Personnel; // Assuming we know the current user
 }
 
 export const TaskFormDialog = ({ open, onOpenChange, onSave, task, projects, personnel, currentUser }: TaskFormDialogProps) => {
@@ -96,12 +97,9 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, projects, per
             </div>
             <div>
               <Label>Mô tả</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="h-[300px]"
-                placeholder="Nhập mô tả chi tiết..."
-              />
+              <div className="bg-white">
+                <ReactQuill theme="snow" value={description} onChange={setDescription} style={{ height: '300px', marginBottom: '4rem' }} />
+              </div>
             </div>
           </div>
           <div className="col-span-1 space-y-4">
