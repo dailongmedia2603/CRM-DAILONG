@@ -25,6 +25,7 @@ interface PersonnelFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (personnel: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => void;
   personnel?: Personnel | null;
+  positions: string[];
 }
 
 export const PersonnelFormDialog = ({
@@ -32,6 +33,7 @@ export const PersonnelFormDialog = ({
   onOpenChange,
   onSave,
   personnel,
+  positions,
 }: PersonnelFormDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -126,7 +128,14 @@ export const PersonnelFormDialog = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Vị trí</Label>
-              <Input id="position" name="position" value={formData.position} onChange={handleChange} />
+              <Select value={formData.position} onValueChange={(value) => handleSelectChange("position", value)}>
+                <SelectTrigger><SelectValue placeholder="Chọn vị trí" /></SelectTrigger>
+                <SelectContent>
+                  {positions.map((pos, index) => (
+                    <SelectItem key={index} value={pos}>{pos}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
