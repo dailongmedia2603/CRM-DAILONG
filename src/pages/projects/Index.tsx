@@ -76,6 +76,7 @@ interface TeamMember {
 
 interface Payment {
   amount: number;
+  paid: boolean;
 }
 
 interface Project {
@@ -89,7 +90,6 @@ interface Project {
   team: TeamMember[];
   contractValue: number;
   payments: Payment[];
-  debt: number;
   link: string;
   archived: boolean;
 }
@@ -103,9 +103,9 @@ const personnelData: TeamMember[] = [
 ];
 
 const initialProjects: Project[] = [
-  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payments: [{amount: 50000000}, {amount: 40000000}], debt: 30000000, link: "https://www.figma.com/", archived: false },
-  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payments: [], debt: 85000000, link: "https://www.figma.com/", archived: false },
-  { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payments: [{amount: 350000000}], debt: 0, link: "https://www.figma.com/", archived: false },
+  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payments: [{amount: 50000000, paid: true}, {amount: 40000000, paid: false}], link: "https://www.figma.com/", archived: false },
+  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payments: [{amount: 40000000, paid: false}], link: "https://www.figma.com/", archived: false },
+  { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payments: [{amount: 200000000, paid: true}, {amount: 150000000, paid: true}], link: "https://www.figma.com/", archived: false },
 ];
 
 const ProjectsPage = () => {
@@ -148,11 +148,7 @@ const ProjectsPage = () => {
 
   // --- FILTERING LOGIC ---
   const filteredProjects = useMemo(() => {
-    return projects.map(p => {
-      const totalPaid = (p.payments || []).reduce((sum, payment) => sum + payment.amount, 0);
-      const newDebt = p.contractValue - totalPaid;
-      return {...p, debt: newDebt};
-    }).filter((project) => {
+    return projects.filter((project) => {
       if (project.archived !== showArchived) return false;
       if (searchTerm && !`${project.client} ${project.name}`.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (personnelFilter !== "all" && !project.team.some(member => member.id === personnelFilter)) return false;
@@ -194,11 +190,11 @@ const ProjectsPage = () => {
     const saveData = {
       ...projectData,
       contractValue: Number(projectData.contractValue || 0),
-      debt: Number(projectData.debt || 0),
-    }
+      payments: projectData.payments.map((p: {amount: number}) => ({ amount: p.amount, paid: false })),
+    };
 
     if (projectToEdit) {
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData } : p);
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData, payments: projectData.payments.map((p: {amount: number}, i: number) => ({ amount: p.amount, paid: projectToEdit.payments[i]?.paid || false })) } : p);
       showSuccess("Dự án đã được cập nhật!");
     } else {
       const newProject: Project = {
@@ -224,6 +220,19 @@ const ProjectsPage = () => {
     setIsDeleteAlertOpen(false);
     setProjectToDelete(null);
     showSuccess("Dự án đã được xóa.");
+  };
+
+  const handleTogglePaymentStatus = (projectId: string, paymentIndex: number) => {
+    const updatedProjects = projects.map(p => {
+        if (p.id === projectId) {
+            const newPayments = [...p.payments];
+            newPayments[paymentIndex].paid = !newPayments[paymentIndex].paid;
+            return { ...p, payments: newPayments };
+        }
+        return p;
+    });
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
   };
 
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
@@ -290,11 +299,10 @@ const ProjectsPage = () => {
                 <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
                 <TableHead className="w-[15%]">Client</TableHead>
                 <TableHead className="w-[20%]">Tên dự án</TableHead>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Team</TableHead>
                 <TableHead>Giá trị HĐ</TableHead>
+                <TableHead>Đã thanh toán</TableHead>
                 <TableHead>Công nợ</TableHead>
-                <TableHead>Thanh toán</TableHead>
+                <TableHead>Tiến độ TT</TableHead>
                 <TableHead>Link</TableHead>
                 <TableHead>Tiến độ</TableHead>
                 <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
@@ -302,21 +310,32 @@ const ProjectsPage = () => {
             </TableHeader>
             <TableBody>
               {filteredProjects.map(project => {
-                const totalPaid = (project.payments || []).reduce((sum, p) => sum + p.amount, 0);
+                const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+                const debt = project.contractValue - totalPaid;
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
-                  <TableCell>{formatDate(project.createdAt)} - {formatDate(project.dueDate)}</TableCell>
+                  <TableCell>{formatCurrency(project.contractValue)}</TableCell>
+                  <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
+                  <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
                   <TableCell>
-                    <div className="flex -space-x-2">
-                      {project.team.map(member => (<Avatar key={member.id} className="border-2 border-white h-6 w-6"><AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback></Avatar>))}
+                    <div className="flex flex-col gap-1">
+                      {(project.payments || []).map((payment, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span>{formatCurrency(payment.amount)}</span>
+                          <CheckCircle
+                            className={cn(
+                              "h-4 w-4 cursor-pointer",
+                              payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400"
+                            )}
+                            onClick={() => handleTogglePaymentStatus(project.id, index)}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </TableCell>
-                  <TableCell>{formatCurrency(project.contractValue)}</TableCell>
-                  <TableCell className={cn(project.debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(project.debt)}</TableCell>
-                  <TableCell className="text-green-600">{formatCurrency(totalPaid)}</TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
                   <TableCell>
                     <Badge
