@@ -43,7 +43,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   PlusCircle,
   Search,
@@ -297,7 +297,22 @@ const ProjectsPage = () => {
                   <TableCell className={cn(project.debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(project.debt)}</TableCell>
                   <TableCell className="text-green-600">{formatCurrency(project.payment)}</TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
-                  <TableCell><Progress value={project.progress} className="w-full h-2" /></TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize",
+                        {
+                          "bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress",
+                          "bg-green-100 text-green-800 border-green-200": project.status === "completed",
+                          "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning",
+                          "bg-red-100 text-red-800 border-red-200": project.status === "overdue",
+                        }
+                      )}
+                    >
+                      {project.status.replace('-', ' ')}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right px-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
