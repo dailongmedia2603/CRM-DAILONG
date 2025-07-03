@@ -52,10 +52,16 @@ import { getClients, setClients } from "@/utils/storage";
 import { clientsData as initialClients, Client } from "@/data/clients";
 import { cn } from "@/lib/utils";
 
-const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
+const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
+    <Card 
+      className={cn(
+        "shadow-sm hover:shadow-md transition-shadow cursor-pointer",
+        isActive && "ring-2 ring-blue-500"
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-4 flex items-center">
         <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
           <Icon className="h-6 w-6 text-white" />
@@ -75,6 +81,7 @@ const ClientsPage = () => {
   const [clients, setClientsState] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -95,22 +102,48 @@ const ClientsPage = () => {
 
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
+    
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
+    
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+
+    if (dateFilter === 'thisMonth') {
+      if (!client.creationDate) return false;
+      const now = new Date();
+      const creationDate = new Date(client.creationDate);
+      if (creationDate.getMonth() !== now.getMonth() || creationDate.getFullYear() !== now.getFullYear()) {
+        return false;
+      }
+    }
+
     return matchesSearch && matchesStatus;
-  }), [clients, searchTerm, statusFilter, showArchived]);
+  }), [clients, searchTerm, statusFilter, showArchived, dateFilter]);
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
-    const totalValue = activeClients.reduce((sum, client) => sum + client.contractValue, 0);
+    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const clientsThisMonth = activeClients.filter(c => {
+      if (!c.creationDate) return false;
+      const creationDate = new Date(c.creationDate);
+      return creationDate.getMonth() === currentMonth && creationDate.getFullYear() === currentYear;
+    });
+
+    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    
     return {
       totalClients: activeClients.length,
       totalContractValue: formatCurrency(totalValue),
-      clientsThisMonth: 0, // Placeholder
-      valueThisMonth: formatCurrency(0), // Placeholder
+      clientsThisMonth: clientsThisMonth.length,
+      valueThisMonth: formatCurrency(valueThisMonth),
     };
   }, [clients]);
 
@@ -178,8 +211,15 @@ const ClientsPage = () => {
     );
   };
   
-  const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
+  const formatCurrency = (value: number) => {
+    if (isNaN(value)) return "0 ₫";
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return date.toLocaleDateString('vi-VN');
+  }
 
   return (
     <MainLayout>
@@ -192,9 +232,9 @@ const ClientsPage = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <ClientStatsCard icon={FileText} title="Tổng Client" value={stats.totalClients.toString()} subtitle="Tổng khách hàng" iconBgColor="bg-blue-500" />
+          <ClientStatsCard icon={FileText} title="Tổng Client" value={stats.totalClients.toString()} subtitle="Tổng khách hàng" iconBgColor="bg-blue-500" onClick={() => setDateFilter('all')} isActive={dateFilter === 'all'} />
           <ClientStatsCard icon={DollarSign} title="Giá trị hợp đồng" value={stats.totalContractValue} subtitle="Tổng giá trị" iconBgColor="bg-green-500" />
-          <ClientStatsCard icon={Calendar} title="Client trong tháng" value={stats.clientsThisMonth.toString()} subtitle="Tháng này" iconBgColor="bg-purple-500" />
+          <ClientStatsCard icon={Calendar} title="Client trong tháng" value={stats.clientsThisMonth.toString()} subtitle="Tháng này" iconBgColor="bg-purple-500" onClick={() => setDateFilter('thisMonth')} isActive={dateFilter === 'thisMonth'} />
           <ClientStatsCard icon={FileText} title="Giá trị HĐ tháng" value={stats.valueThisMonth} subtitle="Tháng này" iconBgColor="bg-orange-500" />
         </div>
 
