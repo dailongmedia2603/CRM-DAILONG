@@ -25,145 +25,179 @@ import {
 import { 
   Select, 
   SelectContent, 
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { PlusCircle, Search, MoreHorizontal } from "lucide-react";
+  SelectItem I'll create a professional Agency CRM web application that can run efficiently on shared hosting with a modern UI. Let me walk you through the implementation using React with TypeScript and Tailwind CSS.
 
-// Sample Data
-const tasksData = [
-  {
-    id: "TASK-8782",
-    title: "You can't compress the program without quantifying the open-source SSD pixel!",
-    status: "in progress",
-    label: "documentation",
-    priority: "medium",
-  },
-  {
-    id: "TASK-7878",
-    title: "Try to calculate the EXE feed, maybe it will copy the open-source capacitor!",
-    status: "backlog",
-    label: "documentation",
-    priority: "medium",
-  },
-  {
-    id: "TASK-7839",
-    title: "We need to bypass the neural TCP card!",
-    status: "todo",
-    label: "bug",
-    priority: "high",
-  },
-  {
-    id: "TASK-5562",
-    title: "The SAS interface is down, navigate the optical driver so we can get to the HDD panel!",
-    status: "backlog",
-    label: "feature",
-    priority: "medium",
-  },
-  {
-    id: "TASK-8686",
-    title: "I'll parse the wireless SSL protocol, that should driver the API panel!",
-    status: "canceled",
-    label: "feature",
-    priority: "medium",
-  },
-];
+<dyad-write path="src/components/layout/MainLayout.tsx" description="Creating the main layout with sidebar navigation">
+import { useState } from "react";
+import { MadeWithDyad } from "@/components/made-with-dyad";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { 
+  Menu, 
+  Home, 
+  Users, 
+  Briefcase, 
+  DollarSign, 
+  GraduationCap, 
+  ClipboardList, 
+  BarChart2, 
+  UserCog,
+  X
+} from "lucide-react";
 
-type Task = typeof tasksData[number];
+interface MainLayoutProps {
+  children: React.ReactNode;
+}
 
-const TasksPage = () => {
-  const [tasks, setTasks] = useState<Task[]>(tasksData);
+export const MainLayout = ({ children }: MainLayoutProps) => {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
-    <MainLayout>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Công việc</h1>
-            <p className="text-muted-foreground">Quản lý tất cả công việc của bạn ở một nơi.</p>
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          isMobile ? "lg:translate-x-0" : ""
+        )}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="text-xl font-bold text-primary">Agency CRM</div>
+            {isMobile && (
+              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                <X className="h-5 w-5" />
+              </Button>
+            )}
           </div>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Thêm công việc
-          </Button>
-        </div>
 
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Tìm kiếm công việc..." className="pl-8" />
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            <NavItem icon={<Home className="mr-3 h-5 w-5" />} href="/" label="Dashboard" />
+            <NavItem icon={<Users className="mr-3 h-5 w-5" />} href="/clients" label="Clients" />
+            <NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Projects" />
+            
+            <NavGroup label="Sales" icon={<DollarSign className="mr-3 h-5 w-5" />}>
+              <NavItem href="/sales/leads" label="Leads" indent />
+              <NavItem href="/sales/performance" label="Performance" indent />
+            </NavGroup>
+            
+            <NavGroup label="Interns" icon={<GraduationCap className="mr-3 h-5 w-5" />}>
+              <NavItem href="/interns/tasks" label="Task Assignment" indent />
+              <NavItem href="/interns/reports" label="Reports" indent />
+            </NavGroup>
+            
+            <NavItem icon={<ClipboardList className="mr-3 h-5 w-5" />} href="/tasks" label="Tasks" />
+            <NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Reports" />
+            <NavItem icon={<UserCog className="mr-3 h-5 w-5" />} href="/hr" label="HR" />
+          </nav>
+
+          <div className="p-4 border-t">
+            <MadeWithDyad />
           </div>
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="in progress">Đang thực hiện</SelectItem>
-              <SelectItem value="todo">Cần làm</SelectItem>
-              <SelectItem value="backlog">Chờ</SelectItem>
-              <SelectItem value="canceled">Đã hủy</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Ưu tiên" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="high">Cao</SelectItem>
-              <SelectItem value="medium">Trung bình</SelectItem>
-              <SelectItem value="low">Thấp</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
-
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]"><Checkbox /></TableHead>
-                <TableHead>Mã</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ưu tiên</TableHead>
-                <TableHead className="text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell><Checkbox /></TableCell>
-                  <TableCell className="font-mono">{task.id}</TableCell>
-                  <TableCell className="font-medium">{task.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">{task.status}</Badge>
-                  </TableCell>
-                  <TableCell className="capitalize">{task.priority}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem>Sửa</DropdownMenuItem>
-                        <DropdownMenuItem>Xóa</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
       </div>
-    </MainLayout>
+
+      {/* Main Content */}
+      <div 
+        className={cn(
+          "flex-1 flex flex-col transition-all duration-300 ease-in-out",
+          sidebarOpen ? "lg:ml-64" : "ml-0"
+        )}
+      >
+        {/* Header */}
+        <header className="bg-white shadow-sm z-10">
+          <div className="flex items-center justify-between p-4">
+            {!sidebarOpen && (
+              <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="flex-1 flex justify-end">
+              <div className="relative">
+                <Button variant="outline" className="ml-2">
+                  Admin
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };
 
-export default TasksPage;
+// Navigation Item Component
+const NavItem = ({ 
+  icon, 
+  href, 
+  label, 
+  indent = false 
+}: { 
+  icon?: React.ReactNode; 
+  href: string; 
+  label: string; 
+  indent?: boolean;
+}) => {
+  return (
+    <a 
+      href={href} 
+      className={cn(
+        "flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors",
+        indent && "ml-6"
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </a>
+  );
+};
+
+// Navigation Group Component
+const NavGroup = ({ 
+  icon, 
+  label, 
+  children 
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  children: React.ReactNode;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div>
+      <button 
+        onClick={() => setOpen(!open)} 
+        className="w-full flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+      >
+        {icon}
+        <span className="flex-1 text-left">{label}</span>
+        <svg
+          className={`w-4 h-4 transition-transform ${open ? 'rotate-90' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      <div className={`mt-1 ${open ? 'block' : 'hidden'}`}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export default MainLayout;

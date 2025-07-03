@@ -44,16 +44,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { 
   Eye,
   PenLine,
@@ -155,13 +145,8 @@ const LeadsPage = () => {
   const [selectedLeadName, setSelectedLeadName] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState("");
 
-  // State cho dialog thêm/sửa lead
+  // State cho dialog thêm lead mới
   const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null);
-
-  // State cho dialog xóa
-  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
-  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   // Dữ liệu mẫu cho leads
   const sampleLeads: Lead[] = [
@@ -345,51 +330,18 @@ const LeadsPage = () => {
     }
   };
 
-  const handleOpenAddDialog = () => {
-    setLeadToEdit(null);
-    setFormDialogOpen(true);
-  };
-
-  const handleOpenEditDialog = (lead: Lead) => {
-    setLeadToEdit(lead);
-    setFormDialogOpen(true);
-  };
-
-  const handleOpenDeleteAlert = (lead: Lead) => {
-    setLeadToDelete(lead);
-    setDeleteAlertOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!leadToDelete) return;
-    const updatedLeads = leads.filter(l => l.id !== leadToDelete.id);
+  const handleAddLead = (newLead: Omit<Lead, "id" | "createdAt" | "history">) => {
+    const leadToAdd: Lead = {
+      id: `lead-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      history: [],
+      ...newLead
+    };
+    const updatedLeads = [...leads, leadToAdd];
     setLeadsState(updatedLeads);
     setLeads(updatedLeads);
-    setDeleteAlertOpen(false);
-    setLeadToDelete(null);
-    showSuccess("Đã xóa lead thành công.");
-  };
-
-  const handleSaveLead = (leadData: any) => {
-    let updatedLeads;
-    if (leadToEdit) {
-      updatedLeads = leads.map(l => l.id === leadToEdit.id ? { ...l, ...leadData } : l);
-      showSuccess("Đã cập nhật lead thành công.");
-    } else {
-      const newLead: Lead = {
-        id: `lead-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        history: [],
-        archived: false,
-        ...leadData
-      };
-      updatedLeads = [...leads, newLead];
-      showSuccess("Đã thêm lead mới thành công.");
-    }
-    setLeadsState(updatedLeads);
-    setLeads(updatedLeads);
+    showSuccess("Đã thêm lead mới thành công");
     setFormDialogOpen(false);
-    setLeadToEdit(null);
   };
 
   const handleFilterByStats = (type: string) => {
@@ -509,7 +461,7 @@ const LeadsPage = () => {
               </>
             )}
           </div>
-          <Button onClick={handleOpenAddDialog}><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
+          <Button onClick={() => setFormDialogOpen(true)}><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
         </div>
         
         <Card>
@@ -552,21 +504,9 @@ const LeadsPage = () => {
                         <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : lead.result === "đang trao đổi" ? "bg-blue-100 text-blue-800" : lead.result === "chưa quyết định" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800")}>{lead.result}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-1">
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleOpenHistory(lead)}>
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger><TooltipContent><p>Xem lịch sử</p></TooltipContent></Tooltip></TooltipProvider>
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(lead)}>
-                                    <PenLine className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger><TooltipContent><p>Sửa</p></TooltipContent></Tooltip></TooltipProvider>
-                            <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(lead)}>
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                            </TooltipTrigger><TooltipContent><p>Xóa</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Xem</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><PenLine className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Sửa</p></TooltipContent></Tooltip></TooltipProvider>
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Xóa</p></TooltipContent></Tooltip></TooltipProvider>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -580,29 +520,7 @@ const LeadsPage = () => {
       </div>
       
       <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLeadName} leadId={selectedLeadId} history={selectedLeadHistory} onAddHistory={handleAddHistory} />
-      
-      <LeadFormDialog 
-        open={formDialogOpen} 
-        onOpenChange={setFormDialogOpen} 
-        onSave={handleSaveLead} 
-        salesPersons={salesPersons}
-        lead={leadToEdit}
-      />
-
-      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {formDialogOpen && (<LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onAddLead={handleAddLead} salesPersons={salesPersons} />)}
     </MainLayout>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,17 +26,15 @@ interface SalesPerson {
 interface LeadFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (leadData: any) => void;
+  onAddLead: (newLead: any) => void;
   salesPersons: SalesPerson[];
-  lead?: any;
 }
 
 export const LeadFormDialog = ({
   open,
   onOpenChange,
-  onSave,
+  onAddLead,
   salesPersons,
-  lead,
 }: LeadFormDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -49,32 +47,8 @@ export const LeadFormDialog = ({
     potential: "chưa xác định" as "tiềm năng" | "không tiềm năng" | "chưa xác định",
     status: "đang suy nghĩ" as "đang làm việc" | "đang suy nghĩ" | "im ru" | "từ chối",
     result: "chưa quyết định" as "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi",
+    archived: false,
   });
-
-  useEffect(() => {
-    if (lead) {
-      setFormData({
-        name: lead.name || "",
-        phone: lead.phone || "",
-        product: lead.product || "",
-        createdBy: lead.createdBy || { id: "", name: "" },
-        potential: lead.potential || "chưa xác định",
-        status: lead.status || "đang suy nghĩ",
-        result: lead.result || "chưa quyết định",
-      });
-    } else {
-      // Reset form for new lead
-      setFormData({
-        name: "",
-        phone: "",
-        product: "",
-        createdBy: { id: "", name: "" },
-        potential: "chưa xác định",
-        status: "đang suy nghĩ",
-        result: "chưa quyết định",
-      });
-    }
-  }, [lead, open]);
 
   // Xử lý thay đổi input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,14 +105,29 @@ export const LeadFormDialog = ({
       return;
     }
 
-    onSave(formData);
+    onAddLead(formData);
+    
+    // Reset form
+    setFormData({
+      name: "",
+      phone: "",
+      product: "",
+      createdBy: {
+        id: "",
+        name: "",
+      },
+      potential: "chưa xác định",
+      status: "đang suy nghĩ",
+      result: "chưa quyết định",
+      archived: false,
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{lead ? "Sửa thông tin lead" : "Thêm lead mới"}</DialogTitle>
+          <DialogTitle>Thêm lead mới</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
@@ -269,7 +258,7 @@ export const LeadFormDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
-          <Button onClick={handleSubmit}>{lead ? "Lưu thay đổi" : "Thêm Lead"}</Button>
+          <Button onClick={handleSubmit}>Thêm Lead</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
