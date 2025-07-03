@@ -100,6 +100,7 @@ interface LeadHistory {
   content: string;
   type: "note" | "call" | "email" | "meeting";
   nextFollowUpDate?: string;
+  nextFollowUpContent?: string;
 }
 
 interface SalesPerson {
@@ -304,7 +305,7 @@ const LeadsPage = () => {
     setHistoryDialogOpen(true);
   };
 
-  const handleAddHistory = (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string }) => {
+  const handleAddHistory = (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string; nextFollowUpContent?: string; }) => {
     const updatedLeads = leads.map(lead => {
       if (lead.id === leadId) {
         const newHistoryEntry: LeadHistory = {

@@ -34,6 +34,7 @@ interface LeadHistory {
   content: string;
   type: "note" | "call" | "email" | "meeting";
   nextFollowUpDate?: string;
+  nextFollowUpContent?: string;
 }
 
 interface LeadHistoryDialogProps {
@@ -42,7 +43,7 @@ interface LeadHistoryDialogProps {
   leadName: string;
   leadId: string;
   history: LeadHistory[];
-  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string }) => void;
+  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string; nextFollowUpContent?: string; }) => void;
 }
 
 export const LeadHistoryDialog = ({
@@ -55,6 +56,7 @@ export const LeadHistoryDialog = ({
 }: LeadHistoryDialogProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [content, setContent] = useState("");
+  const [nextFollowUpContent, setNextFollowUpContent] = useState("");
   const [type, setType] = useState<"note" | "call" | "email" | "meeting">("note");
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | undefined>();
   
@@ -108,10 +110,12 @@ export const LeadHistoryDialog = ({
       content: content.trim(),
       type,
       nextFollowUpDate: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
+      nextFollowUpContent: nextFollowUpContent.trim(),
     });
     showSuccess("Đã thêm lịch sử chăm sóc mới");
     
     setContent("");
+    setNextFollowUpContent("");
     setType("note");
     setNextFollowUpDate(undefined);
     setIsAdding(false);
@@ -159,6 +163,16 @@ export const LeadHistoryDialog = ({
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Nhập nội dung chăm sóc..."
                 rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="font-medium text-sm">Nội dung chăm sóc tiếp theo</div>
+              <Textarea 
+                value={nextFollowUpContent} 
+                onChange={(e) => setNextFollowUpContent(e.target.value)}
+                placeholder="Nhập nội dung cho lần chăm sóc tiếp theo..."
+                rows={2}
               />
             </div>
 
@@ -234,8 +248,13 @@ export const LeadHistoryDialog = ({
                       {formatDate(item.date)}
                     </div>
                     {item.nextFollowUpDate && (
-                      <div className="text-xs text-blue-600 font-medium">
+                      <div className="text-xs text-blue-600 font-medium mt-1">
                         Chăm sóc tiếp theo: {formatDate(item.nextFollowUpDate)}
+                      </div>
+                    )}
+                    {item.nextFollowUpContent && (
+                      <div className="text-xs text-gray-500 mt-1 pl-4 border-l-2 border-gray-300">
+                        <strong>Nội dung:</strong> {item.nextFollowUpContent}
                       </div>
                     )}
                   </div>
