@@ -64,8 +64,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
-import { getProjects, setProjects, getClients } from "@/utils/storage";
-import { Client } from "@/data/clients";
+import { Client, Project } from "@/data/clients"; // Assuming Project is also in clients.ts now
 import { showSuccess } from "@/utils/toast";
 
 // --- DATA TYPES ---
@@ -73,26 +72,6 @@ interface TeamMember {
   id: string;
   name: string;
   image?: string;
-}
-
-interface Payment {
-  amount: number;
-  paid: boolean;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  client: string;
-  progress: number;
-  createdAt: string;
-  dueDate: string;
-  status: "planning" | "in-progress" | "completed" | "overdue";
-  team: TeamMember[];
-  contractValue: number;
-  payments: Payment[];
-  link: string;
-  archived: boolean;
 }
 
 // --- SAMPLE DATA ---
@@ -103,16 +82,14 @@ const personnelData: TeamMember[] = [
   { id: "4", name: "Diana" },
 ];
 
-const initialProjects: Project[] = [
-  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 120000000, payments: [{amount: 50000000, paid: true}, {amount: 40000000, paid: false}], link: "https://www.figma.com/", archived: false },
-  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 85000000, payments: [{amount: 40000000, paid: false}], link: "https://www.figma.com/", archived: false },
-  { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 350000000, payments: [{amount: 200000000, paid: true}, {amount: 150000000, paid: true}], link: "https://www.figma.com/", archived: false },
-];
+interface ProjectsPageProps {
+  projects: Project[];
+  clients: Client[];
+  setProjects: (projects: Project[]) => void;
+}
 
-const ProjectsPage = () => {
+const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => {
   // --- STATE MANAGEMENT ---
-  const [projects, setProjectsState] = useState<Project[]>([]);
-  const [clients, setClientsList] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [personnelFilter, setPersonnelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
@@ -132,23 +109,6 @@ const ProjectsPage = () => {
     completed: "Hoàn thành",
     overdue: "Quá hạn",
   };
-
-  useEffect(() => {
-    const storedProjects = getProjects();
-    if (storedProjects !== null) {
-      setProjectsState(storedProjects);
-    } else {
-      setProjectsState(initialProjects);
-      setProjects(initialProjects);
-    }
-
-    const storedClients = getClients();
-    if (storedClients !== null) {
-      setClientsList(storedClients);
-    } else {
-      setClientsList([]);
-    }
-  }, []);
 
   // --- FILTERING LOGIC ---
   const filteredProjects = useMemo(() => {
@@ -211,14 +171,12 @@ const ProjectsPage = () => {
       updatedProjects = [...projects, newProject];
       showSuccess("Dự án mới đã được thêm!");
     }
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
   };
 
   const handleDeleteConfirm = () => {
     if (!projectToDelete) return;
     const updatedProjects = projects.filter(p => p.id !== projectToDelete.id);
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
     setIsDeleteAlertOpen(false);
     setProjectToDelete(null);
@@ -234,7 +192,6 @@ const ProjectsPage = () => {
         }
         return p;
     });
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
   };
 
@@ -243,7 +200,6 @@ const ProjectsPage = () => {
   
   const handleBulkArchive = () => {
     const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: true } : p);
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
     setSelectedProjects([]);
     showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
@@ -251,7 +207,6 @@ const ProjectsPage = () => {
 
   const handleBulkRestore = () => {
     const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: false } : p);
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
     setSelectedProjects([]);
     showSuccess(`${selectedProjects.length} dự án đã được khôi phục.`);
@@ -259,7 +214,6 @@ const ProjectsPage = () => {
 
   const handleBulkDeleteConfirm = () => {
     const updatedProjects = projects.filter(p => !selectedProjects.includes(p.id));
-    setProjectsState(updatedProjects);
     setProjects(updatedProjects);
     setSelectedProjects([]);
     setIsBulkDeleteAlertOpen(false);

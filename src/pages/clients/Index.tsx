@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -48,8 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess } from "@/utils/toast";
-import { getClients, setClients } from "@/utils/storage";
-import { clientsData as initialClients, Client } from "@/data/clients";
+import { Client } from "@/data/clients";
 import { cn } from "@/lib/utils";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
@@ -77,8 +76,12 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
   );
 };
 
-const ClientsPage = () => {
-  const [clients, setClientsState] = useState<Client[]>([]);
+interface ClientsPageProps {
+  clients: Client[];
+  setClients: (clients: Client[]) => void;
+}
+
+const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
@@ -90,16 +93,6 @@ const ClientsPage = () => {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
-
-  useEffect(() => {
-    const storedClients = getClients();
-    if (storedClients && storedClients.length > 0) {
-      setClientsState(storedClients);
-    } else {
-      setClientsState(initialClients);
-      setClients(initialClients);
-    }
-  }, []);
 
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
@@ -169,17 +162,15 @@ const ClientsPage = () => {
       updatedClients = clients.map(c => c.id === clientToSave.id ? clientToSave : c);
       showSuccess("Client đã được cập nhật!");
     } else {
-      updatedClients = [...clients, { ...clientToSave, archived: false }];
+      updatedClients = [...clients, { ...clientToSave, id: new Date().toISOString(), archived: false }];
       showSuccess("Client mới đã được thêm!");
     }
-    setClientsState(updatedClients);
     setClients(updatedClients);
   };
 
   const handleDeleteConfirm = () => {
     if (!clientToDelete) return;
     const updatedClients = clients.filter(c => c.id !== clientToDelete.id);
-    setClientsState(updatedClients);
     setClients(updatedClients);
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
@@ -188,7 +179,6 @@ const ClientsPage = () => {
 
   const handleBulkArchive = () => {
     const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: true } : c);
-    setClientsState(updatedClients);
     setClients(updatedClients);
     setSelectedClients([]);
     showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
@@ -196,7 +186,6 @@ const ClientsPage = () => {
 
   const handleBulkRestore = () => {
     const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: false } : c);
-    setClientsState(updatedClients);
     setClients(updatedClients);
     setSelectedClients([]);
     showSuccess(`${selectedClients.length} client đã được khôi phục.`);
@@ -204,7 +193,6 @@ const ClientsPage = () => {
 
   const handleBulkDeleteConfirm = () => {
     const updatedClients = clients.filter(c => !selectedClients.includes(c.id));
-    setClientsState(updatedClients);
     setClients(updatedClients);
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);

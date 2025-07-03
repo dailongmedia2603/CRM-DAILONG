@@ -6,6 +6,26 @@ export interface Profile {
   createdAt: string;
 }
 
+export interface Payment {
+  amount: number;
+  paid: boolean;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  client: string;
+  progress: number;
+  createdAt: string;
+  dueDate: string;
+  status: "planning" | "in-progress" | "completed" | "overdue";
+  team: { id: string; name: string; image?: string }[];
+  contractValue: number;
+  payments: Payment[];
+  link: string;
+  archived: boolean;
+}
+
 export interface Client {
   id: string;
   name: string;
