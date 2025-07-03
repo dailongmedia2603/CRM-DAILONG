@@ -184,7 +184,7 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8 p-6">
+      <div className="space-y-8">
         {/* Header Section with Welcome Message */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div>

@@ -263,7 +263,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>
