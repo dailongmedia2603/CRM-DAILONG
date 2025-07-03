@@ -215,11 +215,11 @@ const ProjectsPage = () => {
 
         {/* 2. Statistics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <ProjectStatsCard title="Tổng dự án" value={stats.total} icon={Folder} onClick={() => handleStatusFilterClick("all")} isActive={statusFilter === "all"} variant="default" />
-          <ProjectStatsCard title="Đang chạy" value={stats.inProgress} icon={Clock} onClick={() => handleStatusFilterClick("in-progress")} isActive={statusFilter === "in-progress"} variant="primary" />
-          <ProjectStatsCard title="Hoàn thành" value={stats.completed} icon={CheckCircle} onClick={() => handleStatusFilterClick("completed")} isActive={statusFilter === "completed"} variant="success" />
-          <ProjectStatsCard title="Pending" value={stats.planning} icon={AlertTriangle} onClick={() => handleStatusFilterClick("planning")} isActive={statusFilter === "planning"} variant="warning" />
-          <ProjectStatsCard title="Quá hạn" value={stats.overdue} icon={XCircle} onClick={() => handleStatusFilterClick("overdue")} isActive={statusFilter === "overdue"} variant="danger" />
+          <ProjectStatsCard title="Tổng dự án" value={stats.total} description="Dự án đang hoạt động" icon={Folder} onClick={() => handleStatusFilterClick("all")} isActive={statusFilter === "all"} iconBgColor="bg-blue-500" />
+          <ProjectStatsCard title="Đang chạy" value={stats.inProgress} description="Dự án đang triển khai" icon={Clock} onClick={() => handleStatusFilterClick("in-progress")} isActive={statusFilter === "in-progress"} iconBgColor="bg-cyan-500" />
+          <ProjectStatsCard title="Hoàn thành" value={stats.completed} description="Dự án đã kết thúc" icon={CheckCircle} onClick={() => handleStatusFilterClick("completed")} isActive={statusFilter === "completed"} iconBgColor="bg-green-500" />
+          <ProjectStatsCard title="Pending" value={stats.planning} description="Dự án đang lên kế hoạch" icon={AlertTriangle} onClick={() => handleStatusFilterClick("planning")} isActive={statusFilter === "planning"} iconBgColor="bg-amber-500" />
+          <ProjectStatsCard title="Quá hạn" value={stats.overdue} description="Dự án trễ deadline" icon={XCircle} onClick={() => handleStatusFilterClick("overdue")} isActive={statusFilter === "overdue"} iconBgColor="bg-red-500" />
         </div>
 
         {/* 3. Toolbar */}
