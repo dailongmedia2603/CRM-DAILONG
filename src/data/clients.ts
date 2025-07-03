@@ -1,3 +1,11 @@
+export interface Profile {
+  id: string;
+  name: string;
+  link: string;
+  status: 'KH check' | 'Đã ký' | 'Đã Ship' | 'Hoàn thành';
+  createdAt: string;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -14,6 +22,7 @@ export interface Client {
   invoiceEmail?: string;
   classification?: string;
   source?: string;
+  profiles?: Profile[];
 }
 
 export const clientsData: Client[] = [
@@ -31,7 +40,11 @@ export const clientsData: Client[] = [
       companyName: "Updated Client Name",
       invoiceEmail: "invoice@testclient.com",
       classification: "Cá nhân",
-      source: "Giới thiệu"
+      source: "Giới thiệu",
+      profiles: [
+        { id: 'p1', name: 'Hợp đồng dịch vụ', link: '#', status: 'Đã ký', createdAt: '2025-06-15' },
+        { id: 'p2', name: 'Biên bản nghiệm thu', link: '#', status: 'KH check', createdAt: '2025-07-01' },
+      ]
     },
     {
       id: "2",
@@ -47,6 +60,7 @@ export const clientsData: Client[] = [
       companyName: "XYZ Industries",
       invoiceEmail: "billing@xyz.com",
       classification: "Doanh nghiệp",
-      source: "Website"
+      source: "Website",
+      profiles: []
     },
 ];

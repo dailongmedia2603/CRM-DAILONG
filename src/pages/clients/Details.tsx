@@ -6,8 +6,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, DollarSign, Briefcase, TrendingUp, FileText } from "lucide-react";
-import { Client, clientsData } from "@/data/clients"; // Assuming projects are also needed
+import { Client } from "@/data/clients";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { ProfileList } from "@/components/clients/ProfileList";
 import { showSuccess } from "@/utils/toast";
 import { getClients, setClients } from "@/utils/storage";
 
@@ -30,18 +31,21 @@ const ClientDetailsPage = () => {
     if (currentClient) {
       setClient(currentClient);
     } else {
-      // Handle case where client is not found, maybe redirect
       navigate("/clients");
     }
   }, [clientId, navigate]);
 
-  const handleSaveClient = (clientToSave: Client) => {
+  const handleUpdateClient = (updatedClient: Client) => {
     const allClients = getClients();
     const updatedClients = allClients.map((c: Client) =>
-      c.id === clientToSave.id ? clientToSave : c
+      c.id === updatedClient.id ? updatedClient : c
     );
     setClients(updatedClients);
-    setClient(clientToSave); // Update state on the details page
+    setClient(updatedClient);
+  };
+
+  const handleSaveClientForm = (clientToSave: Client) => {
+    handleUpdateClient(clientToSave);
     showSuccess("Thông tin client đã được cập nhật!");
   };
 
@@ -100,7 +104,7 @@ const ClientDetailsPage = () => {
                   <Briefcase className="mr-2 h-4 w-4" /> Dự án (0)
                 </TabsTrigger>
                 <TabsTrigger value="profile">
-                  <FileText className="mr-2 h-4 w-4" /> Hồ sơ (0)
+                  <FileText className="mr-2 h-4 w-4" /> Hồ sơ ({client.profiles?.length || 0})
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
@@ -150,15 +154,7 @@ const ClientDetailsPage = () => {
                 </Card>
               </TabsContent>
                <TabsContent value="profile" className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hồ sơ</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <FileText className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">Chưa có hồ sơ nào</p>
-                  </CardContent>
-                </Card>
+                <ProfileList client={client} onUpdateClient={handleUpdateClient} />
               </TabsContent>
             </Tabs>
           </div>
@@ -169,7 +165,7 @@ const ClientDetailsPage = () => {
       <ClientFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSave={handleSaveClient}
+        onSave={handleSaveClientForm}
         client={client}
       />
     </MainLayout>
