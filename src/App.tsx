@@ -9,6 +9,7 @@ import ClientsPage from "./pages/clients/Index";
 import ClientDetailsPage from "./pages/clients/Details";
 import ProjectsPage from "./pages/projects/Index";
 import LeadsPage from "./pages/sales/leads/Index";
+import TasksPage from "./pages/tasks/Index";
 import NotFound from "./pages/NotFound";
 import { getClients, setClients, getProjects, setProjects } from "@/utils/storage";
 import { clientsData as initialClients, Client } from "@/data/clients";
@@ -60,6 +61,8 @@ const App = () => {
             <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
             <Route path="/projects" element={<ProjectsPage projects={projects} clients={clients} setProjects={handleSetProjects} />} />
             <Route path="/sales/leads" element={<LeadsPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/interns/tasks" element={<TasksPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
