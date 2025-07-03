@@ -1,67 +1,43 @@
 export interface Client {
   id: string;
   name: string;
-  companyName: string;
+  contactPerson: string;
   email: string;
   phone: string;
   location: string;
   status: "active" | "inactive";
   image?: string;
+  contractValue: number;
+  contractLink: string;
+  creationDate: string;
+  companyName: string; // Giữ lại để tương thích với form dự án
 }
 
 export const clientsData: Client[] = [
     {
       id: "1",
-      name: "John Smith",
-      companyName: "ABC Corporation",
+      name: "Updated Client Name",
+      contactPerson: "John Doe",
       email: "john.smith@abccorp.com",
       phone: "+1 (555) 123-4567",
       location: "New York, USA",
-      status: "active" as const,
+      status: "active",
+      contractValue: 200000,
+      contractLink: "#",
+      creationDate: "2025-05-29",
+      companyName: "ABC Corporation",
     },
     {
       id: "2",
-      name: "Sarah Johnson",
-      companyName: "XYZ Industries",
+      name: "XYZ Industries",
+      contactPerson: "Sarah Johnson",
       email: "sarah.j@xyzindustries.com",
       phone: "+1 (555) 987-6543",
       location: "Chicago, USA",
-      status: "active" as const,
-    },
-    {
-      id: "3",
-      name: "Michael Chen",
-      companyName: "Tech Innovators",
-      email: "mchen@techinnovators.com",
-      phone: "+1 (555) 456-7890",
-      location: "San Francisco, USA",
-      status: "active" as const,
-    },
-    {
-      id: "4",
-      name: "Emily Davis",
-      companyName: "Global Enterprises",
-      email: "e.davis@globalent.com",
-      phone: "+1 (555) 234-5678",
-      location: "Boston, USA",
-      status: "inactive" as const,
-    },
-    {
-      id: "5",
-      name: "David Wilson",
-      companyName: "Creative Solutions",
-      email: "david.w@creativesol.com",
-      phone: "+1 (555) 876-5432",
-      location: "Austin, USA",
-      status: "active" as const,
-    },
-    {
-      id: "6",
-      name: "Lisa Martinez",
-      companyName: "Marketing Masters",
-      email: "lisa.m@marketingmasters.com",
-      phone: "+1 (555) 345-6789",
-      location: "Miami, USA",
-      status: "active" as const,
+      status: "active",
+      contractValue: 150000,
+      contractLink: "#",
+      creationDate: "2025-04-15",
+      companyName: "XYZ Industries",
     },
 ];

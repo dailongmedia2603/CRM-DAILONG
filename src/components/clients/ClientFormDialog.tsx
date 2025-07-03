@@ -38,7 +38,10 @@ export const ClientFormDialog = ({
     if (client) {
       setFormData(client);
     } else {
-      setFormData({ status: "active" });
+      setFormData({ 
+        status: "active",
+        creationDate: new Date().toISOString().split('T')[0] // Set today's date for new clients
+      });
     }
   }, [client, open]);
 
@@ -53,7 +56,7 @@ export const ClientFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.companyName || !formData.email) {
+    if (!formData.name || !formData.contactPerson || !formData.email) {
       alert("Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }
@@ -76,12 +79,20 @@ export const ClientFormDialog = ({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Tên</Label>
+              <Label htmlFor="name" className="text-right">Tên Client</Label>
               <Input id="name" name="name" value={formData.name || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="companyName" className="text-right">Công ty</Label>
-              <Input id="companyName" name="companyName" value={formData.companyName || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="contactPerson" className="text-right">Người liên hệ</Label>
+              <Input id="contactPerson" name="contactPerson" value={formData.contactPerson || ""} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
+              <Input id="contractValue" name="contractValue" type="number" value={formData.contractValue || ""} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="contractLink" className="text-right">Link HĐ</Label>
+              <Input id="contractLink" name="contractLink" value={formData.contractLink || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
@@ -92,8 +103,8 @@ export const ClientFormDialog = ({
               <Input id="phone" name="phone" value={formData.phone || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">Địa chỉ</Label>
-              <Input id="location" name="location" value={formData.location || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="creationDate" className="text-right">Ngày tạo</Label>
+              <Input id="creationDate" name="creationDate" type="date" value={formData.creationDate || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Trạng thái</Label>
