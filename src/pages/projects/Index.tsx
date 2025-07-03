@@ -76,6 +76,11 @@ interface Project {
   archived: boolean;
 }
 
+interface Client {
+  id: string;
+  name: string;
+}
+
 // --- SAMPLE DATA ---
 const personnelData: TeamMember[] = [
   { id: "1", name: "Alice" },
@@ -91,6 +96,17 @@ const projectsData: Project[] = [
   { id: "4", name: "Brand Identity", client: "Global Co", progress: 10, createdAt: "2024-07-01", dueDate: "2024-09-10", status: "planning", team: [personnelData[1]], contractValue: 15000, debt: 15000, archived: false },
   { id: "5", name: "SEO Optimization", client: "Digital World", progress: 90, createdAt: "2024-04-01", dueDate: "2024-06-30", status: "overdue", team: [personnelData[3]], contractValue: 5000, debt: 1000, archived: false },
   { id: "6", name: "Old Archived Project", client: "Past Inc", progress: 100, createdAt: "2023-01-20", dueDate: "2023-05-30", status: "completed", team: [personnelData[0]], contractValue: 10000, debt: 0, archived: true },
+];
+
+const clientsData: Client[] = [
+    { id: "1", name: "ABC Corp" },
+    { id: "2", name: "XYZ Inc" },
+    { id: "3", name: "Tech Innovators" },
+    { id: "4", name: "Global Co" },
+    { id: "5", name: "Digital World" },
+    { id: "6", name: "Past Inc" },
+    { id: "7", name: "Creative Solutions" },
+    { id: "8", name: "Marketing Masters" },
 ];
 
 const ProjectsPage = () => {
@@ -321,7 +337,12 @@ const ProjectsPage = () => {
           </Table>
         </div>
       </div>
-      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={(data) => console.log(data)} />
+      <ProjectFormDialog 
+        open={isFormOpen} 
+        onOpenChange={setIsFormOpen} 
+        onSave={(data) => console.log(data)}
+        clients={clientsData}
+      />
     </MainLayout>
   );
 };

@@ -18,11 +18,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Client {
+  id: string;
+  name: string;
+}
+
 interface ProjectFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (formData: any) => void;
   project?: any; // Pass existing project data for editing
+  clients: Client[];
 }
 
 export const ProjectFormDialog = ({
@@ -30,6 +36,7 @@ export const ProjectFormDialog = ({
   onOpenChange,
   onSave,
   project,
+  clients,
 }: ProjectFormDialogProps) => {
   // In a real app, you'd use a form library like react-hook-form
   // For simplicity, we'll use basic state management here.
@@ -56,7 +63,18 @@ export const ProjectFormDialog = ({
               <Label htmlFor="client" className="text-right">
                 Client
               </Label>
-              <Input id="client" name="client" defaultValue={project?.client} className="col-span-3" />
+              <Select name="client" defaultValue={project?.client}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Chọn client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.name}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
