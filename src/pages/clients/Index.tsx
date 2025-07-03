@@ -87,6 +87,7 @@ const ClientsPage = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
@@ -201,6 +202,15 @@ const ClientsPage = () => {
     showSuccess(`${selectedClients.length} client đã được khôi phục.`);
   };
 
+  const handleBulkDeleteConfirm = () => {
+    const updatedClients = clients.filter(c => !selectedClients.includes(c.id));
+    setClientsState(updatedClients);
+    setClients(updatedClients);
+    setSelectedClients([]);
+    setIsBulkDeleteAlertOpen(false);
+    showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
+  };
+
   const handleSelectAll = (checked: boolean) => {
     setSelectedClients(checked ? filteredClients.map(c => c.id) : []);
   };
@@ -266,17 +276,23 @@ const ClientsPage = () => {
           </div>
           <div className="flex items-center gap-2">
             {selectedClients.length > 0 && (
-              showArchived ? (
-                <Button variant="outline" onClick={handleBulkRestore}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Khôi phục ({selectedClients.length})
+              <>
+                {showArchived ? (
+                  <Button variant="outline" onClick={handleBulkRestore}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Khôi phục ({selectedClients.length})
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={handleBulkArchive}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Lưu trữ ({selectedClients.length})
+                  </Button>
+                )}
+                <Button variant="destructive" onClick={() => setIsBulkDeleteAlertOpen(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Xóa ({selectedClients.length})
                 </Button>
-              ) : (
-                <Button variant="outline" onClick={handleBulkArchive}>
-                  <Archive className="mr-2 h-4 w-4" />
-                  Lưu trữ ({selectedClients.length})
-                </Button>
-              )
+              </>
             )}
             <Button onClick={handleOpenAddDialog} className="bg-blue-600 hover:bg-blue-700">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -352,6 +368,20 @@ const ClientsPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn {selectedClients.length} client đã chọn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
