@@ -63,7 +63,7 @@ export const ProjectFormDialog = ({
                 <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.companyName}>
-                      {client.companyName}
+                      {client.name} ({client.companyName})
                     </SelectItem>
                   ))}
                 </SelectContent>
