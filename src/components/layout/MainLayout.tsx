@@ -95,16 +95,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem 
               icon={<Briefcase className="mr-3 h-5 w-5" />} 
               href="/projects" 
-              label="Projects" 
+              label="Dự án" 
               badge="12"
               active={pathname.startsWith("/projects")}
             />
-            
-            <NavGroup label="Sales & Marketing" icon={<DollarSign className="mr-3 h-5 w-5" />}>
-              <NavItem href="/sales/leads" label="Lead Management" indent active={pathname.startsWith("/sales/leads")} />
-              <NavItem href="/sales/performance" label="Sales Performance" indent active={pathname.startsWith("/sales/performance")} />
-              <NavItem href="/sales/pipeline" label="Sales Pipeline" indent active={pathname.startsWith("/sales/pipeline")} />
-            </NavGroup>
+            <NavItem 
+              icon={<DollarSign className="mr-3 h-5 w-5" />} 
+              href="/sales/leads" 
+              label="Quản lý sale" 
+              active={pathname.startsWith("/sales/leads")}
+            />
             
             <NavGroup label="Team Management" icon={<GraduationCap className="mr-3 h-5 w-5" />}>
               <NavItem href="/interns/tasks" label="Task Assignment" indent active={pathname.startsWith("/interns/tasks")} />
@@ -115,7 +115,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem 
               icon={<ClipboardList className="mr-3 h-5 w-5" />} 
               href="/tasks" 
-              label="Task Management" 
+              label="Công việc" 
               badge="24"
               active={pathname.startsWith("/tasks")}
             />
@@ -128,7 +128,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem 
               icon={<UserCog className="mr-3 h-5 w-5" />} 
               href="/hr" 
-              label="Human Resources" 
+              label="Nhân sự" 
               active={pathname.startsWith("/hr")}
             />
           </nav>
