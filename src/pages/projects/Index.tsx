@@ -135,7 +135,7 @@ const ProjectsPage = () => {
 
   useEffect(() => {
     const storedProjects = getProjects();
-    if (storedProjects && storedProjects.length > 0) {
+    if (storedProjects !== null) {
       setProjectsState(storedProjects);
     } else {
       setProjectsState(initialProjects);
@@ -143,8 +143,10 @@ const ProjectsPage = () => {
     }
 
     const storedClients = getClients();
-    if (storedClients && storedClients.length > 0) {
+    if (storedClients !== null) {
       setClientsList(storedClients);
+    } else {
+      setClientsList([]);
     }
   }, []);
 

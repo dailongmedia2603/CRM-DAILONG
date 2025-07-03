@@ -4,13 +4,13 @@ const CLIENTS_STORAGE_KEY = 'agency-crm-clients';
 const PROJECTS_STORAGE_KEY = 'agency-crm-projects';
 
 // Generic type-safe get function
-export function getFromStorage<T>(key: string, defaultValue: T): T {
+export function getFromStorage<T>(key: string): T | null {
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultValue;
+    return item ? JSON.parse(item) : null;
   } catch (error) {
     console.error(`Error getting item from storage: ${error}`);
-    return defaultValue;
+    return null;
   }
 }
 
@@ -25,7 +25,7 @@ export function setToStorage<T>(key: string, value: T): void {
 
 // --- Leads ---
 export function getLeads() {
-  return getFromStorage(LEADS_STORAGE_KEY, []);
+  return getFromStorage<any[]>(LEADS_STORAGE_KEY);
 }
 export function setLeads(leads: any[]) {
   setToStorage(LEADS_STORAGE_KEY, leads);
@@ -33,7 +33,7 @@ export function setLeads(leads: any[]) {
 
 // --- Clients ---
 export function getClients() {
-  return getFromStorage(CLIENTS_STORAGE_KEY, []);
+  return getFromStorage<any[]>(CLIENTS_STORAGE_KEY);
 }
 export function setClients(clients: any[]) {
   setToStorage(CLIENTS_STORAGE_KEY, clients);
@@ -41,7 +41,7 @@ export function setClients(clients: any[]) {
 
 // --- Projects ---
 export function getProjects() {
-  return getFromStorage(PROJECTS_STORAGE_KEY, []);
+  return getFromStorage<any[]>(PROJECTS_STORAGE_KEY);
 }
 export function setProjects(projects: any[]) {
   setToStorage(PROJECTS_STORAGE_KEY, projects);
