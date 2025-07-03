@@ -12,10 +12,11 @@ import LeadsPage from "./pages/sales/leads/Index";
 import TasksPage from "./pages/tasks/Index";
 import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
-import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel } from "@/utils/storage";
+import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel, getTasks, setTasks } from "@/utils/storage";
 import { clientsData as initialClients, Client } from "@/data/clients";
 import { projectsData as initialProjects, Project } from "@/data/projects";
 import { personnelData as initialPersonnel, Personnel } from "@/data/personnel";
+import { tasksData as initialTasks, Task } from "@/data/tasks";
 
 const queryClient = new QueryClient();
 
@@ -23,19 +24,13 @@ const App = () => {
   const [clients, setClientsState] = useState<Client[]>([]);
   const [projects, setProjectsState] = useState<Project[]>([]);
   const [personnel, setPersonnelState] = useState<Personnel[]>([]);
+  const [tasks, setTasksState] = useState<Task[]>([]);
 
   useEffect(() => {
-    // Load clients
-    const storedClients = getClients();
-    setClientsState(storedClients ?? initialClients);
-
-    // Load projects
-    const storedProjects = getProjects();
-    setProjectsState(storedProjects ?? initialProjects);
-
-    // Load personnel
-    const storedPersonnel = getPersonnel();
-    setPersonnelState(storedPersonnel ?? initialPersonnel);
+    setClientsState(getClients() ?? initialClients);
+    setProjectsState(getProjects() ?? initialProjects);
+    setPersonnelState(getPersonnel() ?? initialPersonnel);
+    setTasksState(getTasks() ?? initialTasks);
   }, []);
 
   const handleSetClients = (newClients: Client[]) => {
@@ -51,6 +46,11 @@ const App = () => {
   const handleSetPersonnel = (newPersonnel: Personnel[]) => {
     setPersonnelState(newPersonnel);
     setPersonnel(newPersonnel);
+  };
+  
+  const handleSetTasks = (newTasks: Task[]) => {
+    setTasksState(newTasks);
+    setTasks(newTasks);
   };
 
   return (
