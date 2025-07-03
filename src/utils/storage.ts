@@ -1,5 +1,6 @@
 // Storage keys
 const LEADS_STORAGE_KEY = 'agency-crm-leads';
+const CLIENTS_STORAGE_KEY = 'agency-crm-clients';
 
 // Generic type-safe get function
 export function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -43,4 +44,14 @@ export function updateLead(leadId: string, updatedLead: any) {
   }
   
   return false;
+}
+
+// Get clients from storage
+export function getClients() {
+  return getFromStorage(CLIENTS_STORAGE_KEY, []);
+}
+
+// Set clients to storage
+export function setClients(clients: any[]) {
+  setToStorage(CLIENTS_STORAGE_KEY, clients);
 }

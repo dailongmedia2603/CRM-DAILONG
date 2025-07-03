@@ -2,22 +2,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, MapPin, MoreHorizontal } from "lucide-react";
+import { Phone, Mail, MapPin, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Client } from "@/data/clients";
 
-export interface ClientCardProps {
-  id: string;
-  name: string;
-  companyName: string;
-  email: string;
-  phone: string;
-  location: string;
-  status: "active" | "inactive";
-  image?: string;
+export interface ClientCardProps extends Client {
   className?: string;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
+  onViewDetails: (client: Client) => void;
 }
 
 export const ClientCard = ({
+  id,
   name,
   companyName,
   email,
@@ -26,7 +29,12 @@ export const ClientCard = ({
   status,
   image,
   className,
+  onEdit,
+  onDelete,
+  onViewDetails,
 }: ClientCardProps) => {
+  const clientData = { id, name, companyName, email, phone, location, status, image };
+
   return (
     <Card className={cn("overflow-hidden", className)}>
       <CardContent className="p-6">
@@ -59,19 +67,37 @@ export const ClientCard = ({
             </div>
           </div>
           
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onViewDetails(clientData)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Xem chi tiết
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(clientData)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Chỉnh sửa
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(clientData)} className="text-red-500">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Xóa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="mt-6 space-y-2">
           <div className="flex items-center text-sm">
             <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>{email}</span>
+            <a href={`mailto:${email}`} className="hover:underline">{email}</a>
           </div>
           <div className="flex items-center text-sm">
             <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>{phone}</span>
+            <a href={`tel:${phone}`} className="hover:underline">{phone}</a>
           </div>
           <div className="flex items-center text-sm">
             <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -80,8 +106,10 @@ export const ClientCard = ({
         </div>
         
         <div className="flex mt-6">
-          <Button variant="outline" className="mr-2 w-full">Contact</Button>
-          <Button className="w-full">View Details</Button>
+          <Button variant="outline" className="mr-2 w-full" asChild>
+            <a href={`mailto:${email}`}>Contact</a>
+          </Button>
+          <Button className="w-full" onClick={() => onViewDetails(clientData)}>View Details</Button>
         </div>
       </CardContent>
     </Card>
