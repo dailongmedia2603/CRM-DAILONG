@@ -122,7 +122,15 @@ const ProjectsPage = () => {
   useEffect(() => {
     const storedProjects = getProjects();
     if (storedProjects && storedProjects.length > 0) {
-      setProjectsState(storedProjects);
+      // Sanitize data from localStorage to prevent type errors
+      const sanitizedProjects = storedProjects.map((p: any) => ({
+        ...p,
+        contractValue: Number(p.contractValue || 0),
+        payment: Number(p.payment || 0),
+        debt: Number(p.debt || 0),
+        progress: Number(p.progress || 0),
+      }));
+      setProjectsState(sanitizedProjects);
     } else {
       setProjectsState(initialProjects);
       setProjects(initialProjects);
@@ -168,18 +176,26 @@ const ProjectsPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveProject = (projectData: Omit<Project, 'id' | 'team' | 'progress'> & { id?: string }) => {
+  const handleSaveProject = (formData: any) => {
+    // Ensure numeric values are correctly parsed from the form
+    const projectData = {
+      ...formData,
+      contractValue: parseFloat(formData.contractValue || '0'),
+      payment: parseFloat(formData.payment || '0'),
+      debt: parseFloat(formData.debt || '0'),
+    };
+
     let updatedProjects;
     if (projectToEdit) {
       // Editing existing project
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...projectData } : p);
+      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...projectToEdit, ...projectData } : p);
       showSuccess("Dự án đã được cập nhật!");
     } else {
       // Adding new project
       const newProject: Project = {
         id: new Date().toISOString(),
-        team: [], // Default empty team
-        progress: 0, // Default progress
+        team: [],
+        progress: 0,
         archived: false,
         ...projectData,
       };
