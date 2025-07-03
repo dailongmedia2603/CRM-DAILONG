@@ -13,8 +13,8 @@ import TasksPage from "./pages/tasks/Index";
 import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
 import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel, getTasks, setTasks } from "@/utils/storage";
-import { clientsData as initialClients, Client } from "@/data/clients";
-import { projectsData as initialProjects, Project } from "@/data/projects";
+import { clientsData as initialClients, Client, Project } from "@/data/clients";
+import { projectsData as initialProjects } from "@/data/projects";
 import { personnelData as initialPersonnel, Personnel } from "@/data/personnel";
 import { initialTasks, Task } from "@/data/tasks";
 

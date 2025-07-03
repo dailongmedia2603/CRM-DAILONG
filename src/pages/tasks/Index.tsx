@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Edit, Trash2, CheckCircle, Circle, PlayCircle } from 'lucide-react';
 import { Task } from '@/data/tasks';
-import { Project } from '@/data/projects';
+import { Project } from '@/data/clients';
 import { Personnel } from '@/data/personnel';
 import { TaskFormDialog } from '@/components/tasks/TaskFormDialog';
 import { TaskViewDialog } from '@/components/tasks/TaskViewDialog';
