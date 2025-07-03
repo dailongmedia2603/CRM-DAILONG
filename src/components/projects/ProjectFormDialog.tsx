@@ -40,15 +40,35 @@ export const ProjectFormDialog = ({
   project,
   clients,
 }: ProjectFormDialogProps) => {
+  const [formData, setFormData] = useState<any>({});
   const [payments, setPayments] = useState<Payment[]>([{ amount: 0, paid: false }]);
 
   useEffect(() => {
-    if (project && project.payments) {
-      setPayments(project.payments);
+    if (project) {
+      setFormData(project);
+      setPayments(project.payments || [{ amount: 0, paid: false }]);
     } else {
+      // Reset for new project
+      setFormData({
+        client: "",
+        name: "",
+        link: "",
+        contractValue: "",
+        status: "planning",
+        dueDate: "",
+      });
       setPayments([{ amount: 0, paid: false }]);
     }
   }, [project, open]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
 
   const handleAddPayment = () => {
     setPayments([...payments, { amount: 0, paid: false }]);
@@ -71,14 +91,13 @@ export const ProjectFormDialog = ({
     return new Intl.NumberFormat('vi-VN').format(value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    
-    data.payments = payments;
-    
-    onSave(data);
+    const dataToSave = {
+      ...formData,
+      payments,
+    };
+    onSave(dataToSave);
     onOpenChange(false);
   };
 
@@ -91,25 +110,38 @@ export const ProjectFormDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {/* Other fields */}
+            {/* Client Select */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="client" className="text-right">Client</Label>
-              <Select name="client" defaultValue={project?.client}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn client" /></SelectTrigger>
-                <SelectContent>{clients.map((client) => (<SelectItem key={client.id} value={client.companyName}>{client.name} {client.companyName ? `(${client.companyName})` : ''}</SelectItem>))}</SelectContent>
+              <Select 
+                name="client" 
+                value={formData.client || ""} 
+                onValueChange={(value) => handleSelectChange("client", value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Chọn client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.companyName}>
+                      {client.name} {client.companyName ? `(${client.companyName})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
+            {/* Other fields */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Tên dự án</Label>
-              <Input id="name" name="name" defaultValue={project?.name} className="col-span-3" />
+              <Input id="name" name="name" value={formData.name || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="link" className="text-right">Link</Label>
-              <Input id="link" name="link" type="url" defaultValue={project?.link} className="col-span-3" />
+              <Input id="link" name="link" type="url" value={formData.link || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
-              <Input id="contractValue" name="contractValue" type="number" defaultValue={project?.contractValue} className="col-span-3" />
+              <Input id="contractValue" name="contractValue" type="number" value={formData.contractValue || ""} onChange={handleChange} className="col-span-3" />
             </div>
             
             {/* Dynamic Payment Fields */}
@@ -141,9 +173,14 @@ export const ProjectFormDialog = ({
               </div>
             </div>
 
+            {/* Status and Due Date */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Tiến độ</Label>
-              <Select name="status" defaultValue={project?.status}>
+              <Select 
+                name="status" 
+                value={formData.status || "planning"} 
+                onValueChange={(value) => handleSelectChange("status", value)}
+              >
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="planning">Pending</SelectItem>
@@ -155,7 +192,7 @@ export const ProjectFormDialog = ({
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dueDate" className="text-right">Hạn chót</Label>
-              <Input id="dueDate" name="dueDate" type="date" defaultValue={project?.dueDate} className="col-span-3" />
+              <Input id="dueDate" name="dueDate" type="date" value={formData.dueDate || ""} onChange={handleChange} className="col-span-3" />
             </div>
           </div>
           <DialogFooter>
