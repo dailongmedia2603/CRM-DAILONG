@@ -59,6 +59,7 @@ import {
   AlertTriangle,
   XCircle,
   ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
@@ -246,6 +247,14 @@ const ProjectsPage = () => {
     showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
   };
 
+  const handleBulkRestore = () => {
+    const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: false } : p);
+    setProjectsState(updatedProjects);
+    setProjects(updatedProjects);
+    setSelectedProjects([]);
+    showSuccess(`${selectedProjects.length} dự án đã được khôi phục.`);
+  };
+
   const handleBulkDeleteConfirm = () => {
     const updatedProjects = projects.filter(p => !selectedProjects.includes(p.id));
     setProjectsState(updatedProjects);
@@ -308,8 +317,18 @@ const ProjectsPage = () => {
                   <Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+                  {showArchived ? (
+                    <DropdownMenuItem onClick={handleBulkRestore}>
+                      <RotateCcw className="mr-2 h-4 w-4" /> Khôi phục
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={handleBulkArchive}>
+                      <Archive className="mr-2 h-4 w-4" /> Lưu trữ
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500">
+                    <Trash2 className="mr-2 h-4 w-4" /> Xóa
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
