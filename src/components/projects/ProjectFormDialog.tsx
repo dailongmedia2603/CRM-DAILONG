@@ -96,7 +96,7 @@ export const ProjectFormDialog = ({
               <Label htmlFor="client" className="text-right">Client</Label>
               <Select name="client" defaultValue={project?.client}>
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn client" /></SelectTrigger>
-                <SelectContent>{clients.map((client) => (<SelectItem key={client.id} value={client.companyName}>{client.name} ({client.companyName})</SelectItem>))}</SelectContent>
+                <SelectContent>{clients.map((client) => (<SelectItem key={client.id} value={client.companyName}>{client.name} {client.companyName ? `(${client.companyName})` : ''}</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
