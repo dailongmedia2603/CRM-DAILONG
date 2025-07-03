@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,11 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Client {
-  id: string;
-  name: string;
-}
+import { Client } from "@/data/clients";
 
 interface ProjectFormDialogProps {
   open: boolean;
@@ -38,8 +33,6 @@ export const ProjectFormDialog = ({
   project,
   clients,
 }: ProjectFormDialogProps) => {
-  // In a real app, you'd use a form library like react-hook-form
-  // For simplicity, we'll use basic state management here.
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -69,8 +62,8 @@ export const ProjectFormDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.name}>
-                      {client.name}
+                    <SelectItem key={client.id} value={client.companyName}>
+                      {client.companyName}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -54,6 +54,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
+import { clientsData } from "@/data/clients";
 
 // --- DATA TYPES ---
 interface TeamMember {
@@ -76,11 +77,6 @@ interface Project {
   archived: boolean;
 }
 
-interface Client {
-  id: string;
-  name: string;
-}
-
 // --- SAMPLE DATA ---
 const personnelData: TeamMember[] = [
   { id: "1", name: "Alice" },
@@ -90,23 +86,12 @@ const personnelData: TeamMember[] = [
 ];
 
 const projectsData: Project[] = [
-  { id: "1", name: "Website Redesign", client: "ABC Corp", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 12000, debt: 3000, archived: false },
-  { id: "2", name: "Marketing Campaign", client: "XYZ Inc", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 8500, debt: 8500, archived: false },
+  { id: "1", name: "Website Redesign", client: "ABC Corporation", progress: 75, createdAt: "2024-05-10", dueDate: "2024-08-15", status: "in-progress", team: [personnelData[0], personnelData[1]], contractValue: 12000, debt: 3000, archived: false },
+  { id: "2", name: "Marketing Campaign", client: "XYZ Industries", progress: 45, createdAt: "2024-06-01", dueDate: "2024-07-30", status: "in-progress", team: [personnelData[2]], contractValue: 8500, debt: 8500, archived: false },
   { id: "3", name: "Mobile App Dev", client: "Tech Innovators", progress: 100, createdAt: "2024-02-15", dueDate: "2024-06-20", status: "completed", team: [personnelData[0], personnelData[3]], contractValue: 35000, debt: 0, archived: false },
-  { id: "4", name: "Brand Identity", client: "Global Co", progress: 10, createdAt: "2024-07-01", dueDate: "2024-09-10", status: "planning", team: [personnelData[1]], contractValue: 15000, debt: 15000, archived: false },
+  { id: "4", name: "Brand Identity", client: "Global Enterprises", progress: 10, createdAt: "2024-07-01", dueDate: "2024-09-10", status: "planning", team: [personnelData[1]], contractValue: 15000, debt: 15000, archived: false },
   { id: "5", name: "SEO Optimization", client: "Digital World", progress: 90, createdAt: "2024-04-01", dueDate: "2024-06-30", status: "overdue", team: [personnelData[3]], contractValue: 5000, debt: 1000, archived: false },
   { id: "6", name: "Old Archived Project", client: "Past Inc", progress: 100, createdAt: "2023-01-20", dueDate: "2023-05-30", status: "completed", team: [personnelData[0]], contractValue: 10000, debt: 0, archived: true },
-];
-
-const clientsData: Client[] = [
-    { id: "1", name: "ABC Corp" },
-    { id: "2", name: "XYZ Inc" },
-    { id: "3", name: "Tech Innovators" },
-    { id: "4", name: "Global Co" },
-    { id: "5", name: "Digital World" },
-    { id: "6", name: "Past Inc" },
-    { id: "7", name: "Creative Solutions" },
-    { id: "8", name: "Marketing Masters" },
 ];
 
 const ProjectsPage = () => {
