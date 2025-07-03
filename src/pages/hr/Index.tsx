@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Search, MoreHorizontal, Users, UserCheck, UserX } from "lucide-react";
@@ -39,6 +39,24 @@ interface HRPageProps {
   personnel: Personnel[];
   setPersonnel: (personnel: Personnel[]) => void;
 }
+
+const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
+  const Icon = icon;
+  return (
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-4 flex items-center">
+        <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,27 +143,27 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng số Nhân sự</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{stats.total}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{stats.active}</div></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ngừng hoạt động</CardTitle>
-              <UserX className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent><div className="text-2xl font-bold">{stats.inactive}</div></CardContent>
-          </Card>
+          <HRStatsCard
+            icon={Users}
+            title="Tổng số Nhân sự"
+            value={stats.total.toString()}
+            subtitle="Tổng số nhân viên"
+            iconBgColor="bg-blue-500"
+          />
+          <HRStatsCard
+            icon={UserCheck}
+            title="Đang hoạt động"
+            value={stats.active.toString()}
+            subtitle="Nhân viên đang làm việc"
+            iconBgColor="bg-green-500"
+          />
+          <HRStatsCard
+            icon={UserX}
+            title="Ngừng hoạt động"
+            value={stats.inactive.toString()}
+            subtitle="Nhân viên đã nghỉ"
+            iconBgColor="bg-gray-500"
+          />
         </div>
 
         <div className="flex justify-between items-center">
@@ -214,7 +232,7 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
+            </Body>
           </Table>
         </Card>
       </div>
