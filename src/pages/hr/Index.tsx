@@ -140,9 +140,10 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
 
   const getRoleBadge = (role: Personnel['role']) => {
     switch (role) {
-      case 'admin': return "bg-red-100 text-red-800";
-      case 'member': return "bg-blue-100 text-blue-800";
-      case 'intern': return "bg-yellow-100 text-yellow-800";
+      case 'BOD': return "bg-red-100 text-red-800";
+      case 'Quản lý': return "bg-purple-100 text-purple-800";
+      case 'Nhân viên': return "bg-blue-100 text-blue-800";
+      case 'Thực tập': return "bg-yellow-100 text-yellow-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -184,7 +185,7 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
                   <TableRow>
                     <TableHead>Nhân sự</TableHead>
                     <TableHead>Vị trí</TableHead>
-                    <TableHead>Quyền hạn</TableHead>
+                    <TableHead>Cấp bậc</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead>Ngày tham gia</TableHead>
                     <TableHead className="text-right">Hành động</TableHead>

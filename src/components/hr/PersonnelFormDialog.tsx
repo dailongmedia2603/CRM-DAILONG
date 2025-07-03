@@ -39,7 +39,7 @@ export const PersonnelFormDialog = ({
     name: "",
     email: "",
     position: "",
-    role: "member" as Personnel['role'],
+    role: "Nhân viên" as Personnel['role'],
     status: "active" as Personnel['status'],
     password: "",
   });
@@ -62,7 +62,7 @@ export const PersonnelFormDialog = ({
         name: "",
         email: "",
         position: "",
-        role: "member",
+        role: "Nhân viên",
         status: "active",
         password: "",
       });
@@ -139,13 +139,14 @@ export const PersonnelFormDialog = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="role">Quyền hạn</Label>
+                <Label htmlFor="role">Cấp bậc</Label>
                 <Select value={formData.role} onValueChange={(value) => handleSelectChange("role", value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="intern">Intern</SelectItem>
+                    <SelectItem value="BOD">BOD</SelectItem>
+                    <SelectItem value="Quản lý">Quản lý</SelectItem>
+                    <SelectItem value="Nhân viên">Nhân viên</SelectItem>
+                    <SelectItem value="Thực tập">Thực tập</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

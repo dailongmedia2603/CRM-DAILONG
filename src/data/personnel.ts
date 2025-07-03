@@ -4,7 +4,7 @@ export interface Personnel {
   email: string;
   avatar?: string;
   position: string;
-  role: 'admin' | 'member' | 'intern';
+  role: 'BOD' | 'Quản lý' | 'Nhân viên' | 'Thực tập';
   status: 'active' | 'inactive';
   createdAt: string;
 }
@@ -15,7 +15,7 @@ export const personnelData: Personnel[] = [
     name: 'Nguyễn Văn Minh',
     email: 'minh.nv@agency.com',
     position: 'Project Manager',
-    role: 'admin',
+    role: 'BOD',
     status: 'active',
     createdAt: '2023-01-15',
   },
@@ -24,7 +24,7 @@ export const personnelData: Personnel[] = [
     name: 'Trần Thị Lan',
     email: 'lan.tt@agency.com',
     position: 'Lead Designer',
-    role: 'member',
+    role: 'Quản lý',
     status: 'active',
     createdAt: '2023-02-20',
   },
@@ -33,7 +33,7 @@ export const personnelData: Personnel[] = [
     name: 'Lê Hoàng Anh',
     email: 'anh.lh@agency.com',
     position: 'Senior Developer',
-    role: 'member',
+    role: 'Nhân viên',
     status: 'active',
     createdAt: '2023-03-10',
   },
@@ -42,7 +42,7 @@ export const personnelData: Personnel[] = [
     name: 'Phạm Thị Thu',
     email: 'thu.pt@agency.com',
     position: 'Marketing Specialist',
-    role: 'member',
+    role: 'Nhân viên',
     status: 'inactive',
     createdAt: '2023-04-05',
   },
@@ -51,7 +51,7 @@ export const personnelData: Personnel[] = [
     name: 'Vũ Đức Thắng',
     email: 'thang.vd@agency.com',
     position: 'Intern Developer',
-    role: 'intern',
+    role: 'Thực tập',
     status: 'active',
     createdAt: '2024-06-01',
   },
