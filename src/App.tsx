@@ -13,11 +13,12 @@ import TasksManagementPage from "./pages/task-management/Index";
 import InternsPage from "./pages/interns/Index";
 import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
-import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel, getTasks, setTasks } from "@/utils/storage";
+import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel, getTasks, setTasks, getInternTasks, setInternTasks } from "@/utils/storage";
 import { clientsData as initialClients, Client, Project } from "@/data/clients";
 import { projectsData as initialProjects } from "@/data/projects";
 import { personnelData as initialPersonnel, Personnel } from "@/data/personnel";
 import { tasksData as initialTasks, Task } from "@/data/tasks";
+import { internTasksData as initialInternTasks, InternTask } from "@/data/internTasks";
 
 const queryClient = new QueryClient();
 
@@ -26,12 +27,14 @@ const App = () => {
   const [projects, setProjectsState] = useState<Project[]>([]);
   const [personnel, setPersonnelState] = useState<Personnel[]>([]);
   const [tasks, setTasksState] = useState<Task[]>([]);
+  const [internTasks, setInternTasksState] = useState<InternTask[]>([]);
 
   useEffect(() => {
     setClientsState(getClients() ?? initialClients);
     setProjectsState(getProjects() ?? initialProjects);
     setPersonnelState(getPersonnel() ?? initialPersonnel);
     setTasksState(getTasks() ?? initialTasks);
+    setInternTasksState(getInternTasks() ?? initialInternTasks);
   }, []);
 
   const handleSetClients = (newClients: Client[]) => {
@@ -52,6 +55,11 @@ const App = () => {
   const handleSetTasks = (newTasks: Task[]) => {
     setTasksState(newTasks);
     setTasks(newTasks);
+  };
+
+  const handleSetInternTasks = (newTasks: InternTask[]) => {
+    setInternTasksState(newTasks);
+    setInternTasks(newTasks);
   };
 
   return (

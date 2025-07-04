@@ -5,6 +5,7 @@ const PROJECTS_STORAGE_KEY = 'agency-crm-projects';
 const PERSONNEL_STORAGE_KEY = 'agency-crm-personnel';
 const POSITIONS_STORAGE_KEY = 'agency-crm-positions';
 const TASKS_STORAGE_KEY = 'agency-crm-tasks';
+const INTERN_TASKS_STORAGE_KEY = 'agency-crm-intern-tasks';
 
 // Generic type-safe get function
 export function getFromStorage<T>(key: string): T | null {
@@ -72,4 +73,12 @@ export function getTasks() {
 }
 export function setTasks(tasks: any[]) {
   setToStorage(TASKS_STORAGE_KEY, tasks);
+}
+
+// --- Intern Tasks ---
+export function getInternTasks() {
+  return getFromStorage<any[]>(INTERN_TASKS_STORAGE_KEY);
+}
+export function setInternTasks(tasks: any[]) {
+  setToStorage(INTERN_TASKS_STORAGE_KEY, tasks);
 }
