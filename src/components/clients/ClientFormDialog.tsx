@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 interface ClientFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (client: Client) => void;
+  onSave: (client: Partial<Client>) => void;
   client?: Client | null;
 }
 
@@ -60,10 +60,17 @@ export const ClientFormDialog = ({
       alert("Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }
-    onSave({
-      id: client?.id || new Date().toISOString(),
-      ...formData,
-    } as Client);
+    
+    const dataToSave: Partial<Client> = { ...formData };
+    
+    // Chỉ gửi id khi chỉnh sửa, không gửi khi tạo mới
+    if (client?.id) {
+      dataToSave.id = client.id;
+    } else {
+      delete dataToSave.id;
+    }
+
+    onSave(dataToSave);
     onOpenChange(false);
   };
 
