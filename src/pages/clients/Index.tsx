@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -47,9 +47,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { Client } from "@/data/clients";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -76,12 +77,9 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
   );
 };
 
-interface ClientsPageProps {
-  clients: Client[];
-  setClients: (clients: Client[]) => void;
-}
-
-const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
+const ClientsPage = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
@@ -94,12 +92,28 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
+  const fetchClients = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('clients').select('*').order('creation_date', { ascending: false });
+    if (error) {
+      showError("Lỗi khi tải dữ liệu khách hàng.");
+      console.error(error);
+    } else {
+      setClients(data as Client[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
     
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
+      (client.contactPerson && client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
 
@@ -156,47 +170,48 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveClient = (clientToSave: Client) => {
-    let updatedClients;
-    if (clients.some(c => c.id === clientToSave.id)) {
-      updatedClients = clients.map(c => c.id === clientToSave.id ? clientToSave : c);
-      showSuccess("Client đã được cập nhật!");
+  const handleSaveClient = async (clientToSave: Client) => {
+    const { error } = await supabase.from('clients').upsert(clientToSave);
+    if (error) {
+      showError("Lưu khách hàng thất bại.");
+      console.error(error);
     } else {
-      updatedClients = [...clients, { ...clientToSave, id: new Date().toISOString(), archived: false }];
-      showSuccess("Client mới đã được thêm!");
+      showSuccess(clientToSave.id ? "Cập nhật khách hàng thành công!" : "Thêm khách hàng mới thành công!");
+      fetchClients();
     }
-    setClients(updatedClients);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!clientToDelete) return;
-    const updatedClients = clients.filter(c => c.id !== clientToDelete.id);
-    setClients(updatedClients);
+    const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
+    if (error) {
+      showError("Xóa khách hàng thất bại.");
+      console.error(error);
+    } else {
+      showSuccess("Khách hàng đã được xóa.");
+      fetchClients();
+    }
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
-    showSuccess("Client đã được xóa.");
   };
 
-  const handleBulkArchive = () => {
-    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: true } : c);
-    setClients(updatedClients);
-    setSelectedClients([]);
-    showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
-  };
-
-  const handleBulkRestore = () => {
-    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: false } : c);
-    setClients(updatedClients);
-    setSelectedClients([]);
-    showSuccess(`${selectedClients.length} client đã được khôi phục.`);
-  };
-
-  const handleBulkDeleteConfirm = () => {
-    const updatedClients = clients.filter(c => !selectedClients.includes(c.id));
-    setClients(updatedClients);
+  const handleBulkAction = async (action: 'archive' | 'restore' | 'delete') => {
+    if (selectedClients.length === 0) return;
+    
+    if (action === 'delete') {
+      const { error } = await supabase.from('clients').delete().in('id', selectedClients);
+      if (error) showError("Xóa hàng loạt thất bại.");
+      else showSuccess(`Đã xóa vĩnh viễn ${selectedClients.length} khách hàng.`);
+    } else {
+      const isArchiving = action === 'archive';
+      const { error } = await supabase.from('clients').update({ archived: isArchiving }).in('id', selectedClients);
+      if (error) showError(`${isArchiving ? 'Lưu trữ' : 'Khôi phục'} hàng loạt thất bại.`);
+      else showSuccess(`Đã ${isArchiving ? 'lưu trữ' : 'khôi phục'} ${selectedClients.length} khách hàng.`);
+    }
+    
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
-    showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
+    fetchClients();
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -214,9 +229,14 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   }
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid Date";
     return date.toLocaleDateString('vi-VN');
+  }
+
+  if (loading) {
+    return <MainLayout><div>Đang tải dữ liệu...</div></MainLayout>;
   }
 
   return (
@@ -266,12 +286,12 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
             {selectedClients.length > 0 && (
               <>
                 {showArchived ? (
-                  <Button variant="outline" onClick={handleBulkRestore}>
+                  <Button variant="outline" onClick={() => handleBulkAction('restore')}>
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Khôi phục ({selectedClients.length})
                   </Button>
                 ) : (
-                  <Button variant="outline" onClick={handleBulkArchive}>
+                  <Button variant="outline" onClick={() => handleBulkAction('archive')}>
                     <Archive className="mr-2 h-4 w-4" />
                     Lưu trữ ({selectedClients.length})
                   </Button>
@@ -369,7 +389,7 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleBulkAction('delete')}>Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
