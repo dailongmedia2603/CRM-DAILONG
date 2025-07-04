@@ -38,9 +38,10 @@ export const ClientFormDialog = ({
     if (client) {
       setFormData(client);
     } else {
+      // Initialize for a new client, without creationDate.
+      // Supabase will handle setting the default value.
       setFormData({ 
         status: "active",
-        creationDate: new Date().toISOString().split('T')[0] // Set today's date for new clients
       });
     }
   }, [client, open]);
@@ -63,11 +64,14 @@ export const ClientFormDialog = ({
     
     const dataToSave: Partial<Client> = { ...formData };
     
-    // Chỉ gửi id khi chỉnh sửa, không gửi khi tạo mới
-    if (client?.id) {
-      dataToSave.id = client.id;
-    } else {
+    // Don't send a client-generated id for new records.
+    if (!client?.id) {
       delete dataToSave.id;
+    }
+
+    // Don't send creationDate for new records.
+    if (!client?.id) {
+        delete dataToSave.creationDate;
     }
 
     onSave(dataToSave);
