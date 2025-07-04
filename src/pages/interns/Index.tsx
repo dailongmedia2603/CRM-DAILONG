@@ -5,22 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp } from 'lucide-react';
 import { InternTask, internTasksData } from '@/data/internTasks';
 import { cn } from '@/lib/utils';
 
-const StatCard = ({ icon, title, value, color }: { icon: React.ElementType, title: string, value: number, color: string }) => {
+const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-5 flex items-center gap-4">
-        <div className={cn("h-12 w-12 rounded-full flex items-center justify-center", color)}>
+      <CardContent className="p-4 flex items-center">
+        <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
           <Icon className="h-6 w-6 text-white" />
         </div>
-        <div>
-          <p className="text-muted-foreground">{title}</p>
+        <div className="flex-1">
+          <p className="text-sm text-muted-foreground">{title}</p>
           <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
+        <TrendingUp className="h-5 w-5 text-green-500" />
       </CardContent>
     </Card>
   );
@@ -76,10 +78,10 @@ const InternsPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard icon={List} title="Tổng số việc" value={stats.total} color="bg-blue-400" />
-          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} color="bg-yellow-400" />
-          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} color="bg-green-400" />
-          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} color="bg-red-400" />
+          <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" />
+          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" />
+          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" />
+          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" />
         </div>
 
         <div className="relative">
