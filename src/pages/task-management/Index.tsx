@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, ExternalLink, List, ArrowLeft, AlertTriangle, Clock, ChevronDown } from "lucide-react";
+import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, List, ArrowLeft, AlertTriangle, Clock, ChevronDown } from "lucide-react";
 import { TaskStatsCard } from "@/components/task-management/TaskStatsCard";
 import { TaskFormDialog } from "@/components/task-management/TaskFormDialog";
 import { FeedbackDialog } from "@/components/task-management/FeedbackDialog";
-import { DescriptionDialog } from "@/components/task-management/DescriptionDialog";
+import { TaskDetailsDialog } from "@/components/task-management/TaskDetailsDialog";
 import { Task, Feedback } from "@/data/tasks";
 import { Personnel } from "@/data/personnel";
 import { getTasks, setTasks } from "@/utils/storage";
@@ -39,7 +39,7 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
   const [dialogs, setDialogs] = useState({
     form: false,
     feedback: false,
-    description: false,
+    details: false,
     delete: false,
   });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -60,7 +60,6 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
     if (priorityFilter !== 'all') {
       filtered = filtered.filter(task => task.priority === priorityFilter);
     }
-    // Main view shows non-completed, completed view shows only completed
     filtered = filtered.filter(task => showCompleted ? task.status === 'Hoàn thành' : task.status !== 'Hoàn thành');
     
     return filtered;
@@ -98,10 +97,10 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
 
   const handleSaveTask = (data: any) => {
     let updatedTasks;
-    if (activeTask) { // Editing
+    if (activeTask) {
       updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, ...data } : t);
       showSuccess("Cập nhật công việc thành công!");
-    } else { // Adding
+    } else {
       const newTask: Task = {
         id: `TASK-${Date.now()}`,
         status: 'Chưa làm',
@@ -149,7 +148,6 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
     };
     const updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, feedbackHistory: [...t.feedbackHistory, newFeedback] } : t);
     setTasks(updatedTasks);
-    // Refresh data in dialog
     const updatedTask = updatedTasks.find(t => t.id === activeTask.id);
     if (updatedTask) setActiveTask(updatedTask);
   };
@@ -205,18 +203,17 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
 
         <div className="rounded-md border">
           <Table>
-            <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0} onCheckedChange={checked => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Mô tả</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Report</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0} onCheckedChange={checked => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Mô tả</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={checked => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
-                  <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('description', task)}>Chi tiết</Button></TableCell>
+                  <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('details', task)}>Chi tiết</Button></TableCell>
                   <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy")}</TableCell>
                   <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
                   <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('feedback', task)}><MessageSquare className="mr-2 h-4 w-4" />{task.feedbackHistory.length}</Button></TableCell>
                   <TableCell><Badge variant={task.status === 'Hoàn thành' ? 'default' : 'secondary'} className={cn({'bg-green-500 text-white': task.status === 'Hoàn thành', 'bg-yellow-500 text-white': task.status === 'Đang làm'})}>{task.status}</Badge></TableCell>
-                  <TableCell>{task.reportLink ? <a href={task.reportLink} target="_blank" rel="noopener noreferrer"><Button variant="link" size="sm"><ExternalLink className="h-4 w-4" /></Button></a> : 'N/A'}</TableCell>
                   <TableCell>
                     {task.status !== 'Hoàn thành' && (
                       <Button 
@@ -231,7 +228,7 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openDialog('description', task)}><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDialog('details', task)}><Eye className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openDialog('form', task)}><Edit className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openDialog('delete', task)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                   </TableCell>
@@ -245,7 +242,7 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
       {/* Dialogs */}
       <TaskFormDialog open={dialogs.form} onOpenChange={() => closeDialog('form')} onSave={handleSaveTask} task={activeTask} personnel={personnel} currentUser={currentUser} />
       {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} />}
-      {activeTask && <DescriptionDialog open={dialogs.description} onOpenChange={() => closeDialog('description')} title={activeTask.name} description={activeTask.description} />}
+      {activeTask && <TaskDetailsDialog open={dialogs.details} onOpenChange={() => closeDialog('details')} task={activeTask} />}
       {activeTask && <AlertDialog open={dialogs.delete} onOpenChange={() => closeDialog('delete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn công việc "{activeTask.name}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(activeTask)}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </MainLayout>
   );
