@@ -170,11 +170,35 @@ const ClientsPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveClient = async (clientToSave: Client) => {
-    const { error } = await supabase.from('clients').upsert(clientToSave);
+  const handleSaveClient = async (clientToSave: Partial<Client>) => {
+    const payload = {
+      id: clientToSave.id,
+      name: clientToSave.name,
+      contact_person: clientToSave.contactPerson,
+      email: clientToSave.email,
+      phone: clientToSave.phone,
+      location: clientToSave.location,
+      status: clientToSave.status,
+      image: clientToSave.image,
+      contract_value: clientToSave.contractValue,
+      contract_link: clientToSave.contractLink,
+      company_name: clientToSave.companyName,
+      invoice_email: clientToSave.invoiceEmail,
+      classification: clientToSave.classification,
+      source: clientToSave.source,
+      archived: clientToSave.archived,
+    };
+
+    if (!payload.id) {
+      // @ts-ignore
+      delete payload.id;
+    }
+
+    const { error } = await supabase.from('clients').upsert(payload);
+
     if (error) {
       showError("Lưu khách hàng thất bại.");
-      console.error(error);
+      console.error("Supabase error:", error);
     } else {
       showSuccess(clientToSave.id ? "Cập nhật khách hàng thành công!" : "Thêm khách hàng mới thành công!");
       fetchClients();
