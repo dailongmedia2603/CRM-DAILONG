@@ -6,7 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp } from 'lucide-react';
-import { InternTask, internTasksData } from '@/data/internTasks';
+import { InternTask } from '@/data/internTasks';
+import { Personnel } from '@/data/personnel';
+import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
+import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
+import { showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
@@ -28,9 +32,19 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.E
   );
 };
 
-const InternsPage = () => {
-  const [tasks, setTasks] = useState<InternTask[]>(internTasksData);
+interface InternsPageProps {
+  tasks: InternTask[];
+  setTasks: (tasks: InternTask[]) => void;
+  personnel: Personnel[];
+}
+
+const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState<InternTask | null>(null);
+
+  const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task =>
@@ -45,6 +59,36 @@ const InternsPage = () => {
     completed: tasks.filter(t => t.commentStatus === 'Hoàn thành' && t.postStatus === 'Hoàn thành').length,
     overdue: tasks.filter(t => new Date(t.deadline) < new Date()).length,
   }), [tasks]);
+
+  const handleOpenAddDialog = () => {
+    setActiveTask(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDetailsDialog = (task: InternTask) => {
+    setActiveTask(task);
+    setIsDetailsOpen(true);
+  };
+
+  const handleSaveTask = (taskData: any) => {
+    let updatedTasks;
+    if (activeTask) {
+      updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, ...taskData } : t);
+      showSuccess("Công việc đã được cập nhật!");
+    } else {
+      const newTask: InternTask = {
+        id: `ITASK-${Date.now()}`,
+        commentStatus: 'Chờ xử lý',
+        postStatus: 'Chờ xử lý',
+        fileCount: 0,
+        progressCount: 0,
+        ...taskData,
+      };
+      updatedTasks = [...tasks, newTask];
+      showSuccess("Đã giao việc mới thành công!");
+    }
+    setTasks(updatedTasks);
+  };
 
   const getPriorityBadge = (priority: InternTask['priority']) => {
     switch (priority) {
@@ -72,7 +116,7 @@ const InternsPage = () => {
             <h1 className="text-3xl font-bold">Giao việc thực tập sinh</h1>
             <p className="text-muted-foreground">Quản lý và theo dõi công việc được giao cho thực tập sinh</p>
           </div>
-          <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+          <Button className="bg-cyan-500 hover:bg-cyan-600 text-white" onClick={handleOpenAddDialog}>
             <Plus className="mr-2 h-4 w-4" /> Giao việc mới
           </Button>
         </div>
@@ -131,7 +175,7 @@ const InternsPage = () => {
                     <a href={task.fileLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline">
                       <ExternalLink className="h-4 w-4 mr-1" /> Link File
                     </a>
-                    <Button variant="ghost" size="icon"><Eye className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -139,6 +183,18 @@ const InternsPage = () => {
           </Table>
         </div>
       </div>
+      <InternTaskFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSaveTask}
+        task={activeTask}
+        interns={interns}
+      />
+      <InternTaskDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        task={activeTask}
+      />
     </MainLayout>
   );
 };
