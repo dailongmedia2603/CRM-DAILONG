@@ -44,19 +44,19 @@ export const LeadStatsCard = ({
   const getIconClasses = () => {
     switch (variant) {
       case "primary":
-        return "text-blue-600";
+        return "text-blue-600 bg-blue-100";
       case "secondary":
-        return "text-gray-600";
+        return "text-gray-600 bg-gray-100";
       case "success":
-        return "text-green-600";
+        return "text-green-600 bg-green-100";
       case "warning":
-        return "text-amber-600";
+        return "text-amber-600 bg-amber-100";
       case "info":
-        return "text-cyan-600";
+        return "text-cyan-600 bg-cyan-100";
       case "destructive":
-        return "text-red-600";
+        return "text-red-600 bg-red-100";
       default:
-        return "text-slate-600";
+        return "text-slate-600 bg-slate-100";
     }
   };
 
@@ -71,20 +71,15 @@ export const LeadStatsCard = ({
     >
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            <h3 className="text-2xl font-bold mt-1">{value}</h3>
-            
-            {description && (
-              <p className="text-xs mt-1">{description}</p>
-            )}
-          </div>
-          
           {Icon && (
-            <div className={cn("rounded-full p-2", getIconClasses())}>
-              <Icon className="h-5 w-5" />
+            <div className={cn("rounded-lg p-3", getIconClasses())}>
+              <Icon className="h-6 w-6" />
             </div>
           )}
+          <div className="text-right">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <h3 className="text-2xl font-bold mt-1">{value}</h3>
+          </div>
         </div>
       </CardContent>
     </Card>
