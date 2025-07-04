@@ -12,11 +12,10 @@ import LeadsPage from "./pages/sales/leads/Index";
 import TasksPage from "./pages/tasks/Index";
 import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
-import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel, getTasks, setTasks } from "@/utils/storage";
+import { getClients, setClients, getProjects, setProjects, getPersonnel, setPersonnel } from "@/utils/storage";
 import { clientsData as initialClients, Client } from "@/data/clients";
 import { projectsData as initialProjects, Project } from "@/data/projects";
 import { personnelData as initialPersonnel, Personnel } from "@/data/personnel";
-import { initialTasks, Task } from "@/data/tasks";
 
 const queryClient = new QueryClient();
 
@@ -24,13 +23,19 @@ const App = () => {
   const [clients, setClientsState] = useState<Client[]>([]);
   const [projects, setProjectsState] = useState<Project[]>([]);
   const [personnel, setPersonnelState] = useState<Personnel[]>([]);
-  const [tasks, setTasksState] = useState<Task[]>([]);
 
   useEffect(() => {
-    setClientsState(getClients() ?? initialClients);
-    setProjectsState(getProjects() ?? initialProjects);
-    setPersonnelState(getPersonnel() ?? initialPersonnel);
-    setTasksState(getTasks() ?? initialTasks);
+    // Load clients
+    const storedClients = getClients();
+    setClientsState(storedClients ?? initialClients);
+
+    // Load projects
+    const storedProjects = getProjects();
+    setProjectsState(storedProjects ?? initialProjects);
+
+    // Load personnel
+    const storedPersonnel = getPersonnel();
+    setPersonnelState(storedPersonnel ?? initialPersonnel);
   }, []);
 
   const handleSetClients = (newClients: Client[]) => {
@@ -48,11 +53,6 @@ const App = () => {
     setPersonnel(newPersonnel);
   };
 
-  const handleSetTasks = (newTasks: Task[]) => {
-    setTasksState(newTasks);
-    setTasks(newTasks);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -65,8 +65,8 @@ const App = () => {
             <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
             <Route path="/projects" element={<ProjectsPage projects={projects} clients={clients} setProjects={handleSetProjects} />} />
             <Route path="/sales/leads" element={<LeadsPage />} />
-            <Route path="/tasks" element={<TasksPage tasks={tasks} setTasks={handleSetTasks} projects={projects} personnel={personnel} />} />
-            <Route path="/interns/tasks" element={<TasksPage tasks={tasks} setTasks={handleSetTasks} projects={projects} personnel={personnel} />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/interns/tasks" element={<TasksPage />} />
             <Route path="/hr" element={<HRPage personnel={personnel} setPersonnel={handleSetPersonnel} />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
