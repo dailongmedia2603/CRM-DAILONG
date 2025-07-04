@@ -212,7 +212,23 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
                   <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('details', task)}>Chi tiết</Button></TableCell>
                   <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy")}</TableCell>
                   <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
-                  <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('feedback', task)}><MessageSquare className="mr-2 h-4 w-4" />{task.feedbackHistory.length}</Button></TableCell>
+                  <TableCell>
+                    <Button 
+                      variant={task.feedbackHistory.length > 0 ? "destructive" : "outline"} 
+                      size="sm" 
+                      onClick={() => openDialog('feedback', task)}
+                      className="relative"
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      {task.feedbackHistory.length}
+                      {task.feedbackHistory.length > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                      )}
+                    </Button>
+                  </TableCell>
                   <TableCell><Badge variant={task.status === 'Hoàn thành' ? 'default' : 'secondary'} className={cn({'bg-green-500 text-white': task.status === 'Hoàn thành', 'bg-yellow-500 text-white': task.status === 'Đang làm'})}>{task.status}</Badge></TableCell>
                   <TableCell>
                     {task.status !== 'Hoàn thành' && (
