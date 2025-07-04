@@ -31,7 +31,8 @@ import {
   LogOut,
   User,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  FolderKanban
 } from "lucide-react";
 import React from "react";
 
@@ -95,14 +96,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem 
               icon={<Briefcase className="mr-3 h-5 w-5" />} 
               href="/projects" 
-              label="Dự án"
+              label="Dự án" 
               badge="12"
               active={pathname.startsWith("/projects")}
             />
             <NavItem 
-              icon={<DollarSign className="mr-3 h-5 w-5" />}
+              icon={<DollarSign className="mr-3 h-5 w-5" />} 
               href="/sales/leads" 
-              label="Quản lý sale"
+              label="Quản lý sale" 
               active={pathname.startsWith("/sales/leads")}
             />
             <NavItem 
@@ -112,11 +113,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               active={pathname.startsWith("/interns")}
             />
             <NavItem 
-              icon={<ClipboardList className="mr-3 h-5 w-5" />} 
-              href="/tasks" 
-              label="Công việc"
-              badge="24"
-              active={pathname.startsWith("/tasks")}
+              icon={<FolderKanban className="mr-3 h-5 w-5" />} 
+              href="/task-management" 
+              label="Quản lý công việc"
+              active={pathname.startsWith("/task-management")}
             />
             <NavItem 
               icon={<BarChart2 className="mr-3 h-5 w-5" />} 
@@ -127,7 +127,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem 
               icon={<UserCog className="mr-3 h-5 w-5" />} 
               href="/hr" 
-              label="Nhân sự"
+              label="Nhân sự" 
               active={pathname.startsWith("/hr")}
             />
           </nav>
