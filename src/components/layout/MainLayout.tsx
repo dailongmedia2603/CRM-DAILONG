@@ -107,9 +107,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             />
             <NavItem 
               icon={<GraduationCap className="mr-3 h-5 w-5" />}
-              href="/interns/tasks" 
+              href="/interns" 
               label="Thực tập sinh"
-              active={pathname.startsWith("/interns/tasks")}
+              active={pathname.startsWith("/interns")}
             />
             <NavItem 
               icon={<ClipboardList className="mr-3 h-5 w-5" />} 
