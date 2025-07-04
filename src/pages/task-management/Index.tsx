@@ -241,7 +241,7 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
 
       {/* Dialogs */}
       <TaskFormDialog open={dialogs.form} onOpenChange={() => closeDialog('form')} onSave={handleSaveTask} task={activeTask} personnel={personnel} currentUser={currentUser} />
-      {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} />}
+      {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} currentUser={currentUser} />}
       {activeTask && <TaskDetailsDialog open={dialogs.details} onOpenChange={() => closeDialog('details')} task={activeTask} />}
       {activeTask && <AlertDialog open={dialogs.delete} onOpenChange={() => closeDialog('delete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn công việc "{activeTask.name}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(activeTask)}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </MainLayout>
