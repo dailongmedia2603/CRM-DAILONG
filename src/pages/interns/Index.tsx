@@ -164,14 +164,15 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="w-[30%] hover:bg-gray-50">CÔNG VIỆC</TableHead>
-                <TableHead className="hover:bg-gray-50">THỰC TẬP SINH</TableHead>
-                <TableHead className="hover:bg-gray-50">DEADLINE</TableHead>
-                <TableHead className="hover:bg-gray-50">ƯU TIÊN</TableHead>
-                <TableHead className="hover:bg-gray-50">SL COMMENT</TableHead>
-                <TableHead className="hover:bg-gray-50">SL POST</TableHead>
-                <TableHead className="hover:bg-gray-50">THAO TÁC</TableHead>
+              <TableRow className="bg-gray-50 hover:bg-gray-50">
+                <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
+                <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>THỰC TẬP SINH</TableHead>
+                <TableHead>DEADLINE</TableHead>
+                <TableHead>ƯU TIÊN</TableHead>
+                <TableHead>SL COMMENT</TableHead>
+                <TableHead>SL POST</TableHead>
+                <TableHead>THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,6 +183,11 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                       <p className="font-medium truncate">{task.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 flex justify-center">
+                      <ExternalLink className="h-5 w-5" />
+                    </a>
                   </TableCell>
                   <TableCell>{task.internName}</TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleDateString('vi-VN')}</TableCell>
@@ -194,9 +200,6 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
-                      <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(task)}><Edit className="h-5 w-5" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(task)}><Trash2 className="h-5 w-5 text-red-500" /></Button>
