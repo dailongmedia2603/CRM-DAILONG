@@ -122,15 +122,6 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
     }
   };
 
-  const getStatusBadge = (status: InternTask['commentStatus']) => {
-    switch (status) {
-      case 'Đang làm': return 'bg-blue-100 text-blue-800';
-      case 'Chờ xử lý': return 'bg-yellow-100 text-yellow-800';
-      case 'Hoàn thành': return 'bg-green-100 text-green-800';
-      default: return '';
-    }
-  };
-
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -166,12 +157,12 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead>FILE LÀM VIỆC</TableHead>
-                <TableHead>THỰC TẬP SINH</TableHead>
+                <TableHead className="text-center">FILE LÀM VIỆC</TableHead>
                 <TableHead>DEADLINE</TableHead>
-                <TableHead>ƯU TIÊN</TableHead>
                 <TableHead>SL COMMENT</TableHead>
                 <TableHead>SL POST</TableHead>
+                <TableHead>ƯU TIÊN</TableHead>
+                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
@@ -184,20 +175,20 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 flex justify-center">
+                  <TableCell className="text-center">
+                    <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
                       <ExternalLink className="h-5 w-5" />
                     </a>
                   </TableCell>
-                  <TableCell>{task.internName}</TableCell>
-                  <TableCell>{new Date(task.deadline).toLocaleDateString('vi-VN')}</TableCell>
-                  <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
+                  <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
                   <TableCell>
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.commentCount}</div>
                   </TableCell>
                   <TableCell>
                     <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.postCount}</div>
                   </TableCell>
+                  <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
+                  <TableCell>{task.internName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
