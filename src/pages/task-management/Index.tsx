@@ -260,7 +260,7 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={checked => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
                   <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('description', task)}>Chi tiết</Button></TableCell>
-                  <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy")}</TableCell>
+                  <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy HH:mm")}</TableCell>
                   <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
                   <TableCell>
                     <Button 
