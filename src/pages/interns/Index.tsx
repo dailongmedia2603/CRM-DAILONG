@@ -13,7 +13,6 @@ import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog'
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
 import { showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -114,6 +113,24 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
     showSuccess("Đã xóa công việc.");
   };
 
+  const getPriorityBadge = (priority: InternTask['priority']) => {
+    switch (priority) {
+      case 'Cao': return 'bg-red-100 text-red-800';
+      case 'Bình thường': return 'bg-blue-100 text-blue-800';
+      case 'Thấp': return 'bg-gray-100 text-gray-800';
+      default: return '';
+    }
+  };
+
+  const getStatusBadge = (status: InternTask['commentStatus']) => {
+    switch (status) {
+      case 'Đang làm': return 'bg-blue-100 text-blue-800';
+      case 'Chờ xử lý': return 'bg-yellow-100 text-yellow-800';
+      case 'Hoàn thành': return 'bg-green-100 text-green-800';
+      default: return '';
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -148,9 +165,11 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="w-[40%]">CÔNG VIỆC</TableHead>
+                <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
                 <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>DEADLINE</TableHead>
+                <TableHead>ƯU TIÊN</TableHead>
                 <TableHead>SL COMMENT</TableHead>
                 <TableHead>SL POST</TableHead>
                 <TableHead>THAO TÁC</TableHead>
@@ -160,7 +179,7 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
               {filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell>
-                    <div className="max-w-sm">
+                    <div className="max-w-xs">
                       <p className="font-medium truncate">{task.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
@@ -170,7 +189,9 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                       <ExternalLink className="h-5 w-5" />
                     </a>
                   </TableCell>
-                  <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy HH:mm")}</TableCell>
+                  <TableCell>{task.internName}</TableCell>
+                  <TableCell>{new Date(task.deadline).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
                   <TableCell>
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.commentCount}</div>
                   </TableCell>

@@ -27,42 +27,35 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
     description: '',
     workLink: '',
     internName: '',
+    deadline: new Date(),
     priority: 'Bình thường' as InternTask['priority'],
     commentCount: 0,
     postCount: 0,
   });
-  const [deadline, setDeadline] = useState<Date | undefined>();
-  const [hour, setHour] = useState('00');
-  const [minute, setMinute] = useState('00');
 
   useEffect(() => {
     if (task) {
-      const taskDeadline = new Date(task.deadline);
       setFormData({
         title: task.title,
         description: task.description,
         workLink: task.workLink,
         internName: task.internName,
+        deadline: new Date(task.deadline),
         priority: task.priority,
         commentCount: task.commentCount,
         postCount: task.postCount,
       });
-      setDeadline(taskDeadline);
-      setHour(format(taskDeadline, 'HH'));
-      setMinute(format(taskDeadline, 'mm'));
     } else {
       setFormData({
         title: '',
         description: '',
         workLink: '',
         internName: '',
+        deadline: new Date(),
         priority: 'Bình thường',
         commentCount: 0,
         postCount: 0,
       });
-      setDeadline(new Date());
-      setHour('00');
-      setMinute('00');
     }
   }, [task, open]);
 
@@ -75,31 +68,14 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleTimeChange = (setter: React.Dispatch<React.SetStateAction<string>>, max: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value, 10);
-    if (isNaN(value) || value < 0) {
-        value = 0;
-    }
-    if (value > max) {
-        value = max;
-    }
-    setter(value.toString().padStart(2, '0'));
-  };
-
   const handleSubmit = () => {
-    if (!formData.title || !formData.internName || !deadline) {
+    if (!formData.title || !formData.internName || !formData.deadline) {
       showError("Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }
-    const finalDeadline = new Date(deadline);
-    finalDeadline.setHours(parseInt(hour, 10));
-    finalDeadline.setMinutes(parseInt(minute, 10));
-    finalDeadline.setSeconds(0);
-    finalDeadline.setMilliseconds(0);
-
     onSave({
       ...formData,
-      deadline: finalDeadline.toISOString(),
+      deadline: format(formData.deadline, 'yyyy-MM-dd'),
     });
     onOpenChange(false);
   };
@@ -136,30 +112,17 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
           </div>
           <div className="space-y-2">
             <Label htmlFor="deadline">Deadline</Label>
-            <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {deadline ? format(deadline, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus /></PopoverContent>
-                </Popover>
-                <Input
-                    type="number"
-                    value={hour}
-                    onChange={handleTimeChange(setHour, 23)}
-                    className="w-16 text-center"
-                />
-                <span>:</span>
-                <Input
-                    type="number"
-                    value={minute}
-                    onChange={handleTimeChange(setMinute, 59)}
-                    className="w-16 text-center"
-                />
-              </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.deadline ? format(formData.deadline, "dd/MM/yyyy") : <span>dd/mm/yyyy</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar mode="single" selected={formData.deadline} onSelect={(date) => setFormData(prev => ({...prev, deadline: date || new Date()}))} initialFocus />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label htmlFor="priority">Ưu tiên</Label>
