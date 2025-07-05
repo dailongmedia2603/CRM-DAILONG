@@ -36,7 +36,7 @@ const ClientDetailsPage = () => {
       setClient(currentClient);
       const allProjects = getProjects();
       const projectsForClient = allProjects.filter(
-        (p: any) => p.client === currentClient.companyName
+        (p: any) => p.client === currentClient.company_name
       );
       setClientProjects(projectsForClient);
     } else {
@@ -100,10 +100,10 @@ const ClientDetailsPage = () => {
               </CardContent>
               <CardContent className="space-y-4">
                 <InfoField label="Tên Client" value={client.name} />
-                <InfoField label="Người liên hệ" value={client.contactPerson} />
+                <InfoField label="Người liên hệ" value={client.contact_person} />
                 <InfoField label="Email" value={client.email} />
-                <InfoField label="Mail nhận hoá đơn" value={client.invoiceEmail || "Chưa có"} />
-                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contractValue)} />
+                <InfoField label="Mail nhận hoá đơn" value={client.invoice_email || "Chưa có"} />
+                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contract_value)} />
                 <InfoField label="Phân loại" value={client.classification || "Chưa có"} />
                 <InfoField label="Nguồn" value={client.source || "Chưa có"} />
               </CardContent>

@@ -38,7 +38,7 @@ export const ClientFormDialog = ({
     if (client) {
       setFormData(client);
     } else {
-      // Initialize for a new client, without creationDate.
+      // Initialize for a new client, without creation_date.
       // Supabase will handle setting the default value.
       setFormData({ 
         status: "active",
@@ -57,7 +57,7 @@ export const ClientFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.contactPerson || !formData.email) {
+    if (!formData.name || !formData.contact_person || !formData.email) {
       alert("Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }
@@ -71,7 +71,8 @@ export const ClientFormDialog = ({
 
     // Don't send creationDate for new records.
     if (!client?.id) {
-        delete dataToSave.creationDate;
+        // @ts-ignore
+        delete dataToSave.creation_date;
     }
 
     onSave(dataToSave);
@@ -94,20 +95,20 @@ export const ClientFormDialog = ({
               <Input id="name" name="name" value={formData.name || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contactPerson" className="text-right">Người liên hệ</Label>
-              <Input id="contactPerson" name="contactPerson" value={formData.contactPerson || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="contact_person" className="text-right">Người liên hệ</Label>
+              <Input id="contact_person" name="contact_person" value={formData.contact_person || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
               <Input id="email" name="email" type="email" value={formData.email || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invoiceEmail" className="text-right">Mail hóa đơn</Label>
-              <Input id="invoiceEmail" name="invoiceEmail" type="email" value={formData.invoiceEmail || ""} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="invoice_email" className="text-right">Mail hóa đơn</Label>
+              <Input id="invoice_email" name="invoice_email" type="email" value={formData.invoice_email || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
-              <Input id="contractValue" name="contractValue" type="number" value={formData.contractValue || 0} onChange={handleChange} className="col-span-3" />
+              <Label htmlFor="contract_value" className="text-right">Giá trị HĐ</Label>
+              <Input id="contract_value" name="contract_value" type="number" value={formData.contract_value || 0} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="classification" className="text-right">Phân loại</Label>

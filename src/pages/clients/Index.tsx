@@ -113,14 +113,14 @@ const ClientsPage = () => {
     
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (client.contactPerson && client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()));
+      (client.contact_person && client.contact_person.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
 
     if (dateFilter === 'thisMonth') {
-      if (!client.creationDate) return false;
+      if (!client.creation_date) return false;
       const now = new Date();
-      const creationDate = new Date(client.creationDate);
+      const creationDate = new Date(client.creation_date);
       if (creationDate.getMonth() !== now.getMonth() || creationDate.getFullYear() !== now.getFullYear()) {
         return false;
       }
@@ -131,19 +131,19 @@ const ClientsPage = () => {
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
-    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
     
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
     const clientsThisMonth = activeClients.filter(c => {
-      if (!c.creationDate) return false;
-      const creationDate = new Date(c.creationDate);
+      if (!c.creation_date) return false;
+      const creationDate = new Date(c.creation_date);
       return creationDate.getMonth() === currentMonth && creationDate.getFullYear() === currentYear;
     });
 
-    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     
@@ -171,30 +171,7 @@ const ClientsPage = () => {
   };
 
   const handleSaveClient = async (clientToSave: Partial<Client>) => {
-    const payload = {
-      id: clientToSave.id,
-      name: clientToSave.name,
-      contact_person: clientToSave.contactPerson,
-      email: clientToSave.email,
-      phone: clientToSave.phone,
-      location: clientToSave.location,
-      status: clientToSave.status,
-      image: clientToSave.image,
-      contract_value: clientToSave.contractValue,
-      contract_link: clientToSave.contractLink,
-      company_name: clientToSave.companyName,
-      invoice_email: clientToSave.invoiceEmail,
-      classification: clientToSave.classification,
-      source: clientToSave.source,
-      archived: clientToSave.archived,
-    };
-
-    if (!payload.id) {
-      // @ts-ignore
-      delete payload.id;
-    }
-
-    const { error } = await supabase.from('clients').upsert(payload);
+    const { error } = await supabase.from('clients').upsert(clientToSave);
 
     if (error) {
       showError("Lưu khách hàng thất bại.");
@@ -358,15 +335,15 @@ const ClientsPage = () => {
                       {client.name}
                     </Link>
                   </TableCell>
-                  <TableCell>{client.contactPerson}</TableCell>
-                  <TableCell>{formatCurrency(client.contractValue)}</TableCell>
+                  <TableCell>{client.contact_person}</TableCell>
+                  <TableCell>{formatCurrency(client.contract_value)}</TableCell>
                   <TableCell>
-                    <a href={client.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                    <a href={client.contract_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                       <ExternalLink className="h-4 w-4 mr-1" />
                       Xem hợp đồng
                     </a>
                   </TableCell>
-                  <TableCell>{formatDate(client.creationDate)}</TableCell>
+                  <TableCell>{formatDate(client.creation_date)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" asChild>

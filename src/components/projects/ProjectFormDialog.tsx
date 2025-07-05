@@ -124,8 +124,8 @@ export const ProjectFormDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.companyName}>
-                      {c.name} {c.companyName ? `(${c.companyName})` : ''}
+                    <SelectItem key={c.id} value={c.company_name}>
+                      {c.name} {c.company_name ? `(${c.company_name})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
