@@ -5,7 +5,6 @@ import { LucideIcon } from "lucide-react";
 interface LeadStatsCardProps {
   title: string;
   value: string;
-  description?: string;
   icon?: LucideIcon;
   variant?: "default" | "primary" | "secondary" | "success" | "warning" | "info" | "destructive";
   onClick?: () => void;
@@ -15,7 +14,6 @@ interface LeadStatsCardProps {
 export const LeadStatsCard = ({
   title,
   value,
-  description,
   icon: Icon,
   variant = "default",
   onClick,
@@ -70,13 +68,13 @@ export const LeadStatsCard = ({
       onClick={onClick}
     >
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
           {Icon && (
             <div className={cn("rounded-lg p-3", getIconClasses())}>
               <Icon className="h-6 w-6" />
             </div>
           )}
-          <div className="text-right">
+          <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <h3 className="text-2xl font-bold mt-1">{value}</h3>
           </div>
