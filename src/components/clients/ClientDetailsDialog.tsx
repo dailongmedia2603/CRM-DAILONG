@@ -44,7 +44,7 @@ export const ClientDetailsDialog = ({
             </Avatar>
             <div>
               <h3 className="text-xl font-bold">{client.name}</h3>
-              <p className="text-muted-foreground">{client.company_name}</p>
+              <p className="text-muted-foreground">{client.companyName}</p>
             </div>
           </div>
           <div>

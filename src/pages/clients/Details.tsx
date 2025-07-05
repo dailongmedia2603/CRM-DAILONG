@@ -9,13 +9,12 @@ import { ArrowLeft, Edit, DollarSign, Briefcase, FileText } from "lucide-react";
 import { Client } from "@/data/clients";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ProfileList } from "@/components/clients/ProfileList";
-import { showSuccess, showError } from "@/utils/toast";
-import { getProjects } from "@/utils/storage";
+import { showSuccess } from "@/utils/toast";
+import { getClients, setClients, getProjects } from "@/utils/storage";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
-const InfoField = ({ label, value }: { label: string; value: string | number | undefined }) => (
+const InfoField = ({ label, value }: { label: string; value: string | number }) => (
   <div>
     <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
     <p className="font-medium">{value || "Chưa có"}</p>
@@ -26,79 +25,37 @@ const ClientDetailsPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [clientProjects, setClientProjects] = useState<any[]>([]);
 
-  const fetchClient = async () => {
-    if (!clientId) return;
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*, profiles(*)')
-      .eq('id', clientId)
-      .single();
-
-    if (error || !data) {
-      showError("Không tìm thấy client.");
-      navigate("/clients");
-    } else {
-      setClient(data as Client);
-      const allProjects = getProjects(); // Tạm thời vẫn lấy project từ local storage
+  useEffect(() => {
+    const allClients = getClients();
+    const currentClient = allClients.find((c: Client) => c.id === clientId);
+    
+    if (currentClient) {
+      setClient(currentClient);
+      const allProjects = getProjects();
       const projectsForClient = allProjects.filter(
-        (p: any) => p.client === data.company_name
+        (p: any) => p.client === currentClient.companyName
       );
       setClientProjects(projectsForClient);
+    } else {
+      navigate("/clients");
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchClient();
   }, [clientId, navigate]);
 
-  const handleSaveClientForm = async (clientToSave: Partial<Client>) => {
-    if (!clientId) return;
-    const { error } = await supabase.from('clients').update(clientToSave).eq('id', clientId);
-    if (error) {
-      showError("Cập nhật thông tin thất bại.");
-    } else {
-      showSuccess("Thông tin client đã được cập nhật!");
-      fetchClient(); // Tải lại dữ liệu mới nhất
-    }
+  const handleUpdateClient = (updatedClient: Client) => {
+    const allClients = getClients();
+    const updatedClients = allClients.map((c: Client) =>
+      c.id === updatedClient.id ? updatedClient : c
+    );
+    setClients(updatedClients);
+    setClient(updatedClient);
   };
-  
-  const handleUpdateClientProfiles = async (updatedClient: Client) => {
-    // This function is for updating profiles from the ProfileList component
-    // It assumes the client object passed in has the latest profiles
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('client_id', updatedClient.id);
 
-    if (error) {
-      showError("Lỗi khi cập nhật hồ sơ.");
-      return;
-    }
-
-    if (updatedClient.profiles && updatedClient.profiles.length > 0) {
-      const profilesToInsert = updatedClient.profiles.map(p => ({
-        client_id: updatedClient.id,
-        name: p.name,
-        link: p.link,
-        status: p.status,
-        created_at: p.createdAt,
-      }));
-      
-      const { error: insertError } = await supabase.from('profiles').insert(profilesToInsert);
-      if (insertError) {
-        showError("Lỗi khi lưu hồ sơ mới.");
-        return;
-      }
-    }
-    
-    showSuccess("Hồ sơ đã được cập nhật!");
-    fetchClient();
+  const handleSaveClientForm = (clientToSave: Client) => {
+    handleUpdateClient(clientToSave);
+    showSuccess("Thông tin client đã được cập nhật!");
   };
 
   const projectStats = useMemo(() => {
@@ -109,14 +66,11 @@ const ClientDetailsPage = () => {
     };
   }, [clientProjects]);
 
-  if (loading || !client) {
-    return <MainLayout><div>Đang tải...</div></MainLayout>;
+  if (!client) {
+    return <MainLayout><div>Loading...</div></MainLayout>;
   }
   
-  const formatCurrency = (value: number | undefined) => {
-    if (value === undefined || isNaN(value)) return "0 ₫";
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  }
+  const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
   return (
     <MainLayout>
@@ -146,12 +100,12 @@ const ClientDetailsPage = () => {
               </CardContent>
               <CardContent className="space-y-4">
                 <InfoField label="Tên Client" value={client.name} />
-                <InfoField label="Người liên hệ" value={client.contact_person} />
+                <InfoField label="Người liên hệ" value={client.contactPerson} />
                 <InfoField label="Email" value={client.email} />
-                <InfoField label="Mail nhận hoá đơn" value={client.invoice_email} />
-                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contract_value)} />
-                <InfoField label="Phân loại" value={client.classification} />
-                <InfoField label="Nguồn" value={client.source} />
+                <InfoField label="Mail nhận hoá đơn" value={client.invoiceEmail || "Chưa có"} />
+                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contractValue)} />
+                <InfoField label="Phân loại" value={client.classification || "Chưa có"} />
+                <InfoField label="Nguồn" value={client.source || "Chưa có"} />
               </CardContent>
             </Card>
           </div>
@@ -253,7 +207,7 @@ const ClientDetailsPage = () => {
                 </Card>
               </TabsContent>
                <TabsContent value="profile" className="mt-4">
-                <ProfileList client={client} onUpdateClient={handleUpdateClientProfiles} />
+                <ProfileList client={client} onUpdateClient={handleUpdateClient} />
               </TabsContent>
             </Tabs>
           </div>

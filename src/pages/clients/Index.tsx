@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -47,10 +47,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { showSuccess, showError } from "@/utils/toast";
+import { showSuccess } from "@/utils/toast";
 import { Client } from "@/data/clients";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -77,9 +76,12 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
   );
 };
 
-const ClientsPage = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+interface ClientsPageProps {
+  clients: Client[];
+  setClients: (clients: Client[]) => void;
+}
+
+const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
@@ -92,35 +94,19 @@ const ClientsPage = () => {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-  const fetchClients = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('clients').select('*').order('creation_date', { ascending: false });
-    if (error) {
-      showError("Lỗi khi tải dữ liệu khách hàng.");
-      console.error(error);
-    } else {
-      setClients(data as Client[]);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
     
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (client.contact_person && client.contact_person.toLowerCase().includes(searchTerm.toLowerCase()));
+      client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
 
     if (dateFilter === 'thisMonth') {
-      if (!client.creation_date) return false;
+      if (!client.creationDate) return false;
       const now = new Date();
-      const creationDate = new Date(client.creation_date);
+      const creationDate = new Date(client.creationDate);
       if (creationDate.getMonth() !== now.getMonth() || creationDate.getFullYear() !== now.getFullYear()) {
         return false;
       }
@@ -131,19 +117,19 @@ const ClientsPage = () => {
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
-    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
+    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
     
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
     const clientsThisMonth = activeClients.filter(c => {
-      if (!c.creation_date) return false;
-      const creationDate = new Date(c.creation_date);
+      if (!c.creationDate) return false;
+      const creationDate = new Date(c.creationDate);
       return creationDate.getMonth() === currentMonth && creationDate.getFullYear() === currentYear;
     });
 
-    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
+    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     
@@ -170,49 +156,47 @@ const ClientsPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveClient = async (clientToSave: Partial<Client>) => {
-    const { error } = await supabase.from('clients').upsert(clientToSave);
-
-    if (error) {
-      showError("Lưu khách hàng thất bại.");
-      console.error("Supabase error:", error);
+  const handleSaveClient = (clientToSave: Client) => {
+    let updatedClients;
+    if (clients.some(c => c.id === clientToSave.id)) {
+      updatedClients = clients.map(c => c.id === clientToSave.id ? clientToSave : c);
+      showSuccess("Client đã được cập nhật!");
     } else {
-      showSuccess(clientToSave.id ? "Cập nhật khách hàng thành công!" : "Thêm khách hàng mới thành công!");
-      fetchClients();
+      updatedClients = [...clients, { ...clientToSave, id: new Date().toISOString(), archived: false }];
+      showSuccess("Client mới đã được thêm!");
     }
+    setClients(updatedClients);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!clientToDelete) return;
-    const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
-    if (error) {
-      showError("Xóa khách hàng thất bại.");
-      console.error(error);
-    } else {
-      showSuccess("Khách hàng đã được xóa.");
-      fetchClients();
-    }
+    const updatedClients = clients.filter(c => c.id !== clientToDelete.id);
+    setClients(updatedClients);
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
+    showSuccess("Client đã được xóa.");
   };
 
-  const handleBulkAction = async (action: 'archive' | 'restore' | 'delete') => {
-    if (selectedClients.length === 0) return;
-    
-    if (action === 'delete') {
-      const { error } = await supabase.from('clients').delete().in('id', selectedClients);
-      if (error) showError("Xóa hàng loạt thất bại.");
-      else showSuccess(`Đã xóa vĩnh viễn ${selectedClients.length} khách hàng.`);
-    } else {
-      const isArchiving = action === 'archive';
-      const { error } = await supabase.from('clients').update({ archived: isArchiving }).in('id', selectedClients);
-      if (error) showError(`${isArchiving ? 'Lưu trữ' : 'Khôi phục'} hàng loạt thất bại.`);
-      else showSuccess(`Đã ${isArchiving ? 'lưu trữ' : 'khôi phục'} ${selectedClients.length} khách hàng.`);
-    }
-    
+  const handleBulkArchive = () => {
+    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: true } : c);
+    setClients(updatedClients);
+    setSelectedClients([]);
+    showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
+  };
+
+  const handleBulkRestore = () => {
+    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: false } : c);
+    setClients(updatedClients);
+    setSelectedClients([]);
+    showSuccess(`${selectedClients.length} client đã được khôi phục.`);
+  };
+
+  const handleBulkDeleteConfirm = () => {
+    const updatedClients = clients.filter(c => !selectedClients.includes(c.id));
+    setClients(updatedClients);
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
-    fetchClients();
+    showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -230,14 +214,9 @@ const ClientsPage = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   }
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid Date";
     return date.toLocaleDateString('vi-VN');
-  }
-
-  if (loading) {
-    return <MainLayout><div>Đang tải dữ liệu...</div></MainLayout>;
   }
 
   return (
@@ -287,12 +266,12 @@ const ClientsPage = () => {
             {selectedClients.length > 0 && (
               <>
                 {showArchived ? (
-                  <Button variant="outline" onClick={() => handleBulkAction('restore')}>
+                  <Button variant="outline" onClick={handleBulkRestore}>
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Khôi phục ({selectedClients.length})
                   </Button>
                 ) : (
-                  <Button variant="outline" onClick={() => handleBulkAction('archive')}>
+                  <Button variant="outline" onClick={handleBulkArchive}>
                     <Archive className="mr-2 h-4 w-4" />
                     Lưu trữ ({selectedClients.length})
                   </Button>
@@ -335,15 +314,15 @@ const ClientsPage = () => {
                       {client.name}
                     </Link>
                   </TableCell>
-                  <TableCell>{client.contact_person}</TableCell>
-                  <TableCell>{formatCurrency(client.contract_value)}</TableCell>
+                  <TableCell>{client.contactPerson}</TableCell>
+                  <TableCell>{formatCurrency(client.contractValue)}</TableCell>
                   <TableCell>
-                    <a href={client.contract_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                    <a href={client.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                       <ExternalLink className="h-4 w-4 mr-1" />
                       Xem hợp đồng
                     </a>
                   </TableCell>
-                  <TableCell>{formatDate(client.creation_date)}</TableCell>
+                  <TableCell>{formatDate(client.creationDate)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" asChild>
@@ -390,7 +369,7 @@ const ClientsPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleBulkAction('delete')}>Xóa</AlertDialogAction>
+            <AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -23,19 +23,24 @@ import { internTasksData as initialInternTasks, InternTask } from "@/data/intern
 const queryClient = new QueryClient();
 
 const App = () => {
-  // State for features not yet migrated to Supabase
+  const [clients, setClientsState] = useState<Client[]>([]);
   const [projects, setProjectsState] = useState<Project[]>([]);
   const [personnel, setPersonnelState] = useState<Personnel[]>([]);
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [internTasks, setInternTasksState] = useState<InternTask[]>([]);
 
   useEffect(() => {
-    // These will be migrated to Supabase later
+    setClientsState(getClients() ?? initialClients);
     setProjectsState(getProjects() ?? initialProjects);
     setPersonnelState(getPersonnel() ?? initialPersonnel);
     setTasksState(getTasks() ?? initialTasks);
     setInternTasksState(getInternTasks() ?? initialInternTasks);
   }, []);
+
+  const handleSetClients = (newClients: Client[]) => {
+    setClientsState(newClients);
+    setClients(newClients);
+  };
 
   const handleSetProjects = (newProjects: Project[]) => {
     setProjectsState(newProjects);
@@ -65,9 +70,9 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/clients" element={<ClientsPage clients={clients} setClients={handleSetClients} />} />
             <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
-            <Route path="/projects" element={<ProjectsPage projects={projects} clients={[]} setProjects={handleSetProjects} />} />
+            <Route path="/projects" element={<ProjectsPage projects={projects} clients={clients} setProjects={handleSetProjects} />} />
             <Route path="/sales/leads" element={<LeadsPage />} />
             <Route path="/task-management" element={<TasksManagementPage tasks={tasks} setTasks={handleSetTasks} personnel={personnel} />} />
             <Route path="/interns" element={<InternsPage tasks={internTasks} setTasks={handleSetInternTasks} personnel={personnel} />} />

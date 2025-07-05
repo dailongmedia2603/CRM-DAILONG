@@ -29,17 +29,17 @@ export interface Project {
 export interface Client {
   id: string;
   name: string;
-  contact_person: string;
+  contactPerson: string;
   email: string;
   phone: string;
   location: string;
   status: "active" | "inactive";
   image?: string;
-  contract_value: number;
-  contract_link: string;
-  creation_date: string;
-  company_name: string;
-  invoice_email?: string;
+  contractValue: number;
+  contractLink: string;
+  creationDate: string;
+  companyName: string;
+  invoiceEmail?: string;
   classification?: string;
   source?: string;
   profiles?: Profile[];
@@ -50,16 +50,16 @@ export const clientsData: Client[] = [
     {
       id: "1",
       name: "Updated Client Name",
-      contact_person: "John Doe",
+      contactPerson: "John Doe",
       email: "john.doe@testclient.com",
       phone: "+1 (555) 123-4567",
       location: "New York, USA",
       status: "active",
-      contract_value: 0,
-      contract_link: "#",
-      creation_date: "2025-05-29",
-      company_name: "Updated Client Name",
-      invoice_email: "invoice@testclient.com",
+      contractValue: 0,
+      contractLink: "#",
+      creationDate: "2025-05-29",
+      companyName: "Updated Client Name",
+      invoiceEmail: "invoice@testclient.com",
       classification: "Cá nhân",
       source: "Giới thiệu",
       profiles: [
@@ -71,16 +71,16 @@ export const clientsData: Client[] = [
     {
       id: "2",
       name: "XYZ Industries",
-      contact_person: "Sarah Johnson",
+      contactPerson: "Sarah Johnson",
       email: "sarah.j@xyzindustries.com",
       phone: "+1 (555) 987-6543",
       location: "Chicago, USA",
       status: "active",
-      contract_value: 150000,
-      contract_link: "#",
-      creation_date: "2025-04-15",
-      company_name: "XYZ Industries",
-      invoice_email: "billing@xyz.com",
+      contractValue: 150000,
+      contractLink: "#",
+      creationDate: "2025-04-15",
+      companyName: "XYZ Industries",
+      invoiceEmail: "billing@xyz.com",
       classification: "Doanh nghiệp",
       source: "Website",
       profiles: [],
