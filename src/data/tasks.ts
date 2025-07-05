@@ -17,7 +17,6 @@ export interface Task {
   priority: 'Cao' | 'Trung bình' | 'Thấp';
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành';
   feedbackHistory: Feedback[];
-  reportLink?: string;
   createdAt: string;
 }
 
