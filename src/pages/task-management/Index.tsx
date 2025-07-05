@@ -186,12 +186,60 @@ const TasksManagementPage = ({ tasks, setTasks, personnel }: TasksManagementPage
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <TaskStatsCard title="Tổng Task" value={stats.total.toString()} icon={List} onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); }} isActive={statusFilter === 'all' && priorityFilter === 'all'} />
-          <TaskStatsCard title="Chưa làm" value={stats.todo.toString()} icon={Play} onClick={() => handleStatClick('status', 'Chưa làm')} isActive={statusFilter === 'Chưa làm'} />
-          <TaskStatsCard title="Hoàn thành" value={stats.completed.toString()} icon={CheckCircle} onClick={() => handleStatClick('status', 'Hoàn thành')} isActive={statusFilter === 'Hoàn thành'} />
-          <TaskStatsCard title="Ưu tiên Cao" value={stats.high.toString()} icon={List} className="border-red-500" onClick={() => handleStatClick('priority', 'Cao')} isActive={priorityFilter === 'Cao'} />
-          <TaskStatsCard title="Ưu tiên TB" value={stats.medium.toString()} icon={List} className="border-yellow-500" onClick={() => handleStatClick('priority', 'Trung bình')} isActive={priorityFilter === 'Trung bình'} />
-          <TaskStatsCard title="Ưu tiên Thấp" value={stats.low.toString()} icon={List} className="border-gray-500" onClick={() => handleStatClick('priority', 'Thấp')} isActive={priorityFilter === 'Thấp'} />
+          <TaskStatsCard 
+            title="Tổng Task" 
+            value={stats.total.toString()} 
+            subtitle="Tất cả công việc"
+            icon={List} 
+            iconBgColor="bg-blue-500"
+            onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); }} 
+            isActive={statusFilter === 'all' && priorityFilter === 'all'} 
+          />
+          <TaskStatsCard 
+            title="Chưa làm" 
+            value={stats.todo.toString()} 
+            subtitle="Công việc cần bắt đầu"
+            icon={Play} 
+            iconBgColor="bg-cyan-500"
+            onClick={() => handleStatClick('status', 'Chưa làm')} 
+            isActive={statusFilter === 'Chưa làm'} 
+          />
+          <TaskStatsCard 
+            title="Hoàn thành" 
+            value={stats.completed.toString()} 
+            subtitle="Công việc đã xong"
+            icon={CheckCircle} 
+            iconBgColor="bg-green-500"
+            onClick={() => handleStatClick('status', 'Hoàn thành')} 
+            isActive={statusFilter === 'Hoàn thành'} 
+          />
+          <TaskStatsCard 
+            title="Ưu tiên Cao" 
+            value={stats.high.toString()} 
+            subtitle="Cần làm ngay"
+            icon={AlertTriangle} 
+            iconBgColor="bg-red-500"
+            onClick={() => handleStatClick('priority', 'Cao')} 
+            isActive={priorityFilter === 'Cao'} 
+          />
+          <TaskStatsCard 
+            title="Ưu tiên TB" 
+            value={stats.medium.toString()} 
+            subtitle="Theo kế hoạch"
+            icon={Clock} 
+            iconBgColor="bg-amber-500"
+            onClick={() => handleStatClick('priority', 'Trung bình')} 
+            isActive={priorityFilter === 'Trung bình'} 
+          />
+          <TaskStatsCard 
+            title="Ưu tiên Thấp" 
+            value={stats.low.toString()} 
+            subtitle="Làm sau"
+            icon={ChevronDown} 
+            iconBgColor="bg-gray-500"
+            onClick={() => handleStatClick('priority', 'Thấp')} 
+            isActive={priorityFilter === 'Thấp'} 
+          />
         </div>
 
         <div className="flex justify-between items-center">
