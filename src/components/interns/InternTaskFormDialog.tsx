@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,10 +25,12 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    workLink: '',
     internName: '',
     deadline: new Date(),
     priority: 'Bình thường' as InternTask['priority'],
-    fileLink: '',
+    commentCount: 0,
+    postCount: 0,
   });
 
   useEffect(() => {
@@ -36,19 +38,23 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       setFormData({
         title: task.title,
         description: task.description,
+        workLink: task.workLink,
         internName: task.internName,
         deadline: new Date(task.deadline),
         priority: task.priority,
-        fileLink: task.fileLink,
+        commentCount: task.commentCount,
+        postCount: task.postCount,
       });
     } else {
       setFormData({
         title: '',
         description: '',
+        workLink: '',
         internName: '',
         deadline: new Date(),
         priority: 'Bình thường',
-        fileLink: '',
+        commentCount: 0,
+        postCount: 0,
       });
     }
   }, [task, open]);
@@ -79,43 +85,44 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{task ? "Chỉnh sửa công việc" : "Giao việc mới"}</DialogTitle>
-          <DialogDescription>Điền thông tin chi tiết cho công việc của thực tập sinh.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Tên công việc</Label>
-            <Input id="title" name="title" value={formData.title} onChange={handleChange} />
+            <Label htmlFor="title">Tiêu đề</Label>
+            <Input id="title" name="title" value={formData.title} onChange={handleChange} placeholder="Nhập tiêu đề công việc..." />
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Mô tả</Label>
-            <Textarea id="description" name="description" value={formData.description} onChange={handleChange} />
+            <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả chi tiết công việc..." />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="internName">Thực tập sinh</Label>
-              <Select value={formData.internName} onValueChange={(value) => handleSelectChange('internName', value)}>
-                <SelectTrigger><SelectValue placeholder="Chọn thực tập sinh" /></SelectTrigger>
-                <SelectContent>
-                  {interns.map(intern => (
-                    <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="deadline">Deadline</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.deadline ? format(formData.deadline, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={formData.deadline} onSelect={(date) => setFormData(prev => ({...prev, deadline: date || new Date()}))} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="workLink">Link làm việc</Label>
+            <Input id="workLink" name="workLink" value={formData.workLink} onChange={handleChange} placeholder="https://docs.google.com/... hoặc https://trello.com" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="internName">Thực tập sinh</Label>
+            <Select value={formData.internName} onValueChange={(value) => handleSelectChange('internName', value)}>
+              <SelectTrigger><SelectValue placeholder="Chọn thực tập sinh" /></SelectTrigger>
+              <SelectContent>
+                {interns.map(intern => (
+                  <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.deadline ? format(formData.deadline, "dd/MM/yyyy") : <span>dd/mm/yyyy</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar mode="single" selected={formData.deadline} onSelect={(date) => setFormData(prev => ({...prev, deadline: date || new Date()}))} initialFocus />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label htmlFor="priority">Ưu tiên</Label>
@@ -128,9 +135,15 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
               </SelectContent>
             </Select>
           </div>
-           <div className="space-y-2">
-            <Label htmlFor="fileLink">Link File</Label>
-            <Input id="fileLink" name="fileLink" value={formData.fileLink} onChange={handleChange} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="commentCount">Số lượng Comment</Label>
+              <Input id="commentCount" name="commentCount" type="number" value={formData.commentCount} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="postCount">Số lượng Post</Label>
+              <Input id="postCount" name="postCount" type="number" value={formData.postCount} onChange={handleChange} />
+            </div>
           </div>
         </div>
         <DialogFooter>

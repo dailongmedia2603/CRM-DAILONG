@@ -93,9 +93,9 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
         id: `ITASK-${Date.now()}`,
         commentStatus: 'Chờ xử lý',
         postStatus: 'Chờ xử lý',
-        fileCount: 0,
-        progressCount: 0,
         ...taskData,
+        commentCount: Number(taskData.commentCount) || 0,
+        postCount: Number(taskData.postCount) || 0,
       };
       updatedTasks = [...tasks, newTask];
       showSuccess("Đã giao việc mới thành công!");
@@ -164,16 +164,14 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead>THỰC TẬP SINH</TableHead>
-                <TableHead>DEADLINE</TableHead>
-                <TableHead>ƯU TIÊN</TableHead>
-                <TableHead>COMMENT</TableHead>
-                <TableHead>POST</TableHead>
-                <TableHead>FILE LÀM VIỆC</TableHead>
-                <TableHead>TIẾN ĐỘ</TableHead>
-                <TableHead>THAO TÁC</TableHead>
+              <TableRow className="bg-gray-50">
+                <TableHead className="w-[30%] hover:bg-gray-50">CÔNG VIỆC</TableHead>
+                <TableHead className="hover:bg-gray-50">THỰC TẬP SINH</TableHead>
+                <TableHead className="hover:bg-gray-50">DEADLINE</TableHead>
+                <TableHead className="hover:bg-gray-50">ƯU TIÊN</TableHead>
+                <TableHead className="hover:bg-gray-50">SL COMMENT</TableHead>
+                <TableHead className="hover:bg-gray-50">SL POST</TableHead>
+                <TableHead className="hover:bg-gray-50">THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,17 +186,15 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                   <TableCell>{task.internName}</TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleDateString('vi-VN')}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
-                  <TableCell><Badge className={cn("capitalize", getStatusBadge(task.commentStatus))}>{task.commentStatus}</Badge></TableCell>
-                  <TableCell><Badge className={cn("capitalize", getStatusBadge(task.postStatus))}>{task.postStatus}</Badge></TableCell>
                   <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.fileCount}</div>
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.commentCount}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.progressCount}</div>
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.postCount}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
-                      <a href={task.fileLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800">
+                      <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>

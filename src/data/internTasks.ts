@@ -7,9 +7,9 @@ export interface InternTask {
   priority: 'Cao' | 'Bình thường' | 'Thấp';
   commentStatus: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
   postStatus: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
-  fileCount: number;
-  progressCount: number;
-  fileLink: string;
+  commentCount: number;
+  postCount: number;
+  workLink: string;
 }
 
 export const internTasksData: InternTask[] = [
@@ -22,9 +22,9 @@ export const internTasksData: InternTask[] = [
     priority: 'Cao',
     commentStatus: 'Đang làm',
     postStatus: 'Đang làm',
-    fileCount: 8,
-    progressCount: 3,
-    fileLink: '#',
+    commentCount: 8,
+    postCount: 3,
+    workLink: '#',
   },
   {
     id: 'ITASK-002',
@@ -35,9 +35,9 @@ export const internTasksData: InternTask[] = [
     priority: 'Bình thường',
     commentStatus: 'Chờ xử lý',
     postStatus: 'Chờ xử lý',
-    fileCount: 3,
-    progressCount: 1,
-    fileLink: '#',
+    commentCount: 3,
+    postCount: 1,
+    workLink: '#',
   },
   {
     id: 'ITASK-003',
@@ -48,8 +48,8 @@ export const internTasksData: InternTask[] = [
     priority: 'Thấp',
     commentStatus: 'Hoàn thành',
     postStatus: 'Hoàn thành',
-    fileCount: 12,
-    progressCount: 5,
-    fileLink: '#',
+    commentCount: 12,
+    postCount: 5,
+    workLink: '#',
   },
 ];

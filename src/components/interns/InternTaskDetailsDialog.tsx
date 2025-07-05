@@ -57,14 +57,14 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
             <div className="space-y-4">
               <DetailItem icon={<User className="h-5 w-5" />} label="Thực tập sinh" value={task.internName} />
               <DetailItem icon={<Calendar className="h-5 w-5" />} label="Deadline" value={format(new Date(task.deadline), "dd/MM/yyyy")} />
-              <DetailItem icon={<Hash className="h-5 w-5" />} label="File làm việc" value={<Badge variant="secondary">{task.fileCount}</Badge>} />
-              <DetailItem icon={<BarChart className="h-5 w-5" />} label="Tiến độ" value={<Badge variant="secondary">{task.progressCount}</Badge>} />
+              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Số lượng Comment" value={<Badge variant="secondary">{task.commentCount}</Badge>} />
+              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Số lượng Post" value={<Badge variant="secondary">{task.postCount}</Badge>} />
             </div>
             <div className="space-y-4">
               <DetailItem icon={<AlertTriangle className="h-5 w-5" />} label="Ưu tiên" value={<Badge className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge>} />
-              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Comment" value={<Badge className={cn(getStatusBadge(task.commentStatus))}>{task.commentStatus}</Badge>} />
-              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Post" value={<Badge className={cn(getStatusBadge(task.postStatus))}>{task.postStatus}</Badge>} />
-              <DetailItem icon={<LinkIcon className="h-5 w-5" />} label="Link File" value={<a href={task.fileLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem link</a>} />
+              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Trạng thái Comment" value={<Badge className={cn(getStatusBadge(task.commentStatus))}>{task.commentStatus}</Badge>} />
+              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Trạng thái Post" value={<Badge className={cn(getStatusBadge(task.postStatus))}>{task.postStatus}</Badge>} />
+              <DetailItem icon={<LinkIcon className="h-5 w-5" />} label="Link làm việc" value={<a href={task.workLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem link</a>} />
             </div>
           </div>
         </div>
