@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import { InternTask } from '@/data/internTasks';
 import { Personnel } from '@/data/personnel';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
@@ -43,6 +44,8 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
 
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
@@ -65,15 +68,25 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
     setIsFormOpen(true);
   };
 
+  const handleOpenEditDialog = (task: InternTask) => {
+    setActiveTask(task);
+    setIsFormOpen(true);
+  };
+
   const handleOpenDetailsDialog = (task: InternTask) => {
     setActiveTask(task);
     setIsDetailsOpen(true);
   };
 
+  const handleOpenDeleteDialog = (task: InternTask) => {
+    setTaskToDelete(task);
+    setIsDeleteAlertOpen(true);
+  };
+
   const handleSaveTask = (taskData: any) => {
     let updatedTasks;
-    if (activeTask) {
-      updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, ...taskData } : t);
+    if (activeTask && activeTask.id) {
+      updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, ...taskData, id: activeTask.id } : t);
       showSuccess("Công việc đã được cập nhật!");
     } else {
       const newTask: InternTask = {
@@ -88,6 +101,16 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
       showSuccess("Đã giao việc mới thành công!");
     }
     setTasks(updatedTasks);
+    setIsFormOpen(false);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!taskToDelete) return;
+    const updatedTasks = tasks.filter(t => t.id !== taskToDelete.id);
+    setTasks(updatedTasks);
+    setIsDeleteAlertOpen(false);
+    setTaskToDelete(null);
+    showSuccess("Đã xóa công việc.");
   };
 
   const getPriorityBadge = (priority: InternTask['priority']) => {
@@ -141,7 +164,7 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
+              <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
                 <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>DEADLINE</TableHead>
@@ -157,8 +180,10 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
               {filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell>
-                    <p className="font-medium">{task.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">{task.description}</p>
+                    <div className="max-w-xs">
+                      <p className="font-medium truncate">{task.title}</p>
+                      <p className="text-sm text-muted-foreground truncate">{task.description}</p>
+                    </div>
                   </TableCell>
                   <TableCell>{task.internName}</TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleDateString('vi-VN')}</TableCell>
@@ -171,11 +196,15 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
                   <TableCell>
                     <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.progressCount}</div>
                   </TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    <a href={task.fileLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline">
-                      <ExternalLink className="h-4 w-4 mr-1" /> Link File
-                    </a>
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
+                  <TableCell>
+                    <div className="flex items-center gap-0">
+                      <a href={task.fileLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(task)}><Edit className="h-5 w-5" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(task)}><Trash2 className="h-5 w-5 text-red-500" /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -195,6 +224,20 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
         onOpenChange={setIsDetailsOpen}
         task={activeTask}
       />
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Công việc "{taskToDelete?.title}" sẽ bị xóa vĩnh viễn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };
