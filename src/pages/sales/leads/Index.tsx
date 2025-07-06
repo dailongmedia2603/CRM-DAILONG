@@ -446,6 +446,19 @@ const LeadsPage = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
+          <Select value={salesFilter} onValueChange={setSalesFilter}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Nhân viên sale" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả nhân viên</SelectItem>
+              {salesPersons.map((person) => (
+                <SelectItem key={person.id} value={person.id}>
+                  {person.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={potentialFilter} onValueChange={setPotentialFilter}>
             <SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiềm năng" /></SelectTrigger>
             <SelectContent>
