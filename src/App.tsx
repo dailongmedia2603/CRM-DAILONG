@@ -71,7 +71,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/clients" element={<ClientsPage clients={clients} setClients={handleSetClients} />} />
-            <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
+            <Route path="/clients/:clientId" element={<ClientDetailsPage clients={clients} setClients={handleSetClients} />} />
             <Route path="/projects" element={<ProjectsPage projects={projects} clients={clients} setProjects={handleSetProjects} />} />
             <Route path="/sales/leads" element={<LeadsPage />} />
             <Route path="/task-management" element={<TasksManagementPage tasks={tasks} setTasks={handleSetTasks} personnel={personnel} />} />

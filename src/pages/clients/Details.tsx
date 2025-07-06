@@ -10,7 +10,7 @@ import { Client, Project } from "@/data/clients";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ProfileList } from "@/components/clients/ProfileList";
 import { showSuccess } from "@/utils/toast";
-import { getClients, setClients, getProjects } from "@/utils/storage";
+import { getProjects } from "@/utils/storage";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,12 @@ const InfoField = ({ label, value }: { label: string; value: string | number }) 
   </div>
 );
 
-const ClientDetailsPage = () => {
+interface ClientDetailsPageProps {
+  clients: Client[];
+  setClients: (clients: Client[]) => void;
+}
+
+const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
@@ -29,8 +34,7 @@ const ClientDetailsPage = () => {
   const [clientProjects, setClientProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const allClients = getClients() || [];
-    const currentClient = allClients.find((c: Client) => c.id === clientId);
+    const currentClient = clients.find((c: Client) => c.id === clientId);
     
     if (currentClient) {
       setClient(currentClient);
@@ -39,22 +43,21 @@ const ClientDetailsPage = () => {
         (p: Project) => p.client === currentClient.companyName
       );
       setClientProjects(projectsForClient);
-    } else {
+    } else if (clients.length > 0) {
       navigate("/clients");
     }
-  }, [clientId, navigate]);
+  }, [clientId, navigate, clients]);
 
   const handleUpdateClient = (updatedClient: Client) => {
-    const allClients = getClients() || [];
-    const clientExists = allClients.some((c: Client) => c.id === updatedClient.id);
+    const clientExists = clients.some((c: Client) => c.id === updatedClient.id);
 
     let updatedClients;
     if (clientExists) {
-        updatedClients = allClients.map((c: Client) =>
+        updatedClients = clients.map((c: Client) =>
             c.id === updatedClient.id ? updatedClient : c
         );
     } else {
-        updatedClients = [...allClients, updatedClient];
+        updatedClients = [...clients, updatedClient];
     }
     
     setClients(updatedClients);
