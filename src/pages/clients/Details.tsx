@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, DollarSign, Briefcase, FileText } from "lucide-react";
-import { Client } from "@/data/clients";
+import { Client, Project } from "@/data/clients";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ProfileList } from "@/components/clients/ProfileList";
 import { showSuccess } from "@/utils/toast";
@@ -26,17 +26,17 @@ const ClientDetailsPage = () => {
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [clientProjects, setClientProjects] = useState<any[]>([]);
+  const [clientProjects, setClientProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const allClients = getClients();
+    const allClients = getClients() || [];
     const currentClient = allClients.find((c: Client) => c.id === clientId);
     
     if (currentClient) {
       setClient(currentClient);
-      const allProjects = getProjects();
+      const allProjects = getProjects() || [];
       const projectsForClient = allProjects.filter(
-        (p: any) => p.client === currentClient.companyName
+        (p: Project) => p.client === currentClient.companyName
       );
       setClientProjects(projectsForClient);
     } else {
@@ -45,10 +45,18 @@ const ClientDetailsPage = () => {
   }, [clientId, navigate]);
 
   const handleUpdateClient = (updatedClient: Client) => {
-    const allClients = getClients();
-    const updatedClients = allClients.map((c: Client) =>
-      c.id === updatedClient.id ? updatedClient : c
-    );
+    const allClients = getClients() || [];
+    const clientExists = allClients.some((c: Client) => c.id === updatedClient.id);
+
+    let updatedClients;
+    if (clientExists) {
+        updatedClients = allClients.map((c: Client) =>
+            c.id === updatedClient.id ? updatedClient : c
+        );
+    } else {
+        updatedClients = [...allClients, updatedClient];
+    }
+    
     setClients(updatedClients);
     setClient(updatedClient);
   };
