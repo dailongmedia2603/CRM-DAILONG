@@ -42,13 +42,10 @@ export const LeadFormDialog = ({
     name: "",
     phone: "",
     product: "",
-    createdBy: {
-      id: "",
-      name: "",
-    },
-    potential: "chưa xác định" as "tiềm năng" | "không tiềm năng" | "chưa xác định",
-    status: "đang suy nghĩ" as "đang làm việc" | "đang suy nghĩ" | "im ru" | "từ chối",
-    result: "chưa quyết định" as "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi",
+    createdBy: { id: "", name: "" },
+    potential: "chưa xác định",
+    status: "đang suy nghĩ",
+    result: "chưa quyết định",
   });
 
   useEffect(() => {
@@ -63,7 +60,6 @@ export const LeadFormDialog = ({
         result: lead.result || "chưa quyết định",
       });
     } else {
-      // Reset form for new lead
       setFormData({
         name: "",
         phone: "",
@@ -76,61 +72,27 @@ export const LeadFormDialog = ({
     }
   }, [lead, open]);
 
-  // Xử lý thay đổi input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Xử lý thay đổi select
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Xử lý chọn nhân viên sale
-  const handleSelectSalesPerson = (salesPersonId: string) => {
-    const selectedPerson = salesPersons.find((person) => person.id === salesPersonId);
-    
-    if (selectedPerson) {
-      setFormData((prev) => ({
-        ...prev,
-        createdBy: {
-          id: selectedPerson.id,
-          name: selectedPerson.name,
-        },
-      }));
+    if (name === "createdBy") {
+      const selectedPerson = salesPersons.find((person) => person.id === value);
+      if (selectedPerson) {
+        setFormData((prev) => ({ ...prev, createdBy: selectedPerson }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Xử lý submit form
   const handleSubmit = () => {
-    // Kiểm tra thông tin bắt buộc
-    if (!formData.name.trim()) {
-      showError("Vui lòng nhập tên lead");
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.product.trim() || !formData.createdBy.id) {
+      showError("Vui lòng điền đầy đủ các trường có dấu *.");
       return;
     }
-
-    if (!formData.phone.trim()) {
-      showError("Vui lòng nhập số điện thoại");
-      return;
-    }
-
-    if (!formData.product.trim()) {
-      showError("Vui lòng nhập sản phẩm quan tâm");
-      return;
-    }
-
-    if (!formData.createdBy.id) {
-      showError("Vui lòng chọn nhân viên sale");
-      return;
-    }
-
     onSave(formData);
   };
 
@@ -141,135 +103,74 @@ export const LeadFormDialog = ({
           <DialogTitle>{lead ? "Sửa thông tin lead" : "Thêm lead mới"}</DialogTitle>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Tên lead <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Nhập tên lead"
-            />
+        <div className="grid gap-6 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Tên lead <span className="text-red-500">*</span></Label>
+            <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nhập tên lead" />
           </div>
           
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="phone" className="text-right">
-              Số điện thoại <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Nhập số điện thoại"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="phone">Số điện thoại <span className="text-red-500">*</span></Label>
+            <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Nhập số điện thoại" />
           </div>
           
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="product" className="text-right">
-              Sản phẩm <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="product"
-              name="product"
-              value={formData.product}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Nhập sản phẩm quan tâm"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="product">Sản phẩm <span className="text-red-500">*</span></Label>
+            <Input id="product" name="product" value={formData.product} onChange={handleInputChange} placeholder="Nhập sản phẩm quan tâm" />
           </div>
           
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="salesPerson" className="text-right">
-              Nhân viên sale <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.createdBy.id}
-              onValueChange={handleSelectSalesPerson}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Chọn nhân viên sale" />
-              </SelectTrigger>
+          <div className="space-y-2">
+            <Label htmlFor="salesPerson">Nhân viên sale <span className="text-red-500">*</span></Label>
+            <Select value={formData.createdBy.id} onValueChange={(value) => handleSelectChange("createdBy", value)}>
+              <SelectTrigger><SelectValue placeholder="Chọn nhân viên sale" /></SelectTrigger>
               <SelectContent>
-                {salesPersons.map((person) => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
-                  </SelectItem>
-                ))}
+                {salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
               </SelectContent>
             </Select>
           </div>
           
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="potential" className="text-right">
-              Tiềm năng
-            </Label>
-            <Select
-              value={formData.potential}
-              onValueChange={(value) => handleSelectChange("potential", value)}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Chọn mức độ tiềm năng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tiềm năng">Tiềm năng</SelectItem>
-                <SelectItem value="không tiềm năng">Không tiềm năng</SelectItem>
-                <SelectItem value="chưa xác định">Chưa xác định</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">
-              Trạng thái chăm sóc
-            </Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleSelectChange("status", value)}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Chọn trạng thái chăm sóc" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="đang làm việc">Đang làm việc</SelectItem>
-                <SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem>
-                <SelectItem value="im ru">Im ru</SelectItem>
-                <SelectItem value="từ chối">Từ chối</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="result" className="text-right">
-              Kết quả bán hàng
-            </Label>
-            <Select
-              value={formData.result}
-              onValueChange={(value) => handleSelectChange("result", value)}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Chọn kết quả bán hàng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ký hợp đồng">Ký hợp đồng</SelectItem>
-                <SelectItem value="chưa quyết định">Chưa quyết định</SelectItem>
-                <SelectItem value="từ chối">Từ chối</SelectItem>
-                <SelectItem value="đang trao đổi">Đang trao đổi</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="potential">Tiềm năng</Label>
+              <Select value={formData.potential} onValueChange={(value) => handleSelectChange("potential", value)}>
+                <SelectTrigger><SelectValue placeholder="Chọn mức độ" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tiềm năng">Tiềm năng</SelectItem>
+                  <SelectItem value="không tiềm năng">Không tiềm năng</SelectItem>
+                  <SelectItem value="chưa xác định">Chưa xác định</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Trạng thái chăm sóc</Label>
+              <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
+                <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="đang làm việc">Đang làm việc</SelectItem>
+                  <SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem>
+                  <SelectItem value="im ru">Im ru</SelectItem>
+                  <SelectItem value="từ chối">Từ chối</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="result">Kết quả bán hàng</Label>
+              <Select value={formData.result} onValueChange={(value) => handleSelectChange("result", value)}>
+                <SelectTrigger><SelectValue placeholder="Chọn kết quả" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ký hợp đồng">Ký hợp đồng</SelectItem>
+                  <SelectItem value="chưa quyết định">Chưa quyết định</SelectItem>
+                  <SelectItem value="từ chối">Từ chối</SelectItem>
+                  <SelectItem value="đang trao đổi">Đang trao đổi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Hủy
-          </Button>
-          <Button onClick={handleSubmit}>{lead ? "Lưu thay đổi" : "Thêm Lead"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
+          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">{lead ? "Lưu thay đổi" : "Thêm Lead"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
