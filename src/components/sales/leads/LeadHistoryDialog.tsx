@@ -31,7 +31,7 @@ interface LeadHistoryDialogProps {
   leadName: string;
   leadId: string;
   history: LeadHistory[];
-  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; next_follow_up_date?: string; next_follow_up_content?: string; user_id: string; user_name: string; }) => void;
+  onAddHistory: (leadId: string, newHistoryData: Partial<LeadHistory>) => void;
 }
 
 export const LeadHistoryDialog = ({
@@ -48,7 +48,7 @@ export const LeadHistoryDialog = ({
   const [type, setType] = useState<"note" | "call" | "email" | "meeting">("note");
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | undefined>();
   
-  const sortedHistory = [...history].sort((a, b) => {
+  const sortedHistory = [...(history || [])].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
@@ -99,8 +99,8 @@ export const LeadHistoryDialog = ({
       type,
       next_follow_up_date: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
       next_follow_up_content: nextFollowUpContent.trim(),
-      user_id: "1", // Mock user id
-      user_name: "Current User" // Mock user name
+      user_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef", // Mock user id, replace with actual user id
+      user_name: "Current User" // Mock user name, replace with actual user name
     });
     showSuccess("Đã thêm lịch sử chăm sóc mới");
     
@@ -210,7 +210,7 @@ export const LeadHistoryDialog = ({
                   <div className="flex flex-col items-center">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>
-                        {item.user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        {item.user_name.split(' ').map(n => n[0]).join('').toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 w-[1px] bg-border mt-2"></div>
@@ -218,7 +218,7 @@ export const LeadHistoryDialog = ({
                   
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-1 text-sm font-medium">
-                      <span>{item.user.name}</span>
+                      <span>{item.user_name}</span>
                       <span className="text-muted-foreground mx-1">•</span>
                       <div className={cn("flex items-center rounded-full px-2 py-1 text-xs", getActivityColor(item.type))}>
                         {getActivityIcon(item.type)}

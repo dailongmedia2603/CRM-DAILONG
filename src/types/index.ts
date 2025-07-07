@@ -109,10 +109,8 @@ export interface InternTask {
 export interface LeadHistory {
     id: string;
     date: string;
-    user: {
-      id: string;
-      name: string;
-    };
+    user_id: string;
+    user_name: string;
     content: string;
     type: "note" | "call" | "email" | "meeting";
     next_follow_up_date?: string;
@@ -124,15 +122,13 @@ export interface Lead {
     name: string;
     phone: string;
     product: string;
-    created_by: {
-      id: string;
-      name: string;
-    };
+    created_by_id: string;
+    created_by_name: string;
     created_at: string;
     potential: "tiềm năng" | "không tiềm năng" | "chưa xác định";
     status: "đang làm việc" | "đang suy nghĩ" | "im ru" | "từ chối";
     result: "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi";
     archived: boolean;
-    history: LeadHistory[];
+    lead_history: LeadHistory[];
     next_follow_up_date?: string;
 }
