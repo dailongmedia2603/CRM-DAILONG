@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,9 +41,14 @@ export const LeadFormDialog = ({
     created_by_id: "",
     created_by_name: "",
     potential: "chưa xác định",
-    status: "đang suy nghĩ",
+    status: "đang làm việc",
     result: "chưa quyết định",
   });
+
+  const salesOnly = useMemo(() => 
+    salesPersons.filter(p => p.position.toLowerCase() === 'sale'), 
+    [salesPersons]
+  );
 
   useEffect(() => {
     if (lead) {
@@ -54,7 +59,7 @@ export const LeadFormDialog = ({
         created_by_id: lead.created_by_id || "",
         created_by_name: lead.created_by_name || "",
         potential: lead.potential || "chưa xác định",
-        status: lead.status || "đang suy nghĩ",
+        status: lead.status || "đang làm việc",
         result: lead.result || "chưa quyết định",
       });
     } else {
@@ -65,7 +70,7 @@ export const LeadFormDialog = ({
         created_by_id: "",
         created_by_name: "",
         potential: "chưa xác định",
-        status: "đang suy nghĩ",
+        status: "đang làm việc",
         result: "chưa quyết định",
       });
     }
@@ -78,7 +83,7 @@ export const LeadFormDialog = ({
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === "created_by_id") {
-      const selectedPerson = salesPersons.find((person) => person.id === value);
+      const selectedPerson = salesOnly.find((person) => person.id === value);
       if (selectedPerson) {
         setFormData((prev) => ({ 
           ...prev, 
@@ -127,7 +132,7 @@ export const LeadFormDialog = ({
             <Select value={formData.created_by_id} onValueChange={(value) => handleSelectChange("created_by_id", value)}>
               <SelectTrigger><SelectValue placeholder="Chọn nhân viên sale" /></SelectTrigger>
               <SelectContent>
-                {salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
+                {salesOnly.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
               </SelectContent>
             </Select>
           </div>
