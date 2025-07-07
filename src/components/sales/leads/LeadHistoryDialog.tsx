@@ -43,7 +43,7 @@ interface LeadHistoryDialogProps {
   leadName: string;
   leadId: string;
   history: LeadHistory[];
-  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; nextFollowUpDate?: string; nextFollowUpContent?: string; }) => void;
+  onAddHistory: (leadId: string, newHistoryData: { content: string; type: LeadHistory['type']; next_follow_up_date?: string; next_follow_up_content?: string; user_id: string; user_name: string; }) => void;
 }
 
 export const LeadHistoryDialog = ({
@@ -109,8 +109,10 @@ export const LeadHistoryDialog = ({
     onAddHistory(leadId, {
       content: content.trim(),
       type,
-      nextFollowUpDate: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
-      nextFollowUpContent: nextFollowUpContent.trim(),
+      next_follow_up_date: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
+      next_follow_up_content: nextFollowUpContent.trim(),
+      user_id: "1", // Mock user id
+      user_name: "Current User" // Mock user name
     });
     showSuccess("Đã thêm lịch sử chăm sóc mới");
     
