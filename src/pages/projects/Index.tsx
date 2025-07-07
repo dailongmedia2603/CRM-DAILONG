@@ -401,11 +401,11 @@ const ProjectsPage = () => {
             <Select
               value={`${pagination.pageSize}`}
               onValueChange={(value) => {
-                setPagination(prev => ({ ...prev, pageSize: Number(value) === 0 ? filteredProjects.length : Number(value) }));
+                setPagination(prev => ({ ...prev, pageSize: Number(value) }));
               }}
             >
               <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={pagination.pageSize} />
+                <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
                 {[20, 50, 100].map((pageSize) => (
