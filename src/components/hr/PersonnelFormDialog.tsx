@@ -92,6 +92,8 @@ export const PersonnelFormDialog = ({
     const dataToSave: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string } = {
       ...formData,
     };
+    
+    // Remove id and password fields if they are not needed
     if (personnel) {
       dataToSave.id = personnel.id;
     }
