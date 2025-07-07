@@ -60,19 +60,15 @@ const ClientDetailsPage = () => {
     fetchClientData();
   }, [clientId, navigate]);
 
-  const handleUpdateClient = async (updatedData: Partial<Client>) => {
+  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
     if (!client) return;
-    const { error } = await supabase.from('clients').update(updatedData).eq('id', client.id);
+    const { error } = await supabase.from('clients').update(clientToSave).eq('id', client.id);
     if (error) {
       showError("Lỗi khi cập nhật client.");
     } else {
       showSuccess("Thông tin client đã được cập nhật!");
       fetchClientData();
     }
-  };
-
-  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
-    await handleUpdateClient(clientToSave);
     setIsFormOpen(false);
   };
 
@@ -184,7 +180,7 @@ const ClientDetailsPage = () => {
                 </Card>
               </TabsContent>
                <TabsContent value="profile" className="mt-4">
-                <ProfileList client={client} onUpdateClient={handleUpdateClient} />
+                <ProfileList client={client} onUpdateClient={fetchClientData} />
               </TabsContent>
             </Tabs>
           </div>

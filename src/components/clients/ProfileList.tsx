@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { Client, Profile } from "@/types";
 import { ProfileFormDialog } from "./ProfileFormDialog";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfileListProps {
   client: Client;
-  onUpdateClient: (updatedClient: Client) => void;
+  onUpdateClient: () => void; // Callback to refetch client data
 }
 
 export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
@@ -22,25 +23,37 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
     setIsFormOpen(true);
   };
 
-  const handleSaveProfile = (profileToSave: Profile) => {
-    const existingProfiles = client.profiles || [];
-    let updatedProfiles;
+  const handleSaveProfile = async (profileData: Omit<Profile, 'id' | 'client_id' | 'created_at'> & { id?: string }) => {
+    if (profileToEdit) {
+      // Update existing profile
+      const { error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', profileToEdit.id);
 
-    if (existingProfiles.some(p => p.id === profileToSave.id)) {
-      updatedProfiles = existingProfiles.map(p => p.id === profileToSave.id ? profileToSave : p);
-      showSuccess("Hồ sơ đã được cập nhật!");
+      if (error) showError("Lỗi khi cập nhật hồ sơ.");
+      else showSuccess("Hồ sơ đã được cập nhật!");
     } else {
-      updatedProfiles = [...existingProfiles, profileToSave];
-      showSuccess("Hồ sơ mới đã được thêm!");
+      // Add new profile
+      const { error } = await supabase
+        .from('profiles')
+        .insert([{ ...profileData, client_id: client.id }]);
+
+      if (error) showError("Lỗi khi thêm hồ sơ mới.");
+      else showSuccess("Hồ sơ mới đã được thêm!");
     }
     
-    onUpdateClient({ ...client, profiles: updatedProfiles });
+    onUpdateClient(); // Trigger re-fetch in parent component
+    setIsFormOpen(false);
   };
 
-  const handleDeleteProfile = (profileId: string) => {
-    const updatedProfiles = (client.profiles || []).filter(p => p.id !== profileId);
-    onUpdateClient({ ...client, profiles: updatedProfiles });
-    showSuccess("Hồ sơ đã được xóa.");
+  const handleDeleteProfile = async (profileId: string) => {
+    const { error } = await supabase.from('profiles').delete().eq('id', profileId);
+    
+    if (error) showError("Lỗi khi xóa hồ sơ.");
+    else showSuccess("Hồ sơ đã được xóa.");
+
+    onUpdateClient(); // Trigger re-fetch in parent component
   };
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
