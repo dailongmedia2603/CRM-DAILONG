@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client } from "@/data/clients";
+import { Client } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -113,14 +113,14 @@ const ClientsPage = () => {
     
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
+      client.contact_person.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
 
     if (dateFilter === 'thisMonth') {
-      if (!client.creationDate) return false;
+      if (!client.creation_date) return false;
       const now = new Date();
-      const creationDate = new Date(client.creationDate);
+      const creationDate = new Date(client.creation_date);
       if (creationDate.getMonth() !== now.getMonth() || creationDate.getFullYear() !== now.getFullYear()) {
         return false;
       }
@@ -131,19 +131,19 @@ const ClientsPage = () => {
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
-    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
     
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
     const clientsThisMonth = activeClients.filter(c => {
-      if (!c.creationDate) return false;
-      const creationDate = new Date(c.creationDate);
+      if (!c.creation_date) return false;
+      const creationDate = new Date(c.creation_date);
       return creationDate.getMonth() === currentMonth && creationDate.getFullYear() === currentYear;
     });
 
-    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contractValue) || 0), 0);
+    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     
@@ -337,15 +337,15 @@ const ClientsPage = () => {
                         {client.name}
                       </Link>
                     </TableCell>
-                    <TableCell>{client.contactPerson}</TableCell>
-                    <TableCell>{formatCurrency(client.contractValue)}</TableCell>
+                    <TableCell>{client.contact_person}</TableCell>
+                    <TableCell>{formatCurrency(client.contract_value)}</TableCell>
                     <TableCell>
-                      <a href={client.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                      <a href={client.contract_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                         <ExternalLink className="h-4 w-4 mr-1" />
                         Xem hợp đồng
                       </a>
                     </TableCell>
-                    <TableCell>{formatDate(client.creationDate)}</TableCell>
+                    <TableCell>{formatDate(client.creation_date)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" asChild>

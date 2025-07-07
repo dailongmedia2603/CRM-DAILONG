@@ -10,17 +10,17 @@ export interface Profile {
 export interface Client {
   id: string;
   name: string;
-  contactPerson: string;
+  contact_person: string;
   email: string;
   phone: string;
   location: string;
   status: 'active' | 'inactive';
   image?: string;
-  contractValue: number;
-  contractLink: string;
-  creationDate: string;
-  companyName: string;
-  invoiceEmail: string;
+  contract_value: number;
+  contract_link: string;
+  creation_date: string;
+  company_name: string;
+  invoice_email: string;
   classification: 'Cá nhân' | 'Doanh nghiệp';
   source: 'Giới thiệu' | 'Website' | 'Sự kiện' | 'Khác';
   archived: boolean;
@@ -35,16 +35,16 @@ export interface Payment {
 export interface Project {
   id: string;
   name: string;
-  client: string;
+  client_name: string;
   client_id?: string;
   progress: number;
   team: { id: string; name: string; image?: string }[];
-  dueDate: string;
+  due_date: string;
   status: 'planning' | 'in-progress' | 'completed' | 'overdue' | 'on-hold';
-  contractValue: number;
+  contract_value: number;
   link: string;
   archived: boolean;
-  createdAt: string;
+  created_at: string;
   payments: Payment[];
 }
 
@@ -56,13 +56,13 @@ export interface Personnel {
   position: string;
   role: 'BOD' | 'Quản lý' | 'Nhân viên' | 'Thực tập';
   status: 'active' | 'inactive';
-  createdAt: string;
+  created_at: string;
 }
 
 export interface Feedback {
   id: string;
-  userId: string;
-  userName: string;
+  user_id: string;
+  user_name: string;
   message: string;
   timestamp: string;
 }
@@ -78,21 +78,21 @@ export interface Task {
   priority: 'Cao' | 'Trung bình' | 'Thấp';
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành';
   feedbackHistory: Feedback[];
-  createdAt: string;
+  created_at: string;
 }
 
 export interface InternTask {
   id: string;
   title: string;
   description: string;
-  internName: string;
+  intern_name: string;
   deadline: string;
   priority: 'Cao' | 'Bình thường' | 'Thấp';
-  commentStatus: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
-  postStatus: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
-  commentCount: number;
-  postCount: number;
-  workLink: string;
+  comment_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
+  post_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
+  comment_count: number;
+  post_count: number;
+  work_link: string;
 }
 
 export interface LeadHistory {
@@ -104,8 +104,8 @@ export interface LeadHistory {
     };
     content: string;
     type: "note" | "call" | "email" | "meeting";
-    nextFollowUpDate?: string;
-    nextFollowUpContent?: string;
+    next_follow_up_date?: string;
+    next_follow_up_content?: string;
 }
 
 export interface Lead {
@@ -113,15 +113,15 @@ export interface Lead {
     name: string;
     phone: string;
     product: string;
-    createdBy: {
+    created_by: {
       id: string;
       name: string;
     };
-    createdAt: string;
+    created_at: string;
     potential: "tiềm năng" | "không tiềm năng" | "chưa xác định";
     status: "đang làm việc" | "đang suy nghĩ" | "im ru" | "từ chối";
     result: "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi";
     archived: boolean;
     history: LeadHistory[];
-    nextFollowUpDate?: string;
+    next_follow_up_date?: string;
 }

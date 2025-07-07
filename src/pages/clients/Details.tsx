@@ -31,10 +31,9 @@ const ClientDetailsPage = () => {
   const fetchClientData = async () => {
     if (!clientId) return;
 
-    // Fetch client details
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
-      .select('*')
+      .select('*, profiles(*)')
       .eq('id', clientId)
       .single();
 
@@ -45,7 +44,6 @@ const ClientDetailsPage = () => {
     }
     setClient(clientData as Client);
 
-    // Fetch client projects
     const { data: projectsData, error: projectsError } = await supabase
       .from('projects')
       .select('*')
@@ -62,25 +60,24 @@ const ClientDetailsPage = () => {
     fetchClientData();
   }, [clientId, navigate]);
 
-  const handleUpdateClient = (updatedClient: Client) => {
-    setClient(updatedClient);
-    fetchClientData(); // Re-fetch to ensure data consistency
-  };
-
-  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+  const handleUpdateClient = async (updatedData: Partial<Client>) => {
     if (!client) return;
-    const { error } = await supabase.from('clients').update(clientToSave).eq('id', client.id);
+    const { error } = await supabase.from('clients').update(updatedData).eq('id', client.id);
     if (error) {
       showError("Lỗi khi cập nhật client.");
     } else {
       showSuccess("Thông tin client đã được cập nhật!");
       fetchClientData();
     }
+  };
+
+  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+    await handleUpdateClient(clientToSave);
     setIsFormOpen(false);
   };
 
   const projectStats = useMemo(() => {
-    const totalValue = clientProjects.reduce((sum, p) => sum + Number(p.contractValue || 0), 0);
+    const totalValue = clientProjects.reduce((sum, p) => sum + Number(p.contract_value || 0), 0);
     return {
       count: clientProjects.length,
       totalValue: totalValue,
@@ -119,10 +116,10 @@ const ClientDetailsPage = () => {
               </CardContent>
               <CardContent className="space-y-4">
                 <InfoField label="Tên Client" value={client.name} />
-                <InfoField label="Người liên hệ" value={client.contactPerson} />
+                <InfoField label="Người liên hệ" value={client.contact_person} />
                 <InfoField label="Email" value={client.email} />
-                <InfoField label="Mail nhận hoá đơn" value={client.invoiceEmail || "Chưa có"} />
-                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contractValue)} />
+                <InfoField label="Mail nhận hoá đơn" value={client.invoice_email || "Chưa có"} />
+                <InfoField label="Giá trị hợp đồng" value={formatCurrency(client.contract_value)} />
                 <InfoField label="Phân loại" value={client.classification || "Chưa có"} />
                 <InfoField label="Nguồn" value={client.source || "Chưa có"} />
               </CardContent>
@@ -155,7 +152,7 @@ const ClientDetailsPage = () => {
                         <div className="space-y-4">
                           {clientProjects.slice(0, 5).map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p></div>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.due_date).toLocaleDateString('vi-VN')}</p></div>
                               <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
@@ -175,7 +172,7 @@ const ClientDetailsPage = () => {
                         <div className="space-y-4">
                           {clientProjects.map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p></div>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.due_date).toLocaleDateString('vi-VN')}</p></div>
                               <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
