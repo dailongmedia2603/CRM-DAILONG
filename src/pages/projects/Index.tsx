@@ -51,6 +51,7 @@ import {
   XCircle,
   ExternalLink,
   RotateCcw,
+  AlertCircle as AlertCircleIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
@@ -58,6 +59,7 @@ import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { Client, Project } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
+import { differenceInDays, startOfToday } from 'date-fns';
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -275,14 +277,25 @@ const ProjectsPage = () => {
               filteredProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                 const debt = project.contract_value - totalPaid;
+                const today = startOfToday();
+                const endDate = project.end_date ? new Date(project.end_date) : null;
+                const isOverdue = endDate && endDate < today && project.status !== 'completed';
+                const overdueDays = endDate ? differenceInDays(today, endDate) : 0;
+
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
-                  <TableCell>
+                  <TableCell className={cn(isOverdue && "text-red-600")}>
                     <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
                     <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
+                    {isOverdue && (
+                      <div className="flex items-center font-bold mt-1">
+                        <AlertCircleIcon className="h-4 w-4 mr-1" />
+                        <span>Trễ {overdueDays} ngày</span>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
