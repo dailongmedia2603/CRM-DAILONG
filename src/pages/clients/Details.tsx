@@ -33,7 +33,7 @@ const ClientDetailsPage = () => {
 
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
-      .select('*, profiles(*)')
+      .select('*, profiles(*), profile_folders(*)')
       .eq('id', clientId)
       .single();
 
@@ -42,7 +42,14 @@ const ClientDetailsPage = () => {
       navigate("/clients");
       return;
     }
-    setClient(clientData as Client);
+    
+    const clientWithFolders = {
+      ...clientData,
+      folders: clientData.profile_folders,
+    };
+    delete clientWithFolders.profile_folders;
+
+    setClient(clientWithFolders as Client);
 
     const { data: projectsData, error: projectsError } = await supabase
       .from('projects')
@@ -60,7 +67,7 @@ const ClientDetailsPage = () => {
     fetchClientData();
   }, [clientId, navigate]);
 
-  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles' | 'folders'>) => {
     if (!client) return;
     const { error } = await supabase.from('clients').update(clientToSave).eq('id', client.id);
     if (error) {

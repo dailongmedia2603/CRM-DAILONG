@@ -1,6 +1,14 @@
+export interface ProfileFolder {
+  id: string;
+  name: string;
+  client_id: string;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   client_id: string;
+  folder_id?: string | null;
   name: string;
   link: string;
   status: 'KH check' | 'Đã ký' | 'Đã Ship' | 'Hoàn thành';
@@ -25,6 +33,7 @@ export interface Client {
   source: 'Giới thiệu' | 'Website' | 'Sự kiện' | 'Khác';
   archived: boolean;
   profiles?: Profile[];
+  folders?: ProfileFolder[];
 }
 
 export interface Payment {
