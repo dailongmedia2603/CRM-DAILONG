@@ -75,14 +75,36 @@ const HRPage = () => {
   };
 
   const fetchPositions = async () => {
-    // For simplicity, we'll hardcode positions. In a real app, this would fetch from a 'positions' table.
-    setPositions(['Software Engineer', 'Product Manager', 'UI/UX Designer', 'Marketing Specialist', 'HR Manager', 'Thực tập']);
+    const { data, error } = await supabase.from("positions").select("name");
+    if (error) showError("Lỗi khi tải dữ liệu vị trí.");
+    else setPositions(data.map(p => p.name));
   };
 
   useEffect(() => {
     fetchPersonnel();
     fetchPositions();
   }, []);
+
+  const handlePositionsChange = async (newPositions: string[]) => {
+    // This is a simplified approach. A more robust solution would compare old and new arrays.
+    // For now, we'll clear and re-insert. This is not ideal for production.
+    
+    // Delete all existing positions
+    const { error: deleteError } = await supabase.from('positions').delete().neq('name', 'dummy_value_to_delete_all');
+    if (deleteError) {
+      showError("Lỗi khi xóa vị trí cũ.");
+      return;
+    }
+
+    // Insert new positions
+    const { error: insertError } = await supabase.from('positions').insert(newPositions.map(name => ({ name })));
+    if (insertError) {
+      showError("Lỗi khi lưu vị trí mới.");
+      return;
+    }
+    
+    fetchPositions(); // Re-fetch to confirm
+  };
 
   const filteredPersonnel = useMemo(() =>
     personnel.filter(p =>
@@ -223,7 +245,7 @@ const HRPage = () => {
             </Card>
           </TabsContent>
           <TabsContent value="config" className="mt-6">
-            <PositionConfigTab positions={positions} onPositionsChange={setPositions} />
+            <PositionConfigTab positions={positions} onPositionsChange={handlePositionsChange} />
           </TabsContent>
         </Tabs>
       </div>
