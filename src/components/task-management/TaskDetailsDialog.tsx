@@ -6,7 +6,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Task } from "@/data/tasks";
+import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { User, Calendar, Link as LinkIcon, FileText } from "lucide-react";

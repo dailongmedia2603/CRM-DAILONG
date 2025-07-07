@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { InternTask } from "@/data/internTasks";
+import { InternTask } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle } from "lucide-react";

@@ -16,13 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Client } from "@/data/clients";
+import { Client } from "@/types";
 import { useEffect, useState } from "react";
 
 interface ClientFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (client: Client) => void;
+  onSave: (client: any) => void;
   client?: Client | null;
 }
 
@@ -61,9 +61,9 @@ export const ClientFormDialog = ({
       return;
     }
     onSave({
-      id: client?.id || new Date().toISOString(),
+      id: client?.id || undefined,
       ...formData,
-    } as Client);
+    });
     onOpenChange(false);
   };
 

@@ -6,11 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, DollarSign, Briefcase, FileText } from "lucide-react";
-import { Client, Project } from "@/data/clients";
+import { Client, Project } from "@/types";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ProfileList } from "@/components/clients/ProfileList";
-import { showSuccess } from "@/utils/toast";
-import { getProjects } from "@/utils/storage";
+import { showSuccess, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -21,52 +21,62 @@ const InfoField = ({ label, value }: { label: string; value: string | number }) 
   </div>
 );
 
-interface ClientDetailsPageProps {
-  clients: Client[];
-  setClients: (clients: Client[]) => void;
-}
-
-const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
+const ClientDetailsPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [clientProjects, setClientProjects] = useState<Project[]>([]);
 
-  useEffect(() => {
-    const currentClient = clients.find((c: Client) => c.id === clientId);
-    
-    if (currentClient) {
-      setClient(currentClient);
-      const allProjects = getProjects() || [];
-      const projectsForClient = allProjects.filter(
-        (p: Project) => p.client === currentClient.companyName
-      );
-      setClientProjects(projectsForClient);
-    } else if (clients.length > 0) {
+  const fetchClientData = async () => {
+    if (!clientId) return;
+
+    // Fetch client details
+    const { data: clientData, error: clientError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', clientId)
+      .single();
+
+    if (clientError || !clientData) {
+      showError("Không tìm thấy client.");
       navigate("/clients");
+      return;
     }
-  }, [clientId, navigate, clients]);
+    setClient(clientData as Client);
 
-  const handleUpdateClient = (updatedClient: Client) => {
-    const clientExists = clients.some((c: Client) => c.id === updatedClient.id);
+    // Fetch client projects
+    const { data: projectsData, error: projectsError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('client_id', clientId);
 
-    let updatedClients;
-    if (clientExists) {
-        updatedClients = clients.map((c: Client) =>
-            c.id === updatedClient.id ? updatedClient : c
-        );
+    if (projectsError) {
+      showError("Lỗi khi tải dự án của client.");
     } else {
-        updatedClients = [...clients, updatedClient];
+      setClientProjects(projectsData as Project[]);
     }
-    
-    setClients(updatedClients);
-    setClient(updatedClient);
   };
 
-  const handleSaveClientForm = (clientToSave: Client) => {
-    handleUpdateClient(clientToSave);
-    showSuccess("Thông tin client đã được cập nhật!");
+  useEffect(() => {
+    fetchClientData();
+  }, [clientId, navigate]);
+
+  const handleUpdateClient = (updatedClient: Client) => {
+    setClient(updatedClient);
+    fetchClientData(); // Re-fetch to ensure data consistency
+  };
+
+  const handleSaveClientForm = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+    if (!client) return;
+    const { error } = await supabase.from('clients').update(clientToSave).eq('id', client.id);
+    if (error) {
+      showError("Lỗi khi cập nhật client.");
+    } else {
+      showSuccess("Thông tin client đã được cập nhật!");
+      fetchClientData();
+    }
+    setIsFormOpen(false);
   };
 
   const projectStats = useMemo(() => {
@@ -86,7 +96,6 @@ const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
   return (
     <MainLayout>
       <div className="space-y-4">
-        {/* Header */}
         <div>
           <Button variant="ghost" onClick={() => navigate("/clients")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -97,7 +106,6 @@ const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Client Info */}
           <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardContent className="pt-6 flex flex-col items-center space-y-4">
@@ -121,68 +129,39 @@ const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
             </Card>
           </div>
 
-          {/* Right Column: Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview">
               <TabsList>
-                <TabsTrigger value="overview">
-                  <FileText className="mr-2 h-4 w-4" /> Tổng quan
-                </TabsTrigger>
-                <TabsTrigger value="projects">
-                  <Briefcase className="mr-2 h-4 w-4" /> Dự án ({projectStats.count})
-                </TabsTrigger>
-                <TabsTrigger value="profile">
-                  <FileText className="mr-2 h-4 w-4" /> Hồ sơ ({client.profiles?.length || 0})
-                </TabsTrigger>
+                <TabsTrigger value="overview"><FileText className="mr-2 h-4 w-4" /> Tổng quan</TabsTrigger>
+                <TabsTrigger value="projects"><Briefcase className="mr-2 h-4 w-4" /> Dự án ({projectStats.count})</TabsTrigger>
+                <TabsTrigger value="profile"><FileText className="mr-2 h-4 w-4" /> Hồ sơ ({client.profiles?.length || 0})</TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="mt-4">
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-green-50 border-green-200">
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-green-800">Giá trị hợp đồng</CardTitle>
-                        <DollarSign className="h-4 w-4 text-green-700" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-green-900">{formatCurrency(projectStats.totalValue)}</div>
-                        <p className="text-xs text-green-700">Tổng giá trị từ các dự án</p>
-                      </CardContent>
+                      <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium text-green-800">Giá trị hợp đồng</CardTitle><DollarSign className="h-4 w-4 text-green-700" /></CardHeader>
+                      <CardContent><div className="text-2xl font-bold text-green-900">{formatCurrency(projectStats.totalValue)}</div><p className="text-xs text-green-700">Tổng giá trị từ các dự án</p></CardContent>
                     </Card>
                     <Card className="bg-blue-50 border-blue-200">
-                       <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-800">Dự án</CardTitle>
-                        <Briefcase className="h-4 w-4 text-blue-700" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-blue-900">{projectStats.count}</div>
-                        <p className="text-xs text-blue-700">Tổng số dự án</p>
-                      </CardContent>
+                       <CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium text-blue-800">Dự án</CardTitle><Briefcase className="h-4 w-4 text-blue-700" /></CardHeader>
+                      <CardContent><div className="text-2xl font-bold text-blue-900">{projectStats.count}</div><p className="text-xs text-blue-700">Tổng số dự án</p></CardContent>
                     </Card>
                   </div>
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Dự án gần đây</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Dự án gần đây</CardTitle></CardHeader>
                     <CardContent>
                       {clientProjects.length > 0 ? (
                         <div className="space-y-4">
                           {clientProjects.slice(0, 5).map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div>
-                                <Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link>
-                                <p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p>
-                              </div>
-                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>
-                                {project.status}
-                              </Badge>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p></div>
+                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-48">
-                          <Briefcase className="h-12 w-12 text-muted-foreground" />
-                          <p className="mt-4 text-muted-foreground">Chưa có dự án nào</p>
-                        </div>
+                        <div className="flex flex-col items-center justify-center h-48"><Briefcase className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Chưa có dự án nào</p></div>
                       )}
                     </CardContent>
                   </Card>
@@ -190,29 +169,19 @@ const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
               </TabsContent>
               <TabsContent value="projects" className="mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Danh sách dự án</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle>Danh sách dự án</CardTitle></CardHeader>
                   <CardContent>
                       {clientProjects.length > 0 ? (
                         <div className="space-y-4">
                           {clientProjects.map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div>
-                                <Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link>
-                                <p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p>
-                              </div>
-                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>
-                                {project.status}
-                              </Badge>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.dueDate).toLocaleDateString('vi-VN')}</p></div>
+                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-48">
-                          <Briefcase className="h-12 w-12 text-muted-foreground" />
-                          <p className="mt-4 text-muted-foreground">Chưa có dự án nào</p>
-                        </div>
+                        <div className="flex flex-col items-center justify-center h-48"><Briefcase className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Chưa có dự án nào</p></div>
                       )}
                     </CardContent>
                 </Card>
@@ -225,13 +194,7 @@ const ClientDetailsPage = ({ clients, setClients }: ClientDetailsPageProps) => {
         </div>
       </div>
       
-      {/* Edit Dialog */}
-      <ClientFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSave={handleSaveClientForm}
-        client={client}
-      />
+      <ClientFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveClientForm} client={client} />
     </MainLayout>
   );
 };

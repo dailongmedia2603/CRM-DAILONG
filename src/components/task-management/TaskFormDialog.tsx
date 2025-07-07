@@ -10,8 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { showError } from "@/utils/toast";
-import { Personnel } from "@/data/personnel";
-import { Task } from "@/data/tasks";
+import { Personnel, Task } from "@/types";
 
 interface TaskFormDialogProps {
   open: boolean;

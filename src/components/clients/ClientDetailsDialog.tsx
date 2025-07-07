@@ -8,7 +8,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Mail, MapPin } from "lucide-react";
-import { Client } from "@/data/clients";
+import { Client } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ClientDetailsDialogProps {

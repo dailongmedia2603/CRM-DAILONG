@@ -10,8 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { showError } from "@/utils/toast";
-import { InternTask } from "@/data/internTasks";
-import { Personnel } from "@/data/personnel";
+import { InternTask, Personnel } from "@/types";
 
 interface InternTaskFormDialogProps {
   open: boolean;

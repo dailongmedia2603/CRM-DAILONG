@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Profile } from "@/data/clients";
+import { Profile } from "@/types";
 import { useEffect, useState } from "react";
 
 interface ProfileFormDialogProps {
@@ -39,7 +39,7 @@ export const ProfileFormDialog = ({
     } else {
       setFormData({
         status: "KH check",
-        createdAt: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString().split('T')[0],
       });
     }
   }, [profile, open]);

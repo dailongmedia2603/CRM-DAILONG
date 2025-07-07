@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   PlusCircle,
@@ -64,44 +63,44 @@ import {
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
-import { Client, Project } from "@/data/clients"; // Assuming Project is also in clients.ts now
-import { showSuccess } from "@/utils/toast";
+import { Client, Project } from "@/types";
+import { showSuccess, showError } from "@/utils/toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// --- DATA TYPES ---
-interface TeamMember {
-  id: string;
-  name: string;
-  image?: string;
-}
-
-// --- SAMPLE DATA ---
-const personnelData: TeamMember[] = [
-  { id: "1", name: "Alice" },
-  { id: "2", name: "Bob" },
-  { id: "3", name: "Charlie" },
-  { id: "4", name: "Diana" },
-];
-
-interface ProjectsPageProps {
-  projects: Project[];
-  clients: Client[];
-  setProjects: (projects: Project[]) => void;
-}
-
-const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => {
-  // --- STATE MANAGEMENT ---
+const ProjectsPage = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [personnelFilter, setPersonnelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [showArchived, setShowArchived] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   
-  // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    const [projectsRes, clientsRes] = await Promise.all([
+      supabase.from("projects").select("*"),
+      supabase.from("clients").select("id, companyName, name"),
+    ]);
+
+    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
+    else setProjects(projectsRes.data as Project[]);
+
+    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
+    else setClients(clientsRes.data as Client[]);
+    
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const statusTextMap: { [key: string]: string } = {
     planning: "Pending",
@@ -110,18 +109,15 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
     overdue: "Quá hạn",
   };
 
-  // --- FILTERING LOGIC ---
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
       if (project.archived !== showArchived) return false;
-      if (searchTerm && !`${project.client} ${project.name}`.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-      if (personnelFilter !== "all" && !project.team.some(member => member.id === personnelFilter)) return false;
+      if (searchTerm && !`${project.client_name} ${project.name}`.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (statusFilter !== "all" && project.status !== statusFilter) return false;
       return true;
     });
-  }, [projects, searchTerm, personnelFilter, statusFilter, showArchived]);
+  }, [projects, searchTerm, statusFilter, showArchived]);
 
-  // --- STATISTICS ---
   const stats = useMemo(() => {
     const activeProjects = projects.filter(p => !p.archived);
     return {
@@ -133,7 +129,6 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
     };
   }, [projects]);
 
-  // --- HANDLERS ---
   const handleOpenAddDialog = () => {
     setProjectToEdit(null);
     setIsFormOpen(true);
@@ -149,106 +144,93 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveProject = (projectData: any) => {
-    let updatedProjects;
+  const handleSaveProject = async (projectData: any) => {
     const saveData = {
       ...projectData,
       contractValue: Number(projectData.contractValue || 0),
     };
 
     if (projectToEdit) {
-      updatedProjects = projects.map(p => p.id === projectToEdit.id ? { ...p, ...saveData } : p);
-      showSuccess("Dự án đã được cập nhật!");
+      const { error } = await supabase.from('projects').update(saveData).eq('id', projectToEdit.id);
+      if (error) showError("Lỗi khi cập nhật dự án.");
+      else showSuccess("Dự án đã được cập nhật!");
     } else {
-      const newProject: Project = {
-        id: new Date().toISOString(),
-        ...saveData,
-        team: [],
-        progress: 0,
-        archived: false,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      updatedProjects = [...projects, newProject];
-      showSuccess("Dự án mới đã được thêm!");
+      const { error } = await supabase.from('projects').insert([saveData]);
+      if (error) showError("Lỗi khi thêm dự án mới.");
+      else showSuccess("Dự án mới đã được thêm!");
     }
-    setProjects(updatedProjects);
+    fetchData();
+    setIsFormOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!projectToDelete) return;
-    const updatedProjects = projects.filter(p => p.id !== projectToDelete.id);
-    setProjects(updatedProjects);
+    const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
+    if (error) showError("Lỗi khi xóa dự án.");
+    else showSuccess("Dự án đã được xóa.");
+    fetchData();
     setIsDeleteAlertOpen(false);
     setProjectToDelete(null);
-    showSuccess("Dự án đã được xóa.");
   };
 
-  const handleTogglePaymentStatus = (projectId: string, paymentIndex: number) => {
-    const updatedProjects = projects.map(p => {
-        if (p.id === projectId) {
-            const newPayments = [...p.payments];
-            newPayments[paymentIndex].paid = !newPayments[paymentIndex].paid;
-            return { ...p, payments: newPayments };
-        }
-        return p;
-    });
-    setProjects(updatedProjects);
+  const handleTogglePaymentStatus = async (projectId: string, paymentIndex: number) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const newPayments = [...project.payments];
+    newPayments[paymentIndex].paid = !newPayments[paymentIndex].paid;
+    const { error } = await supabase.from('projects').update({ payments: newPayments }).eq('id', projectId);
+    if (error) showError("Lỗi khi cập nhật thanh toán.");
+    else fetchData();
   };
 
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
   const handleSelectRow = (id: string, checked: boolean) => setSelectedProjects(checked ? [...selectedProjects, id] : selectedProjects.filter((pId) => pId !== id));
   
-  const handleBulkArchive = () => {
-    const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: true } : p);
-    setProjects(updatedProjects);
-    setSelectedProjects([]);
-    showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
+  const handleBulkArchive = async () => {
+    const { error } = await supabase.from('projects').update({ archived: true }).in('id', selectedProjects);
+    if (error) showError("Lỗi khi lưu trữ dự án.");
+    else {
+      showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
+      fetchData();
+      setSelectedProjects([]);
+    }
   };
 
-  const handleBulkRestore = () => {
-    const updatedProjects = projects.map(p => selectedProjects.includes(p.id) ? { ...p, archived: false } : p);
-    setProjects(updatedProjects);
-    setSelectedProjects([]);
-    showSuccess(`${selectedProjects.length} dự án đã được khôi phục.`);
+  const handleBulkRestore = async () => {
+    const { error } = await supabase.from('projects').update({ archived: false }).in('id', selectedProjects);
+    if (error) showError("Lỗi khi khôi phục dự án.");
+    else {
+      showSuccess(`${selectedProjects.length} dự án đã được khôi phục.`);
+      fetchData();
+      setSelectedProjects([]);
+    }
   };
 
-  const handleBulkDeleteConfirm = () => {
-    const updatedProjects = projects.filter(p => !selectedProjects.includes(p.id));
-    setProjects(updatedProjects);
-    setSelectedProjects([]);
+  const handleBulkDeleteConfirm = async () => {
+    const { error } = await supabase.from('projects').delete().in('id', selectedProjects);
+    if (error) showError("Lỗi khi xóa dự án.");
+    else {
+      showSuccess(`${selectedProjects.length} dự án đã được xóa vĩnh viễn.`);
+      fetchData();
+      setSelectedProjects([]);
+    }
     setIsBulkDeleteAlertOpen(false);
-    showSuccess(`${selectedProjects.length} dự án đã được xóa vĩnh viễn.`);
   };
 
   const handleStatusFilterClick = (status: string) => setStatusFilter(prev => prev === status ? "all" : status);
 
-  // --- HELPER FUNCTIONS ---
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('vi-VN');
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Quản lý Dự án</h1>
             <p className="text-muted-foreground">Theo dõi, quản lý và phân tích tất cả các dự án của bạn.</p>
           </div>
-          <Popover>
-            <PopoverTrigger asChild><Button variant="outline"><CalendarIcon className="mr-2 h-4 w-4" />Thời gian</Button></PopoverTrigger>
-            <PopoverContent className="w-80">
-              <Tabs defaultValue="month">
-                <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="month">Tháng</TabsTrigger><TabsTrigger value="quarter">Quý</TabsTrigger><TabsTrigger value="year">Năm</TabsTrigger></TabsList>
-                <TabsContent value="month" className="space-y-4 pt-4"><Select><SelectTrigger><SelectValue placeholder="Chọn năm" /></SelectTrigger><SelectContent><SelectItem value="2024">2024</SelectItem></SelectContent></Select><Select><SelectTrigger><SelectValue placeholder="Chọn tháng" /></SelectTrigger><SelectContent><SelectItem value="7">Tháng 7</SelectItem></SelectContent></Select></TabsContent>
-                <TabsContent value="quarter" className="space-y-4 pt-4"><Select><SelectTrigger><SelectValue placeholder="Chọn năm" /></SelectTrigger><SelectContent><SelectItem value="2024">2024</SelectItem></SelectContent></Select><Select><SelectTrigger><SelectValue placeholder="Chọn quý" /></SelectTrigger><SelectContent><SelectItem value="q3">Quý 3</SelectItem></SelectContent></Select></TabsContent>
-                <TabsContent value="year" className="space-y-4 pt-4"><Select><SelectTrigger><SelectValue placeholder="Chọn năm" /></SelectTrigger><SelectContent><SelectItem value="2024">2024</SelectItem></SelectContent></Select></TabsContent>
-              </Tabs>
-            </PopoverContent>
-          </Popover>
         </div>
 
-        {/* Statistics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <ProjectStatsCard title="Tổng dự án" value={stats.total} description="Dự án đang hoạt động" icon={Folder} onClick={() => handleStatusFilterClick("all")} isActive={statusFilter === "all"} iconBgColor="bg-blue-500" />
           <ProjectStatsCard title="Đang chạy" value={stats.inProgress} description="Dự án đang triển khai" icon={Clock} onClick={() => handleStatusFilterClick("in-progress")} isActive={statusFilter === "in-progress"} iconBgColor="bg-cyan-500" />
@@ -257,34 +239,19 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
           <ProjectStatsCard title="Quá hạn" value={stats.overdue} description="Dự án trễ deadline" icon={XCircle} onClick={() => handleStatusFilterClick("overdue")} isActive={statusFilter === "overdue"} iconBgColor="bg-red-500" />
         </div>
 
-        {/* Toolbar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4 flex-1 w-full">
             <div className="relative w-full md:w-auto md:flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm dự án..." className="pl-8 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-            <Select value={personnelFilter} onValueChange={setPersonnelFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Nhân sự" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân sự</SelectItem>{personnelData.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiến độ" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả tiến độ</SelectItem><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent></Select>
             <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Dự án hoạt động" : "Dự án lưu trữ"}</Button>
-            <Button variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
             {selectedProjects.length > 0 && (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button></DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {showArchived ? (
-                    <DropdownMenuItem onClick={handleBulkRestore}>
-                      <RotateCcw className="mr-2 h-4 w-4" /> Khôi phục
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={handleBulkArchive}>
-                      <Archive className="mr-2 h-4 w-4" /> Lưu trữ
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500">
-                    <Trash2 className="mr-2 h-4 w-4" /> Xóa
-                  </DropdownMenuItem>
+                  {showArchived ? (<DropdownMenuItem onClick={handleBulkRestore}><RotateCcw className="mr-2 h-4 w-4" /> Khôi phục</DropdownMenuItem>) : (<DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem>)}
+                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -292,7 +259,6 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
           </div>
         </div>
 
-        {/* Project List */}
         <div className="rounded-lg border">
           <Table>
             <TableHeader>
@@ -310,13 +276,14 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProjects.map(project => {
+              {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
+              filteredProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                 const debt = project.contractValue - totalPaid;
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
-                  <TableCell>{project.client}</TableCell>
+                  <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
                   <TableCell>{formatCurrency(project.contractValue)}</TableCell>
                   <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
@@ -326,33 +293,13 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
                       {(project.payments || []).map((payment, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <span>{formatCurrency(payment.amount)}</span>
-                          <CheckCircle
-                            className={cn(
-                              "h-4 w-4 cursor-pointer",
-                              payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400"
-                            )}
-                            onClick={() => handleTogglePaymentStatus(project.id, index)}
-                          />
+                          <CheckCircle className={cn("h-4 w-4 cursor-pointer", payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400")} onClick={() => handleTogglePaymentStatus(project.id, index)} />
                         </div>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        {
-                          "bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress",
-                          "bg-green-100 text-green-800 border-green-200": project.status === "completed",
-                          "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning",
-                          "bg-red-100 text-red-800 border-red-200": project.status === "overdue",
-                        }
-                      )}
-                    >
-                      {statusTextMap[project.status]}
-                    </Badge>
-                  </TableCell>
+                  <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
                   <TableCell className="text-right px-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -373,30 +320,14 @@ const ProjectsPage = ({ projects, clients, setProjects }: ProjectsPageProps) => 
       <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Xóa</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm}>Xóa</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn {selectedProjects.length} dự án đã chọn.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn {selectedProjects.length} dự án đã chọn.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </MainLayout>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send } from "lucide-react";
-import { Feedback } from "@/data/tasks";
+import { Feedback } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from 'date-fns/locale';
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ExternalLink } from "lucide-react";
-import { Client, Profile } from "@/data/clients";
+import { Client, Profile } from "@/types";
 import { ProfileFormDialog } from "./ProfileFormDialog";
 import { showSuccess } from "@/utils/toast";
 
@@ -78,7 +78,7 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
                 <TableCell>
                   <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">{profile.status}</Badge>
                 </TableCell>
-                <TableCell>{formatDate(profile.createdAt)}</TableCell>
+                <TableCell>{formatDate(profile.created_at)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={() => handleOpenForm(profile)}>

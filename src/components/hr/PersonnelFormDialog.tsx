@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Personnel } from "@/data/personnel";
+import { Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 
 interface PersonnelFormDialogProps {

@@ -30,19 +30,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Search, MoreHorizontal, Users, UserCheck, UserX } from "lucide-react";
-import { Personnel } from "@/data/personnel";
+import { Personnel } from "@/types";
 import { PersonnelFormDialog } from "@/components/hr/PersonnelFormDialog";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PositionConfigTab } from '@/components/hr/PositionConfigTab';
-import { getPositions, setPositions } from '@/utils/storage';
-import { initialPositions } from '@/data/positions';
-
-interface HRPageProps {
-  personnel: Personnel[];
-  setPersonnel: (personnel: Personnel[]) => void;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -62,23 +56,33 @@ const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: Reac
   );
 };
 
-const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
+const HRPage = () => {
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel | null>(null);
-  const [positions, setPositionsState] = useState<string[]>([]);
+
+  const fetchPersonnel = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("personnel").select("*");
+    if (error) showError("Lỗi khi tải dữ liệu nhân sự.");
+    else setPersonnel(data as Personnel[]);
+    setLoading(false);
+  };
+
+  const fetchPositions = async () => {
+    // For simplicity, we'll hardcode positions. In a real app, this would fetch from a 'positions' table.
+    setPositions(['Software Engineer', 'Product Manager', 'UI/UX Designer', 'Marketing Specialist', 'HR Manager', 'Thực tập']);
+  };
 
   useEffect(() => {
-    const storedPositions = getPositions();
-    setPositionsState(storedPositions ?? initialPositions);
+    fetchPersonnel();
+    fetchPositions();
   }, []);
-
-  const handleSetPositions = (newPositions: string[]) => {
-    setPositionsState(newPositions);
-    setPositions(newPositions);
-  };
 
   const filteredPersonnel = useMemo(() =>
     personnel.filter(p =>
@@ -108,34 +112,29 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSavePersonnel = (data: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => {
-    let updatedPersonnel;
-    if (data.id) {
-      updatedPersonnel = personnel.map(p =>
-        p.id === data.id ? { ...p, ...data, email: data.email, name: data.name, position: data.position, role: data.role, status: data.status } : p
-      );
-      showSuccess("Cập nhật thông tin nhân sự thành công!");
+  const handleSavePersonnel = async (data: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => {
+    const { id, ...personnelData } = data;
+    if (id) {
+      const { error } = await supabase.from('personnel').update(personnelData).eq('id', id);
+      if (error) showError("Lỗi khi cập nhật nhân sự.");
+      else showSuccess("Cập nhật thông tin thành công!");
     } else {
-      const newPersonnel: Personnel = {
-        id: `user-${new Date().getTime()}`,
-        createdAt: new Date().toISOString(),
-        ...data,
-        role: data.role,
-        status: data.status,
-      };
-      updatedPersonnel = [...personnel, newPersonnel];
-      showSuccess("Thêm nhân sự mới thành công!");
+      const { error } = await supabase.from('personnel').insert([personnelData]);
+      if (error) showError("Lỗi khi thêm nhân sự mới.");
+      else showSuccess("Thêm nhân sự mới thành công!");
     }
-    setPersonnel(updatedPersonnel);
+    fetchPersonnel();
+    setIsFormOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!personnelToDelete) return;
-    const updatedPersonnel = personnel.filter(p => p.id !== personnelToDelete.id);
-    setPersonnel(updatedPersonnel);
+    const { error } = await supabase.from('personnel').delete().eq('id', personnelToDelete.id);
+    if (error) showError("Lỗi khi xóa nhân sự.");
+    else showSuccess("Đã xóa nhân sự.");
+    fetchPersonnel();
     setIsDeleteAlertOpen(false);
     setPersonnelToDelete(null);
-    showSuccess("Đã xóa nhân sự.");
   };
 
   const getRoleBadge = (role: Personnel['role']) => {
@@ -192,7 +191,8 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPersonnel.map((p) => (
+                  {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
+                  filteredPersonnel.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ const HRPage = ({ personnel, setPersonnel }: HRPageProps) => {
             </Card>
           </TabsContent>
           <TabsContent value="config" className="mt-6">
-            <PositionConfigTab positions={positions} onPositionsChange={handleSetPositions} />
+            <PositionConfigTab positions={positions} onPositionsChange={setPositions} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2 } from 'lucide-react';
-import { InternTask } from '@/data/internTasks';
-import { Personnel } from '@/data/personnel';
+import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
-import { showSuccess } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -33,19 +33,36 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.E
   );
 };
 
-interface InternsPageProps {
-  tasks: InternTask[];
-  setTasks: (tasks: InternTask[]) => void;
-  personnel: Personnel[];
-}
-
-const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
+const InternsPage = () => {
+  const [tasks, setTasks] = useState<InternTask[]>([]);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    const [tasksRes, personnelRes] = await Promise.all([
+      supabase.from("intern_tasks").select("*"),
+      supabase.from("personnel").select("*").eq('role', 'Thực tập'),
+    ]);
+
+    if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
+    else setTasks(tasksRes.data as InternTask[]);
+
+    if (personnelRes.error) showError("Lỗi khi tải dữ liệu thực tập sinh.");
+    else setPersonnel(personnelRes.data as Personnel[]);
+    
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
@@ -83,34 +100,28 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveTask = (taskData: any) => {
-    let updatedTasks;
+  const handleSaveTask = async (taskData: any) => {
     if (activeTask && activeTask.id) {
-      updatedTasks = tasks.map(t => t.id === activeTask.id ? { ...t, ...taskData, id: activeTask.id } : t);
-      showSuccess("Công việc đã được cập nhật!");
+      const { error } = await supabase.from('intern_tasks').update(taskData).eq('id', activeTask.id);
+      if (error) showError("Lỗi khi cập nhật công việc.");
+      else showSuccess("Công việc đã được cập nhật!");
     } else {
-      const newTask: InternTask = {
-        id: `ITASK-${Date.now()}`,
-        commentStatus: 'Chờ xử lý',
-        postStatus: 'Chờ xử lý',
-        ...taskData,
-        commentCount: Number(taskData.commentCount) || 0,
-        postCount: Number(taskData.postCount) || 0,
-      };
-      updatedTasks = [...tasks, newTask];
-      showSuccess("Đã giao việc mới thành công!");
+      const { error } = await supabase.from('intern_tasks').insert([taskData]);
+      if (error) showError("Lỗi khi giao việc mới.");
+      else showSuccess("Đã giao việc mới thành công!");
     }
-    setTasks(updatedTasks);
+    fetchData();
     setIsFormOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!taskToDelete) return;
-    const updatedTasks = tasks.filter(t => t.id !== taskToDelete.id);
-    setTasks(updatedTasks);
+    const { error } = await supabase.from('intern_tasks').delete().eq('id', taskToDelete.id);
+    if (error) showError("Lỗi khi xóa công việc.");
+    else showSuccess("Đã xóa công việc.");
+    fetchData();
     setIsDeleteAlertOpen(false);
     setTaskToDelete(null);
-    showSuccess("Đã xóa công việc.");
   };
 
   const getPriorityBadge = (priority: InternTask['priority']) => {
@@ -167,7 +178,8 @@ const InternsPage = ({ tasks, setTasks, personnel }: InternsPageProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map(task => (
+              {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
+              filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell>
                     <div className="max-w-xs">

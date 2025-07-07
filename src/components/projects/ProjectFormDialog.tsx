@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Client } from "@/data/clients";
+import { Client } from "@/types";
 import { PlusCircle, X } from "lucide-react";
 
 interface Payment {
