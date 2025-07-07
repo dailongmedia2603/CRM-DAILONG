@@ -70,7 +70,11 @@ import {
   Archive,
   RotateCcw,
   Calendar as CalendarIcon,
-  ChevronDown
+  ChevronDown,
+  ChevronsLeft,
+  ChevronRight,
+  ChevronsRight,
+  ChevronLeft
 } from "lucide-react";
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
@@ -109,10 +113,12 @@ const LeadsPage = () => {
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+
   const fetchData = async () => {
     setLoading(true);
     const [leadsRes, salesRes] = await Promise.all([
-        supabase.from("leads").select("*, lead_history(*)"),
+        supabase.from("leads").select("*, lead_history(*)").order('created_at', { ascending: false }),
         supabase.from("personnel").select("*")
     ]);
 
@@ -161,6 +167,19 @@ const LeadsPage = () => {
       return isArchivedMatch && isSalesMatch && isStatusMatch && isSearchMatch && isFollowUpMatch;
     });
   }, [leads, searchTerm, salesFilter, statusFilter, archivedFilter, followUpFilter, specificDateFilter]);
+
+  const paginatedLeads = useMemo(() => {
+    const { pageIndex, pageSize } = pagination;
+    if (pageSize === 0) return filteredLeads;
+    const start = pageIndex * pageSize;
+    const end = start + pageSize;
+    return filteredLeads.slice(start, end);
+  }, [filteredLeads, pagination]);
+
+  const pageCount = useMemo(() => {
+    if (pagination.pageSize === 0) return 1;
+    return Math.ceil(filteredLeads.length / pagination.pageSize);
+  }, [filteredLeads, pagination.pageSize]);
 
   const stats = useMemo(() => ({
     totalLeads: filteredLeads.length,
@@ -281,38 +300,36 @@ const LeadsPage = () => {
           <LeadStatsCard title="Từ chối" value={stats.rejected.toString()} icon={X} variant="destructive" />
         </div>
         
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-          <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-          <div className="flex w-full md:w-auto space-x-4">
-            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
-                  </PopoverContent>
-                </Popover>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button onClick={handleOpenAddDialog} className="whitespace-nowrap"><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
-          </div>
+        <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+          <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+          <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full md:w-auto">
+                Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
-        <div className="flex justify-start items-center">
+        <div className="flex justify-between items-center">
           <div className="flex space-x-2">{selectedLeads.length > 0 && (<><Button variant="outline" onClick={() => handleBulkAction(archivedFilter === 'active' ? 'archive' : 'restore')}><Archive className="h-4 w-4 mr-2" />{archivedFilter === 'active' ? 'Lưu trữ' : 'Khôi phục'} ({selectedLeads.length})</Button><Button variant="destructive" onClick={() => handleBulkAction('delete')}><Trash2 className="h-4 w-4 mr-2" />Xóa ({selectedLeads.length})</Button></>)}</div>
+          <Button onClick={handleOpenAddDialog}><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
         </div>
         
         <Card>
@@ -323,8 +340,8 @@ const LeadsPage = () => {
                 <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale tạo</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Ngày CS tiếp</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {loading ? <TableRow><TableCell colSpan={12} className="text-center h-24">Đang tải...</TableCell></TableRow> :
-                  filteredLeads.length === 0 ? (<TableRow><TableCell colSpan={12} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
-                    filteredLeads.map((lead) => (
+                  paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={12} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
+                    paginatedLeads.map((lead) => (
                       <TableRow key={lead.id}>
                         <TableCell><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={() => handleSelectLead(lead.id)} /></TableCell>
                         <TableCell className="font-medium">{lead.name}</TableCell>
@@ -343,6 +360,73 @@ const LeadsPage = () => {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {selectedLeads.length} của {filteredLeads.length} dòng được chọn.
+              </div>
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">Số dòng mỗi trang</p>
+                <Select
+                  value={`${pagination.pageSize}`}
+                  onValueChange={(value) => {
+                    setPagination(prev => ({ ...prev, pageSize: Number(value) }));
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[20, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="0">Tất cả</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Trang {pagination.pageIndex + 1} của {pageCount}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+                  disabled={pagination.pageIndex === 0}
+                >
+                  <span className="sr-only">Go to first page</span>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                  disabled={pagination.pageIndex === 0}
+                >
+                  <span className="sr-only">Go to previous page</span>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                  disabled={pagination.pageIndex >= pageCount - 1}
+                >
+                  <span className="sr-only">Go to next page</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+                  disabled={pagination.pageIndex >= pageCount - 1}
+                >
+                  <span className="sr-only">Go to last page</span>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
