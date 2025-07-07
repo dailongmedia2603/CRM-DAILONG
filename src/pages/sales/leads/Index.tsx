@@ -300,36 +300,38 @@ const LeadsPage = () => {
           <LeadStatsCard title="Từ chối" value={stats.rejected.toString()} icon={X} variant="destructive" />
         </div>
         
-        <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-          <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-          <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full md:w-auto">
-                Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+          <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+          <div className="flex w-full md:w-auto space-x-4">
+            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={handleOpenAddDialog} className="whitespace-nowrap"><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
+          </div>
         </div>
         
-        <div className="flex justify-between items-center">
+        <div className="flex justify-start items-center">
           <div className="flex space-x-2">{selectedLeads.length > 0 && (<><Button variant="outline" onClick={() => handleBulkAction(archivedFilter === 'active' ? 'archive' : 'restore')}><Archive className="h-4 w-4 mr-2" />{archivedFilter === 'active' ? 'Lưu trữ' : 'Khôi phục'} ({selectedLeads.length})</Button><Button variant="destructive" onClick={() => handleBulkAction('delete')}><Trash2 className="h-4 w-4 mr-2" />Xóa ({selectedLeads.length})</Button></>)}</div>
-          <Button onClick={handleOpenAddDialog}><PlusCircle className="h-4 w-4 mr-2" />Thêm Lead</Button>
         </div>
         
         <Card>
