@@ -40,8 +40,7 @@ export const ProjectFormDialog = ({
   project,
   clients,
 }: ProjectFormDialogProps) => {
-  // Use individual states for each form field for better control
-  const [client, setClient] = useState("");
+  const [clientId, setClientId] = useState("");
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [contractValue, setContractValue] = useState("");
@@ -51,16 +50,16 @@ export const ProjectFormDialog = ({
 
   useEffect(() => {
     if (project) {
-      setClient(project.client || "");
+      setClientId(project.client_id || "");
       setName(project.name || "");
       setLink(project.link || "");
       setContractValue(project.contract_value?.toString() || "");
       setStatus(project.status || "planning");
-      setDueDate(project.due_date || "");
+      setDueDate(project.due_date ? new Date(project.due_date).toISOString().split('T')[0] : "");
       setPayments(project.payments || [{ amount: 0, paid: false }]);
     } else {
       // Reset for new project
-      setClient("");
+      setClientId("");
       setName("");
       setLink("");
       setContractValue("");
@@ -93,9 +92,9 @@ export const ProjectFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedClient = clients.find(c => c.id === client);
+    const selectedClient = clients.find(c => c.id === clientId);
     const dataToSave = {
-      client_id: client,
+      client_id: clientId,
       client_name: selectedClient?.name,
       name,
       link,
@@ -117,10 +116,9 @@ export const ProjectFormDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {/* Client Select */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="client" className="text-right">Client</Label>
-              <Select value={client} onValueChange={setClient}>
+              <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Chọn client" />
                 </SelectTrigger>
@@ -133,7 +131,6 @@ export const ProjectFormDialog = ({
                 </SelectContent>
               </Select>
             </div>
-            {/* Other fields */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Tên dự án</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
@@ -147,7 +144,6 @@ export const ProjectFormDialog = ({
               <Input id="contract_value" type="number" value={contractValue} onChange={(e) => setContractValue(e.target.value)} className="col-span-3" />
             </div>
             
-            {/* Dynamic Payment Fields */}
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Thanh toán</Label>
               <div className="col-span-3 space-y-2">
@@ -175,7 +171,6 @@ export const ProjectFormDialog = ({
               </div>
             </div>
 
-            {/* Status and Due Date */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Tiến độ</Label>
               <Select value={status} onValueChange={setStatus}>
