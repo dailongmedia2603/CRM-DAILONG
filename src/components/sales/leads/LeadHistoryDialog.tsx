@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -48,9 +48,13 @@ export const LeadHistoryDialog = ({
   const [type, setType] = useState<"note" | "call" | "email" | "meeting">("note");
   const [nextFollowUpDate, setNextFollowUpDate] = useState<Date | undefined>();
   
-  const sortedHistory = [...(history || [])].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
+  const [localHistory, setLocalHistory] = useState<LeadHistory[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      setLocalHistory([...(history || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    }
+  }, [history, open]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -94,14 +98,25 @@ export const LeadHistoryDialog = ({
       return;
     }
 
-    onAddHistory(leadId, {
+    const newHistoryEntry: Partial<LeadHistory> = {
       content: content.trim(),
       type,
       next_follow_up_date: nextFollowUpDate ? nextFollowUpDate.toISOString() : undefined,
       next_follow_up_content: nextFollowUpContent.trim(),
-      user_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef", // Mock user id, replace with actual user id
-      user_name: "Current User" // Mock user name, replace with actual user name
-    });
+      user_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef", // Mock user id
+      user_name: "Current User" // Mock user name
+    };
+
+    onAddHistory(leadId, newHistoryEntry);
+    
+    // Optimistically update UI
+    const tempNewHistory: LeadHistory = {
+        id: Date.now().toString(),
+        date: new Date().toISOString(),
+        ...newHistoryEntry
+    } as LeadHistory;
+    setLocalHistory(prev => [tempNewHistory, ...prev]);
+
     showSuccess("Đã thêm lịch sử chăm sóc mới");
     
     setContent("");
@@ -200,12 +215,12 @@ export const LeadHistoryDialog = ({
 
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
-            {sortedHistory.length === 0 ? (
+            {localHistory.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Chưa có lịch sử chăm sóc nào
               </div>
             ) : (
-              sortedHistory.map((item) => (
+              localHistory.map((item) => (
                 <div key={item.id} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <Avatar className="h-8 w-8">
