@@ -90,14 +90,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               icon={<Users className="mr-3 h-5 w-5" />} 
               href="/clients" 
               label="Clients" 
-              badge="36"
               active={pathname.startsWith("/clients")}
             />
             <NavItem 
               icon={<Briefcase className="mr-3 h-5 w-5" />} 
               href="/projects" 
               label="Dự án" 
-              badge="12"
               active={pathname.startsWith("/projects")}
             />
             <NavItem 
