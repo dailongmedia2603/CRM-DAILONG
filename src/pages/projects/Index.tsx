@@ -281,8 +281,8 @@ const ProjectsPage = () => {
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
                   <TableCell>
-                    <div>{formatDate(project.start_date)}</div>
-                    <div>{formatDate(project.end_date)}</div>
+                    <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
+                    <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
