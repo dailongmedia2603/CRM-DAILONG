@@ -106,13 +106,19 @@ export const ProjectFormDialog = ({
   const handleRemoveTeamMember = (index: number) => setTeam(team.filter((_, i) => i !== index));
   const handleTeamChange = (index: number, field: 'role' | 'id', value: string) => {
     const newTeam = [...team];
-    if (field === 'id') {
+    if (field === 'role') {
+      newTeam[index] = { ...newTeam[index], role: value, id: '', name: '' }; // Reset person when role changes
+    } else if (field === 'id') {
       const selectedPerson = personnelList.find(p => p.id === value);
       newTeam[index] = { ...newTeam[index], id: value, name: selectedPerson?.name || '' };
-    } else {
-      newTeam[index] = { ...newTeam[index], role: value };
     }
     setTeam(newTeam);
+  };
+
+  const getPersonnelForRole = (role: string) => {
+    if (!role) return personnelList;
+    // This is a simple mapping. A more complex app might have a dedicated 'roles' table.
+    return personnelList.filter(p => p.position.toLowerCase().includes(role.toLowerCase()));
   };
 
   const formatCurrency = (value: string | number) => {
@@ -199,7 +205,7 @@ export const ProjectFormDialog = ({
                     </Select>
                     <Select value={member.id} onValueChange={(value) => handleTeamChange(index, 'id', value)}>
                       <SelectTrigger className="flex-1"><SelectValue placeholder="Chọn nhân sự" /></SelectTrigger>
-                      <SelectContent>{personnelList.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{getPersonnelForRole(member.role).map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTeamMember(index)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
