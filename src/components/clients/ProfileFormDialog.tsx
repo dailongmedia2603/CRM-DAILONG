@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 interface ProfileFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (profile: Profile) => void;
+  onSave: (profile: Partial<Profile>) => void;
   profile?: Profile | null;
 }
 
@@ -37,9 +37,11 @@ export const ProfileFormDialog = ({
     if (profile) {
       setFormData(profile);
     } else {
+      // Reset for new profile
       setFormData({
+        name: '',
+        link: '',
         status: "KH check",
-        created_at: new Date().toISOString().split('T')[0],
       });
     }
   }, [profile, open]);
@@ -59,10 +61,11 @@ export const ProfileFormDialog = ({
       alert("Vui lòng điền đầy đủ tên và link hồ sơ.");
       return;
     }
-    onSave({
-      id: profile?.id || new Date().toISOString(),
-      ...formData,
-    } as Profile);
+    
+    // For new profiles, `id` will be undefined.
+    // For existing profiles, `id` will be present.
+    // The `onSave` function (handleSaveProfile) will handle the logic.
+    onSave(formData);
     onOpenChange(false);
   };
 

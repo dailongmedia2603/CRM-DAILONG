@@ -23,24 +23,34 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
     setIsFormOpen(true);
   };
 
-  const handleSaveProfile = async (profileData: Omit<Profile, 'id' | 'client_id' | 'created_at'> & { id?: string }) => {
-    if (profileToEdit) {
+  const handleSaveProfile = async (profileData: Partial<Profile>) => {
+    const { id, client_id, created_at, ...dataToSave } = profileData;
+
+    if (id) {
       // Update existing profile
       const { error } = await supabase
         .from('profiles')
-        .update(profileData)
-        .eq('id', profileToEdit.id);
+        .update(dataToSave)
+        .eq('id', id);
 
-      if (error) showError("Lỗi khi cập nhật hồ sơ.");
-      else showSuccess("Hồ sơ đã được cập nhật!");
+      if (error) {
+        console.error("Update error:", error);
+        showError("Lỗi khi cập nhật hồ sơ.");
+      } else {
+        showSuccess("Hồ sơ đã được cập nhật!");
+      }
     } else {
       // Add new profile
       const { error } = await supabase
         .from('profiles')
-        .insert([{ ...profileData, client_id: client.id }]);
+        .insert([{ ...dataToSave, client_id: client.id }]);
 
-      if (error) showError("Lỗi khi thêm hồ sơ mới.");
-      else showSuccess("Hồ sơ mới đã được thêm!");
+      if (error) {
+        console.error("Insert error:", error);
+        showError("Lỗi khi thêm hồ sơ mới.");
+      } else {
+        showSuccess("Hồ sơ mới đã được thêm!");
+      }
     }
     
     onUpdateClient(); // Trigger re-fetch in parent component
