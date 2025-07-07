@@ -23,19 +23,7 @@ import { cn } from "@/lib/utils";
 import { showSuccess } from "@/utils/toast";
 import { format } from "date-fns";
 import { vi } from 'date-fns/locale';
-
-interface LeadHistory {
-  id: string;
-  date: string;
-  user: {
-    id: string;
-    name: string;
-  };
-  content: string;
-  type: "note" | "call" | "email" | "meeting";
-  nextFollowUpDate?: string;
-  nextFollowUpContent?: string;
-}
+import { LeadHistory } from "@/types";
 
 interface LeadHistoryDialogProps {
   open: boolean;
@@ -249,14 +237,14 @@ export const LeadHistoryDialog = ({
                     <div className="text-xs text-muted-foreground">
                       {formatDate(item.date)}
                     </div>
-                    {item.nextFollowUpDate && (
+                    {item.next_follow_up_date && (
                       <div className="text-xs text-blue-600 font-medium mt-1">
-                        Chăm sóc tiếp theo: {formatDate(item.nextFollowUpDate)}
+                        Chăm sóc tiếp theo: {formatDate(item.next_follow_up_date)}
                       </div>
                     )}
-                    {item.nextFollowUpContent && (
+                    {item.next_follow_up_content && (
                       <div className="text-xs text-gray-500 mt-1 pl-4 border-l-2 border-gray-300">
-                        <strong>Nội dung:</strong> {item.nextFollowUpContent}
+                        <strong>Nội dung:</strong> {item.next_follow_up_content}
                       </div>
                     )}
                   </div>
