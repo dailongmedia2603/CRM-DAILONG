@@ -53,7 +53,7 @@ export const ProjectFormDialog = ({
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [contractValue, setContractValue] = useState("");
-  const [status, setStatus] = useState("planning");
+  const [status, setStatus] = useState("in-progress");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [payments, setPayments] = useState<Payment[]>([{ amount: 0, paid: false }]);
@@ -74,7 +74,7 @@ export const ProjectFormDialog = ({
       setName(project.name || "");
       setLink(project.link || "");
       setContractValue(project.contract_value?.toString() || "");
-      setStatus(project.status || "planning");
+      setStatus(project.status || "in-progress");
       setStartDate(project.start_date ? new Date(project.start_date).toISOString().split('T')[0] : "");
       setEndDate(project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : "");
       setPayments(project.payments || [{ amount: 0, paid: false }]);
@@ -85,7 +85,7 @@ export const ProjectFormDialog = ({
       setName("");
       setLink("");
       setContractValue("");
-      setStatus("planning");
+      setStatus("in-progress");
       setStartDate("");
       setEndDate("");
       setPayments([{ amount: 0, paid: false }]);
@@ -217,7 +217,12 @@ export const ProjectFormDialog = ({
               <Label htmlFor="status" className="text-right">Tiến độ</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
-                <SelectContent><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent>
+                <SelectContent>
+                  <SelectItem value="planning">Pending</SelectItem>
+                  <SelectItem value="in-progress">Đang chạy</SelectItem>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                  <SelectItem value="overdue">Quá hạn</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
