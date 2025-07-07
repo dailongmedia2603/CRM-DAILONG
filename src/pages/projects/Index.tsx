@@ -81,11 +81,14 @@ const ProjectsPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("projects").select("*");
-    if (error) {
-      showError("Lỗi khi tải dữ liệu dự án.");
-    } else {
-      const updatedProjects = data.map(p => {
+    const [projectsRes, clientsRes] = await Promise.all([
+      supabase.from("projects").select("*"),
+      supabase.from("clients").select("id, company_name, name"),
+    ]);
+
+    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
+    else {
+      const updatedProjects = projectsRes.data.map(p => {
         const endDate = p.end_date ? new Date(p.end_date) : null;
         if (endDate && endDate < startOfToday() && p.status !== 'completed') {
           return { ...p, status: 'overdue' };
@@ -95,9 +98,8 @@ const ProjectsPage = () => {
       setProjects(updatedProjects as Project[]);
     }
 
-    const { data: clientsData, error: clientsError } = await supabase.from("clients").select("id, company_name, name");
-    if (clientsError) showError("Lỗi khi tải dữ liệu khách hàng.");
-    else setClients(clientsData as Client[]);
+    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
+    else setClients(clientsRes.data as Client[]);
     
     setLoading(false);
   };
@@ -292,13 +294,13 @@ const ProjectsPage = () => {
                 <TableHead>Client</TableHead>
                 <TableHead>Tên dự án</TableHead>
                 <TableHead>Link</TableHead>
-                <TableHead>Nghiệm thu</TableHead>
                 <TableHead>Thời gian</TableHead>
                 <TableHead>Nhân sự</TableHead>
                 <TableHead>Giá trị HĐ</TableHead>
                 <TableHead>Đã thanh toán</TableHead>
                 <TableHead>Công nợ</TableHead>
                 <TableHead>Tiến độ TT</TableHead>
+                <TableHead>Nghiệm thu</TableHead>
                 <TableHead>Tiến độ</TableHead>
                 <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
               </TableRow>
@@ -317,13 +319,6 @@ const ProjectsPage = () => {
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
-                  <TableCell>
-                    {project.acceptance_link ? (
-                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline"><CheckCircle className="h-4 w-4" /></a>
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </TableCell>
                   <TableCell className={cn(isOverdue && "text-red-600")}>
                     <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
                     <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
@@ -353,6 +348,13 @@ const ProjectsPage = () => {
                         </div>
                       ))}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {project.acceptance_link ? (
+                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline"><CheckCircle className="h-4 w-4" /></a>
+                    ) : (
+                      <span>N/A</span>
+                    )}
                   </TableCell>
                   <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
                   <TableCell className="text-right px-2">
