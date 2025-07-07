@@ -113,7 +113,7 @@ const LeadsPage = () => {
     setLoading(true);
     const [leadsRes, salesRes] = await Promise.all([
         supabase.from("leads").select("*, lead_history(*)"),
-        supabase.from("personnel").select("*")
+        supabase.from("personnel").select("*") // Assuming all personnel can be sales persons
     ]);
 
     if(leadsRes.error) showError("Lỗi khi tải dữ liệu leads.");
@@ -132,7 +132,7 @@ const LeadsPage = () => {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const isArchivedMatch = archivedFilter === 'all' || (archivedFilter === 'active' ? !lead.archived : lead.archived);
-      const isSalesMatch = salesFilter === 'all' || lead.created_by_id === salesFilter;
+      const isSalesMatch = salesFilter === 'all' || (lead.created_by_id && lead.created_by_id === salesFilter);
       const isStatusMatch = statusFilter === 'all' || lead.status === statusFilter;
       const isSearchMatch = searchTerm === '' || 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
