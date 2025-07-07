@@ -23,7 +23,7 @@ import { showSuccess, showError } from "@/utils/toast";
 interface PersonnelFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (personnel: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => void;
+  onSave: (personnel: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string }) => void;
   personnel?: Personnel | null;
   positions: string[];
 }
@@ -89,7 +89,7 @@ export const PersonnelFormDialog = ({
       return;
     }
 
-    const dataToSave: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string } = {
+    const dataToSave: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string } = {
       ...formData,
     };
     if (personnel) {
@@ -140,7 +140,7 @@ export const PersonnelFormDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Cấp bậc</Label>
-                <Select value={formData.role} onValueChange={(value) => handleSelectChange("role", value)}>
+                <Select value={formData.role} onValueChange={(value) => handleSelectChange("role", value as Personnel['role'])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="BOD">BOD</SelectItem>
@@ -152,7 +152,7 @@ export const PersonnelFormDialog = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Trạng thái</Label>
-                <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
+                <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value as Personnel['status'])}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Hoạt động</SelectItem>

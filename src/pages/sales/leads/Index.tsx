@@ -132,7 +132,7 @@ const LeadsPage = () => {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const isArchivedMatch = archivedFilter === 'all' || (archivedFilter === 'active' ? !lead.archived : lead.archived);
-      const isSalesMatch = salesFilter === 'all' || lead.createdBy.id === salesFilter;
+      const isSalesMatch = salesFilter === 'all' || lead.created_by.id === salesFilter;
       const isStatusMatch = statusFilter === 'all' || lead.status === statusFilter;
       const isSearchMatch = searchTerm === '' || 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -275,9 +275,9 @@ const LeadsPage = () => {
                         <TableCell>{lead.phone}</TableCell>
                         <TableCell>{lead.product}</TableCell>
                         <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.history.length})</Button></TableCell>
-                        <TableCell>{lead.createdBy.name}</TableCell>
-                        <TableCell>{formatDateDisplay(lead.createdAt)}</TableCell>
-                        <TableCell>{formatDateDisplay(lead.nextFollowUpDate)}</TableCell>
+                        <TableCell>{lead.created_by.name}</TableCell>
+                        <TableCell>{formatDateDisplay(lead.created_at)}</TableCell>
+                        <TableCell>{formatDateDisplay(lead.next_follow_up_date)}</TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800")}>{lead.status}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>

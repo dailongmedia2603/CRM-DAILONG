@@ -54,9 +54,9 @@ export const ProjectFormDialog = ({
       setClient(project.client || "");
       setName(project.name || "");
       setLink(project.link || "");
-      setContractValue(project.contractValue?.toString() || "");
+      setContractValue(project.contract_value?.toString() || "");
       setStatus(project.status || "planning");
-      setDueDate(project.dueDate || "");
+      setDueDate(project.due_date || "");
       setPayments(project.payments || [{ amount: 0, paid: false }]);
     } else {
       // Reset for new project
@@ -93,13 +93,15 @@ export const ProjectFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedClient = clients.find(c => c.id === client);
     const dataToSave = {
-      client,
+      client_id: client,
+      client_name: selectedClient?.name,
       name,
       link,
-      contractValue: Number(contractValue),
+      contract_value: Number(contractValue),
       status,
-      dueDate,
+      due_date: dueDate,
       payments,
     };
     onSave(dataToSave);
@@ -124,8 +126,8 @@ export const ProjectFormDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.companyName}>
-                      {c.name} {c.companyName ? `(${c.companyName})` : ''}
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.company_name ? `(${c.company_name})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -141,8 +143,8 @@ export const ProjectFormDialog = ({
               <Input id="link" type="url" value={link} onChange={(e) => setLink(e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contractValue" className="text-right">Giá trị HĐ</Label>
-              <Input id="contractValue" type="number" value={contractValue} onChange={(e) => setContractValue(e.target.value)} className="col-span-3" />
+              <Label htmlFor="contract_value" className="text-right">Giá trị HĐ</Label>
+              <Input id="contract_value" type="number" value={contractValue} onChange={(e) => setContractValue(e.target.value)} className="col-span-3" />
             </div>
             
             {/* Dynamic Payment Fields */}

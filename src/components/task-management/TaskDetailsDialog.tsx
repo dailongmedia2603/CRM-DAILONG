@@ -66,7 +66,7 @@ export const TaskDetailsDialog = ({ open, onOpenChange, task }: TaskDetailsDialo
               <DetailItem 
                 icon={<Calendar className="h-4 w-4" />} 
                 label="Ngày tạo" 
-                value={format(new Date(task.createdAt), "dd/MM/yyyy")} 
+                value={format(new Date(task.created_at), "dd/MM/yyyy")} 
               />
             </div>
           </div>

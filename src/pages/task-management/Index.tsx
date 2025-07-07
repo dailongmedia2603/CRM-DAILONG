@@ -58,7 +58,7 @@ const TasksManagementPage = () => {
 
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
-    if (dateFilter) filtered = filtered.filter(task => isSameDay(new Date(task.createdAt), dateFilter));
+    if (dateFilter) filtered = filtered.filter(task => isSameDay(new Date(task.created_at), dateFilter));
     if (searchTerm) filtered = filtered.filter(task => task.name.toLowerCase().includes(searchTerm.toLowerCase()));
     if (statusFilter !== 'all') filtered = filtered.filter(task => task.status === statusFilter);
     if (priorityFilter !== 'all') filtered = filtered.filter(task => task.priority === priorityFilter);
@@ -67,7 +67,7 @@ const TasksManagementPage = () => {
   }, [tasks, dateFilter, searchTerm, statusFilter, priorityFilter, showCompleted]);
 
   const stats = useMemo(() => {
-    const relevantTasks = dateFilter ? tasks.filter(task => isSameDay(new Date(task.createdAt), dateFilter)) : tasks;
+    const relevantTasks = dateFilter ? tasks.filter(task => isSameDay(new Date(task.created_at), dateFilter)) : tasks;
     return {
       total: relevantTasks.length,
       todo: relevantTasks.filter(t => t.status === 'Chưa làm').length,

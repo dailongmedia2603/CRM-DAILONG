@@ -26,11 +26,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -40,15 +35,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   PlusCircle,
   Search,
-  Filter,
   MoreHorizontal,
-  Calendar as CalendarIcon,
   Archive,
   Trash2,
   List,
@@ -86,7 +78,7 @@ const ProjectsPage = () => {
     setLoading(true);
     const [projectsRes, clientsRes] = await Promise.all([
       supabase.from("projects").select("*"),
-      supabase.from("clients").select("id, companyName, name"),
+      supabase.from("clients").select("*"),
     ]);
 
     if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
@@ -147,7 +139,7 @@ const ProjectsPage = () => {
   const handleSaveProject = async (projectData: any) => {
     const saveData = {
       ...projectData,
-      contractValue: Number(projectData.contractValue || 0),
+      contract_value: Number(projectData.contract_value || 0),
     };
 
     if (projectToEdit) {
@@ -279,13 +271,13 @@ const ProjectsPage = () => {
               {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
-                const debt = project.contractValue - totalPaid;
+                const debt = project.contract_value - totalPaid;
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
-                  <TableCell>{formatCurrency(project.contractValue)}</TableCell>
+                  <TableCell>{formatCurrency(project.contract_value)}</TableCell>
                   <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
                   <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
                   <TableCell>

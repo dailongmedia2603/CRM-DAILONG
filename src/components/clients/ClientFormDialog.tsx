@@ -56,10 +56,7 @@ export const ClientFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.contact_person || !formData.email) {
-      alert("Vui lòng điền đầy đủ các trường bắt buộc.");
-      return;
-    }
+    // Validation removed as per user request
     const { id, profiles, ...dataToSave } = formData;
     onSave(dataToSave);
     onOpenChange(false);

@@ -51,11 +51,11 @@ export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFee
               {history.map(fb => (
                 <div key={fb.id} className="flex items-start gap-3">
                   <Avatar className="h-9 w-9 border">
-                    <AvatarFallback>{fb.userName.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{fb.user_name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2">
-                      <p className="font-semibold text-sm">{fb.userName}</p>
+                      <p className="font-semibold text-sm">{fb.user_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(fb.timestamp), { addSuffix: true, locale: vi })}
                       </p>

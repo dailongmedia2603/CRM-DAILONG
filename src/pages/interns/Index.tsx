@@ -69,14 +69,14 @@ const InternsPage = () => {
   const filteredTasks = useMemo(() => {
     return tasks.filter(task =>
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.internName.toLowerCase().includes(searchTerm.toLowerCase())
+      task.intern_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [tasks, searchTerm]);
 
   const stats = useMemo(() => ({
     total: tasks.length,
-    inProgress: tasks.filter(t => t.commentStatus === 'Đang làm' || t.postStatus === 'Đang làm').length,
-    completed: tasks.filter(t => t.commentStatus === 'Hoàn thành' && t.postStatus === 'Hoàn thành').length,
+    inProgress: tasks.filter(t => t.comment_status === 'Đang làm' || t.post_status === 'Đang làm').length,
+    completed: tasks.filter(t => t.comment_status === 'Hoàn thành' && t.post_status === 'Hoàn thành').length,
     overdue: tasks.filter(t => new Date(t.deadline) < new Date()).length,
   }), [tasks]);
 
@@ -188,19 +188,19 @@ const InternsPage = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <a href={task.workLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
+                    <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
                       <ExternalLink className="h-5 w-5" />
                     </a>
                   </TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
                   <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.commentCount}</div>
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.postCount}</div>
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
                   </TableCell>
                   <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
-                  <TableCell>{task.internName}</TableCell>
+                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>

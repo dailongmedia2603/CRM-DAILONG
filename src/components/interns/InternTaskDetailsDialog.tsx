@@ -33,7 +33,7 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
     }
   };
 
-  const getStatusBadge = (status: InternTask['commentStatus']) => {
+  const getStatusBadge = (status: InternTask['comment_status']) => {
     switch (status) {
       case 'Đang làm': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'Chờ xử lý': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -55,16 +55,16 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <DetailItem icon={<User className="h-5 w-5" />} label="Thực tập sinh" value={task.internName} />
+              <DetailItem icon={<User className="h-5 w-5" />} label="Thực tập sinh" value={task.intern_name} />
               <DetailItem icon={<Calendar className="h-5 w-5" />} label="Deadline" value={format(new Date(task.deadline), "dd/MM/yyyy")} />
-              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Số lượng Comment" value={<Badge variant="secondary">{task.commentCount}</Badge>} />
-              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Số lượng Post" value={<Badge variant="secondary">{task.postCount}</Badge>} />
+              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Số lượng Comment" value={<Badge variant="secondary">{task.comment_count}</Badge>} />
+              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Số lượng Post" value={<Badge variant="secondary">{task.post_count}</Badge>} />
             </div>
             <div className="space-y-4">
               <DetailItem icon={<AlertTriangle className="h-5 w-5" />} label="Ưu tiên" value={<Badge className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge>} />
-              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Trạng thái Comment" value={<Badge className={cn(getStatusBadge(task.commentStatus))}>{task.commentStatus}</Badge>} />
-              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Trạng thái Post" value={<Badge className={cn(getStatusBadge(task.postStatus))}>{task.postStatus}</Badge>} />
-              <DetailItem icon={<LinkIcon className="h-5 w-5" />} label="Link làm việc" value={<a href={task.workLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem link</a>} />
+              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Trạng thái Comment" value={<Badge className={cn(getStatusBadge(task.comment_status))}>{task.comment_status}</Badge>} />
+              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Trạng thái Post" value={<Badge className={cn(getStatusBadge(task.post_status))}>{task.post_status}</Badge>} />
+              <DetailItem icon={<LinkIcon className="h-5 w-5" />} label="Link làm việc" value={<a href={task.work_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem link</a>} />
             </div>
           </div>
         </div>

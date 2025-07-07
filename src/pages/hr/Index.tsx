@@ -112,7 +112,7 @@ const HRPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSavePersonnel = async (data: Omit<Personnel, 'id' | 'createdAt'> & { id?: string; password?: string }) => {
+  const handleSavePersonnel = async (data: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string }) => {
     const { id, ...personnelData } = data;
     if (id) {
       const { error } = await supabase.from('personnel').update(personnelData).eq('id', id);
@@ -206,7 +206,7 @@ const HRPage = () => {
                       <TableCell>{p.position}</TableCell>
                       <TableCell><Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge></TableCell>
                       <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
-                      <TableCell>{new Date(p.createdAt).toLocaleDateString('vi-VN')}</TableCell>
+                      <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>

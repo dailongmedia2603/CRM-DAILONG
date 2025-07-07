@@ -24,11 +24,11 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    workLink: '',
-    internName: '',
+    work_link: '',
+    intern_name: '',
     priority: 'Bình thường' as InternTask['priority'],
-    commentCount: 0,
-    postCount: 0,
+    comment_count: 0,
+    post_count: 0,
   });
   const [deadline, setDeadline] = useState<Date | undefined>();
   const [hour, setHour] = useState('00');
@@ -40,11 +40,11 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       setFormData({
         title: task.title,
         description: task.description,
-        workLink: task.workLink,
-        internName: task.internName,
+        work_link: task.work_link,
+        intern_name: task.intern_name,
         priority: task.priority,
-        commentCount: task.commentCount,
-        postCount: task.postCount,
+        comment_count: task.comment_count,
+        post_count: task.post_count,
       });
       setDeadline(taskDeadline);
       setHour(format(taskDeadline, 'HH'));
@@ -53,11 +53,11 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       setFormData({
         title: '',
         description: '',
-        workLink: '',
-        internName: '',
+        work_link: '',
+        intern_name: '',
         priority: 'Bình thường',
-        commentCount: 0,
-        postCount: 0,
+        comment_count: 0,
+        post_count: 0,
       });
       setDeadline(undefined);
       setHour('00');
@@ -82,7 +82,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
   };
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.internName || !deadline) {
+    if (!formData.title || !formData.intern_name || !deadline) {
       showError("Vui lòng điền đầy đủ các trường bắt buộc: Tiêu đề, Thực tập sinh, Deadline.");
       return;
     }
@@ -116,12 +116,12 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
             <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Mô tả chi tiết công việc..." />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="workLink">Link làm việc</Label>
-            <Input id="workLink" name="workLink" value={formData.workLink} onChange={handleChange} placeholder="https://docs.google.com/... hoặc https://trello.com" />
+            <Label htmlFor="work_link">Link làm việc</Label>
+            <Input id="work_link" name="work_link" value={formData.work_link} onChange={handleChange} placeholder="https://docs.google.com/... hoặc https://trello.com" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="internName">Thực tập sinh</Label>
-            <Select value={formData.internName} onValueChange={(value) => handleSelectChange('internName', value)}>
+            <Label htmlFor="intern_name">Thực tập sinh</Label>
+            <Select value={formData.intern_name} onValueChange={(value) => handleSelectChange('intern_name', value)}>
               <SelectTrigger><SelectValue placeholder="Chọn thực tập sinh" /></SelectTrigger>
               <SelectContent>
                 {interns.map(intern => (
@@ -162,12 +162,12 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="commentCount">Số lượng Comment</Label>
-              <Input id="commentCount" name="commentCount" type="number" value={formData.commentCount} onChange={handleChange} />
+              <Label htmlFor="comment_count">Số lượng Comment</Label>
+              <Input id="comment_count" name="comment_count" type="number" value={formData.comment_count} onChange={handleChange} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="postCount">Số lượng Post</Label>
-              <Input id="postCount" name="postCount" type="number" value={formData.postCount} onChange={handleChange} />
+              <Label htmlFor="post_count">Số lượng Post</Label>
+              <Input id="post_count" name="post_count" type="number" value={formData.post_count} onChange={handleChange} />
             </div>
           </div>
         </div>
