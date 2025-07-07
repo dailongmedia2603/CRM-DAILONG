@@ -52,6 +52,10 @@ import {
   ExternalLink,
   RotateCcw,
   AlertCircle as AlertCircleIcon,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
@@ -79,10 +83,12 @@ const ProjectsPage = () => {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+
   const fetchData = async () => {
     setLoading(true);
     const [projectsRes, clientsRes] = await Promise.all([
-      supabase.from("projects").select("*"),
+      supabase.from("projects").select("*").order('created_at', { ascending: false }),
       supabase.from("clients").select("id, company_name, name"),
     ]);
 
@@ -123,6 +129,19 @@ const ProjectsPage = () => {
       return true;
     });
   }, [projects, searchTerm, statusFilter, showArchived]);
+
+  const paginatedProjects = useMemo(() => {
+    const { pageIndex, pageSize } = pagination;
+    if (pageSize === 0) return filteredProjects; // Show all
+    const start = pageIndex * pageSize;
+    const end = start + pageSize;
+    return filteredProjects.slice(start, end);
+  }, [filteredProjects, pagination]);
+
+  const pageCount = useMemo(() => {
+    if (pagination.pageSize === 0) return 1;
+    return Math.ceil(filteredProjects.length / pagination.pageSize);
+  }, [filteredProjects, pagination.pageSize]);
 
   const stats = useMemo(() => {
     const activeProjects = projects.filter(p => !p.archived);
@@ -307,7 +326,7 @@ const ProjectsPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
-              filteredProjects.map(project => {
+              paginatedProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                 const debt = project.contract_value - totalPaid;
                 const isOverdue = project.status === 'overdue';
@@ -316,7 +335,7 @@ const ProjectsPage = () => {
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
-                  <TableCell>{project.client_name}</TableCell>
+                  <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
                   <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
                   <TableCell className={cn(isOverdue && "text-red-600")}>
@@ -372,6 +391,73 @@ const ProjectsPage = () => {
               )})}
             </TableBody>
           </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            {selectedProjects.length} của {filteredProjects.length} dòng được chọn.
+          </div>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Số dòng mỗi trang</p>
+            <Select
+              value={`${pagination.pageSize}`}
+              onValueChange={(value) => {
+                setPagination(prev => ({ ...prev, pageSize: Number(value) === 0 ? filteredProjects.length : Number(value) }));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[20, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+                <SelectItem value="0">Tất cả</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Trang {pagination.pageIndex + 1} của {pageCount}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to first page</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to last page</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
       <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
