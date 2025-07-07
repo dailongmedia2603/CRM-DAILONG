@@ -132,11 +132,11 @@ const LeadsPage = () => {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const isArchivedMatch = archivedFilter === 'all' || (archivedFilter === 'active' ? !lead.archived : lead.archived);
-      const isSalesMatch = salesFilter === 'all' || lead.created_by.id === salesFilter;
+      const isSalesMatch = salesFilter === 'all' || (lead.created_by && lead.created_by.id === salesFilter);
       const isStatusMatch = statusFilter === 'all' || lead.status === statusFilter;
       const isSearchMatch = searchTerm === '' || 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.phone.includes(searchTerm) ||
+        (lead.phone && lead.phone.includes(searchTerm)) ||
         lead.product.toLowerCase().includes(searchTerm.toLowerCase());
       return isArchivedMatch && isSalesMatch && isStatusMatch && isSearchMatch;
     });
@@ -181,7 +181,7 @@ const LeadsPage = () => {
   };
 
   const handleOpenHistory = (lead: Lead) => {
-    setSelectedLeadHistory(lead.history);
+    setSelectedLeadHistory(lead.history || []);
     setSelectedLeadName(lead.name);
     setSelectedLeadId(lead.id);
     setHistoryDialogOpen(true);
@@ -274,8 +274,8 @@ const LeadsPage = () => {
                         <TableCell className="font-medium">{lead.name}</TableCell>
                         <TableCell>{lead.phone}</TableCell>
                         <TableCell>{lead.product}</TableCell>
-                        <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.history.length})</Button></TableCell>
-                        <TableCell>{lead.created_by.name}</TableCell>
+                        <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.history?.length || 0})</Button></TableCell>
+                        <TableCell>{lead.created_by?.name || 'N/A'}</TableCell>
                         <TableCell>{formatDateDisplay(lead.created_at)}</TableCell>
                         <TableCell>{formatDateDisplay(lead.next_follow_up_date)}</TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
