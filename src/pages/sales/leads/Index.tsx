@@ -138,9 +138,27 @@ const LeadsPage = () => {
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (lead.phone && lead.phone.includes(searchTerm)) ||
         lead.product.toLowerCase().includes(searchTerm.toLowerCase());
-      return isArchivedMatch && isSalesMatch && isStatusMatch && isSearchMatch;
+      
+      let isFollowUpMatch = true;
+      if (followUpFilter !== 'all' || specificDateFilter) {
+        const today = startOfDay(new Date());
+        if (!lead.next_follow_up_date) {
+          isFollowUpMatch = false;
+        } else {
+          const followUpDate = startOfDay(new Date(lead.next_follow_up_date));
+          if (specificDateFilter) {
+            isFollowUpMatch = isEqual(followUpDate, startOfDay(specificDateFilter));
+          } else if (followUpFilter === 'today') {
+            isFollowUpMatch = isEqual(followUpDate, today);
+          } else if (followUpFilter === 'overdue') {
+            isFollowUpMatch = followUpDate < today;
+          }
+        }
+      }
+
+      return isArchivedMatch && isSalesMatch && isStatusMatch && isSearchMatch && isFollowUpMatch;
     });
-  }, [leads, searchTerm, salesFilter, statusFilter, archivedFilter]);
+  }, [leads, searchTerm, salesFilter, statusFilter, archivedFilter, followUpFilter, specificDateFilter]);
 
   const stats = useMemo(() => ({
     totalLeads: filteredLeads.length,
@@ -233,6 +251,16 @@ const LeadsPage = () => {
     return format(new Date(dateString), "dd/MM/yyyy");
   };
 
+  const handleFollowUpFilterChange = (value: string) => {
+    setSpecificDateFilter(undefined);
+    setFollowUpFilter(value);
+  };
+
+  const handleSpecificDateSelect = (date?: Date) => {
+    setFollowUpFilter("all");
+    setSpecificDateFilter(date);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -255,6 +283,27 @@ const LeadsPage = () => {
           <div className="relative flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full md:w-auto">
+                Cần chăm sóc <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('all')}>Tất cả</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleFollowUpFilterChange('overdue')}>Quá hạn</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">Chọn ngày</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={specificDateFilter} onSelect={handleSpecificDateSelect} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="flex justify-between items-center">
