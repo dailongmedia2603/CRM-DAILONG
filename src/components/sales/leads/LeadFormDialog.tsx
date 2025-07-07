@@ -17,17 +17,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { showError } from "@/utils/toast";
-
-interface SalesPerson {
-  id: string;
-  name: string;
-}
+import { Personnel } from "@/types";
 
 interface LeadFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (leadData: any) => void;
-  salesPersons: SalesPerson[];
+  salesPersons: Personnel[];
   lead?: any;
 }
 
@@ -42,7 +38,8 @@ export const LeadFormDialog = ({
     name: "",
     phone: "",
     product: "",
-    createdBy: { id: "", name: "" },
+    created_by_id: "",
+    created_by_name: "",
     potential: "chưa xác định",
     status: "đang suy nghĩ",
     result: "chưa quyết định",
@@ -54,7 +51,8 @@ export const LeadFormDialog = ({
         name: lead.name || "",
         phone: lead.phone || "",
         product: lead.product || "",
-        createdBy: lead.createdBy || { id: "", name: "" },
+        created_by_id: lead.created_by_id || "",
+        created_by_name: lead.created_by_name || "",
         potential: lead.potential || "chưa xác định",
         status: lead.status || "đang suy nghĩ",
         result: lead.result || "chưa quyết định",
@@ -64,7 +62,8 @@ export const LeadFormDialog = ({
         name: "",
         phone: "",
         product: "",
-        createdBy: { id: "", name: "" },
+        created_by_id: "",
+        created_by_name: "",
         potential: "chưa xác định",
         status: "đang suy nghĩ",
         result: "chưa quyết định",
@@ -78,10 +77,14 @@ export const LeadFormDialog = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    if (name === "createdBy") {
+    if (name === "created_by_id") {
       const selectedPerson = salesPersons.find((person) => person.id === value);
       if (selectedPerson) {
-        setFormData((prev) => ({ ...prev, createdBy: selectedPerson }));
+        setFormData((prev) => ({ 
+          ...prev, 
+          created_by_id: selectedPerson.id,
+          created_by_name: selectedPerson.name 
+        }));
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -89,7 +92,7 @@ export const LeadFormDialog = ({
   };
 
   const handleSubmit = () => {
-    if (!formData.name.trim() || !formData.phone.trim() || !formData.product.trim() || !formData.createdBy.id) {
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.product.trim() || !formData.created_by_id) {
       showError("Vui lòng điền đầy đủ các trường có dấu *.");
       return;
     }
@@ -121,7 +124,7 @@ export const LeadFormDialog = ({
           
           <div className="space-y-2">
             <Label htmlFor="salesPerson">Nhân viên sale <span className="text-red-500">*</span></Label>
-            <Select value={formData.createdBy.id} onValueChange={(value) => handleSelectChange("createdBy", value)}>
+            <Select value={formData.created_by_id} onValueChange={(value) => handleSelectChange("created_by_id", value)}>
               <SelectTrigger><SelectValue placeholder="Chọn nhân viên sale" /></SelectTrigger>
               <SelectContent>
                 {salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
