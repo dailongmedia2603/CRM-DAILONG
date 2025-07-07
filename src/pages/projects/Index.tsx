@@ -351,7 +351,7 @@ const ProjectsPage = () => {
                   </TableCell>
                   <TableCell>
                     {project.acceptance_link ? (
-                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline"><CheckCircle className="h-4 w-4" /></a>
+                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a>
                     ) : (
                       <span>N/A</span>
                     )}
