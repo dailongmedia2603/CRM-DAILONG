@@ -134,21 +134,6 @@ const HRPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSavePersonnel = async (data: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string }) => {
-    const { id, ...personnelData } = data;
-    if (id) {
-      const { error } = await supabase.from('personnel').update(personnelData).eq('id', id);
-      if (error) showError("Lỗi khi cập nhật nhân sự.");
-      else showSuccess("Cập nhật thông tin thành công!");
-    } else {
-      const { error } = await supabase.from('personnel').insert([personnelData]);
-      if (error) showError("Lỗi khi thêm nhân sự mới.");
-      else showSuccess("Thêm nhân sự mới thành công!");
-    }
-    fetchPersonnel();
-    setIsFormOpen(false);
-  };
-
   const handleDeleteConfirm = async () => {
     if (!personnelToDelete) return;
     const { error } = await supabase.from('personnel').delete().eq('id', personnelToDelete.id);
@@ -253,7 +238,7 @@ const HRPage = () => {
       <PersonnelFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSave={handleSavePersonnel}
+        onSave={fetchPersonnel}
         personnel={personnelToEdit}
         positions={positions}
       />
