@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -47,9 +47,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { Client } from "@/data/clients";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -76,12 +77,9 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
   );
 };
 
-interface ClientsPageProps {
-  clients: Client[];
-  setClients: (clients: Client[]) => void;
-}
-
-const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
+const ClientsPage = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
@@ -93,6 +91,22 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+
+  const fetchClients = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("clients").select("*");
+    if (error) {
+      showError("Lỗi khi tải dữ liệu khách hàng.");
+      console.error(error);
+    } else {
+      setClients(data as Client[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
@@ -156,47 +170,53 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveClient = (clientToSave: Client) => {
-    let updatedClients;
-    if (clients.some(c => c.id === clientToSave.id)) {
-      updatedClients = clients.map(c => c.id === clientToSave.id ? clientToSave : c);
-      showSuccess("Client đã được cập nhật!");
+  const handleSaveClient = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+    if (clientToEdit) {
+      const { error } = await supabase.from('clients').update(clientToSave).eq('id', clientToEdit.id);
+      if (error) showError("Lỗi khi cập nhật client.");
+      else showSuccess("Client đã được cập nhật!");
     } else {
-      updatedClients = [...clients, { ...clientToSave, id: new Date().toISOString(), archived: false }];
-      showSuccess("Client mới đã được thêm!");
+      const { error } = await supabase.from('clients').insert([clientToSave]);
+      if (error) showError("Lỗi khi thêm client mới.");
+      else showSuccess("Client mới đã được thêm!");
     }
-    setClients(updatedClients);
+    fetchClients();
+    setIsFormOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!clientToDelete) return;
-    const updatedClients = clients.filter(c => c.id !== clientToDelete.id);
-    setClients(updatedClients);
+    const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
+    if (error) showError("Lỗi khi xóa client.");
+    else showSuccess("Client đã được xóa.");
+    fetchClients();
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
-    showSuccess("Client đã được xóa.");
   };
 
-  const handleBulkArchive = () => {
-    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: true } : c);
-    setClients(updatedClients);
+  const handleBulkArchive = async () => {
+    const { error } = await supabase.from('clients').update({ archived: true }).in('id', selectedClients);
+    if (error) showError("Lỗi khi lưu trữ clients.");
+    else showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
+    fetchClients();
     setSelectedClients([]);
-    showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
   };
 
-  const handleBulkRestore = () => {
-    const updatedClients = clients.map(c => selectedClients.includes(c.id) ? { ...c, archived: false } : c);
-    setClients(updatedClients);
+  const handleBulkRestore = async () => {
+    const { error } = await supabase.from('clients').update({ archived: false }).in('id', selectedClients);
+    if (error) showError("Lỗi khi khôi phục clients.");
+    else showSuccess(`${selectedClients.length} client đã được khôi phục.`);
+    fetchClients();
     setSelectedClients([]);
-    showSuccess(`${selectedClients.length} client đã được khôi phục.`);
   };
 
-  const handleBulkDeleteConfirm = () => {
-    const updatedClients = clients.filter(c => !selectedClients.includes(c.id));
-    setClients(updatedClients);
+  const handleBulkDeleteConfirm = async () => {
+    const { error } = await supabase.from('clients').delete().in('id', selectedClients);
+    if (error) showError("Lỗi khi xóa clients.");
+    else showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
+    fetchClients();
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
-    showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -303,37 +323,41 @@ const ClientsPage = ({ clients, setClients }: ClientsPageProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
-                  <TableCell>
-                    <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
-                      <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
-                        <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      {client.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{client.contactPerson}</TableCell>
-                  <TableCell>{formatCurrency(client.contractValue)}</TableCell>
-                  <TableCell>
-                    <a href={client.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Xem hợp đồng
-                    </a>
-                  </TableCell>
-                  <TableCell>{formatDate(client.creationDate)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4" /></Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(client)}><Pen className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(client)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {loading ? (
+                <TableRow><TableCell colSpan={7} className="text-center">Đang tải...</TableCell></TableRow>
+              ) : (
+                filteredClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
+                    <TableCell>
+                      <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
+                        <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
+                          <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        {client.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{client.contactPerson}</TableCell>
+                    <TableCell>{formatCurrency(client.contractValue)}</TableCell>
+                    <TableCell>
+                      <a href={client.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Xem hợp đồng
+                      </a>
+                    </TableCell>
+                    <TableCell>{formatDate(client.creationDate)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4" /></Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(client)}><Pen className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(client)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </Card>
