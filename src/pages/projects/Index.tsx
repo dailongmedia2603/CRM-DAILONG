@@ -78,7 +78,7 @@ const ProjectsPage = () => {
     setLoading(true);
     const [projectsRes, clientsRes] = await Promise.all([
       supabase.from("projects").select("*"),
-      supabase.from("clients").select("*"),
+      supabase.from("clients").select("id, company_name, name"),
     ]);
 
     if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
@@ -212,6 +212,7 @@ const ProjectsPage = () => {
   const handleStatusFilterClick = (status: string) => setStatusFilter(prev => prev === status ? "all" : status);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  const formatDate = (dateString: string) => dateString ? new Date(dateString).toLocaleDateString('vi-VN') : 'N/A';
 
   return (
     <MainLayout>
@@ -256,8 +257,10 @@ const ProjectsPage = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
-                <TableHead className="w-[15%]">Client</TableHead>
-                <TableHead className="w-[20%]">Tên dự án</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Tên dự án</TableHead>
+                <TableHead>Thời gian</TableHead>
+                <TableHead>Nhân sự</TableHead>
                 <TableHead>Giá trị HĐ</TableHead>
                 <TableHead>Đã thanh toán</TableHead>
                 <TableHead>Công nợ</TableHead>
@@ -268,7 +271,7 @@ const ProjectsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={12} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                 const debt = project.contract_value - totalPaid;
@@ -277,6 +280,17 @@ const ProjectsPage = () => {
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
+                  <TableCell>
+                    <div>{formatDate(project.start_date)}</div>
+                    <div>{formatDate(project.end_date)}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {(project.team || []).map((member, index) => (
+                        <div key={index}>{member.role}: {member.name}</div>
+                      ))}
+                    </div>
+                  </TableCell>
                   <TableCell>{formatCurrency(project.contract_value)}</TableCell>
                   <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
                   <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>

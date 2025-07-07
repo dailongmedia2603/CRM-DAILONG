@@ -155,7 +155,7 @@ const ClientDetailsPage = () => {
                         <div className="space-y-4">
                           {clientProjects.slice(0, 5).map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.due_date).toLocaleDateString('vi-VN')}</p></div>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.end_date).toLocaleDateString('vi-VN')}</p></div>
                               <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
@@ -175,7 +175,7 @@ const ClientDetailsPage = () => {
                         <div className="space-y-4">
                           {clientProjects.map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.due_date).toLocaleDateString('vi-VN')}</p></div>
+                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.end_date).toLocaleDateString('vi-VN')}</p></div>
                               <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}

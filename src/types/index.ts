@@ -47,14 +47,15 @@ export interface Project {
   client_name: string;
   client_id?: string;
   progress: number;
-  team: { id: string; name: string; image?: string }[];
-  due_date: string;
+  start_date: string;
+  end_date: string;
   status: 'planning' | 'in-progress' | 'completed' | 'overdue' | 'on-hold';
   contract_value: number;
   link: string;
   archived: boolean;
   created_at: string;
   payments: Payment[];
+  team: { role: string; name: string; id: string }[];
 }
 
 export interface Personnel {
