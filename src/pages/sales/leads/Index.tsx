@@ -113,7 +113,7 @@ const LeadsPage = () => {
     setLoading(true);
     const [leadsRes, salesRes] = await Promise.all([
         supabase.from("leads").select("*, lead_history(*)"),
-        supabase.from("personnel").select("*") // Assuming all personnel can be sales persons
+        supabase.from("personnel").select("*")
     ]);
 
     if(leadsRes.error) showError("Lỗi khi tải dữ liệu leads.");
@@ -132,7 +132,7 @@ const LeadsPage = () => {
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const isArchivedMatch = archivedFilter === 'all' || (archivedFilter === 'active' ? !lead.archived : lead.archived);
-      const isSalesMatch = salesFilter === 'all' || (lead.created_by_id && lead.created_by_id === salesFilter);
+      const isSalesMatch = salesFilter === 'all' || lead.created_by_id === salesFilter;
       const isStatusMatch = statusFilter === 'all' || lead.status === statusFilter;
       const isSearchMatch = searchTerm === '' || 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -142,10 +142,12 @@ const LeadsPage = () => {
       let isFollowUpMatch = true;
       if (followUpFilter !== 'all' || specificDateFilter) {
         const today = startOfDay(new Date());
-        if (!lead.next_follow_up_date) {
+        const latestHistory = lead.lead_history?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        
+        if (!latestHistory || !latestHistory.next_follow_up_date) {
           isFollowUpMatch = false;
         } else {
-          const followUpDate = startOfDay(new Date(lead.next_follow_up_date));
+          const followUpDate = startOfDay(new Date(latestHistory.next_follow_up_date));
           if (specificDateFilter) {
             isFollowUpMatch = isEqual(followUpDate, startOfDay(specificDateFilter));
           } else if (followUpFilter === 'today') {
