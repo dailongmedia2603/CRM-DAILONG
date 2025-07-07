@@ -52,6 +52,7 @@ export interface Project {
   status: 'planning' | 'in-progress' | 'completed' | 'overdue' | 'on-hold';
   contract_value: number;
   link: string;
+  acceptance_link?: string;
   archived: boolean;
   created_at: string;
   payments: Payment[];

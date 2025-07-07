@@ -56,6 +56,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
+import { AcceptanceDialog } from "@/components/projects/AcceptanceDialog";
 import { Client, Project } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,23 +72,32 @@ const ProjectsPage = () => {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAcceptanceOpen, setIsAcceptanceOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [projectToComplete, setProjectToComplete] = useState<Project | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
-    const [projectsRes, clientsRes] = await Promise.all([
-      supabase.from("projects").select("*"),
-      supabase.from("clients").select("id, company_name, name"),
-    ]);
+    const { data, error } = await supabase.from("projects").select("*");
+    if (error) {
+      showError("Lỗi khi tải dữ liệu dự án.");
+    } else {
+      const updatedProjects = data.map(p => {
+        const endDate = p.end_date ? new Date(p.end_date) : null;
+        if (endDate && endDate < startOfToday() && p.status !== 'completed') {
+          return { ...p, status: 'overdue' };
+        }
+        return p;
+      });
+      setProjects(updatedProjects as Project[]);
+    }
 
-    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
-    else setProjects(projectsRes.data as Project[]);
-
-    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
-    else setClients(clientsRes.data as Client[]);
+    const { data: clientsData, error: clientsError } = await supabase.from("clients").select("id, company_name, name");
+    if (clientsError) showError("Lỗi khi tải dữ liệu khách hàng.");
+    else setClients(clientsData as Client[]);
     
     setLoading(false);
   };
@@ -136,6 +146,26 @@ const ProjectsPage = () => {
   const handleOpenDeleteAlert = (project: Project) => {
     setProjectToDelete(project);
     setIsDeleteAlertOpen(true);
+  };
+
+  const handleOpenAcceptanceDialog = (project: Project) => {
+    setProjectToComplete(project);
+    setIsAcceptanceOpen(true);
+  };
+
+  const handleConfirmCompletion = async (link: string) => {
+    if (!projectToComplete) return;
+    const { error } = await supabase
+      .from('projects')
+      .update({ status: 'completed', acceptance_link: link })
+      .eq('id', projectToComplete.id);
+
+    if (error) showError("Lỗi khi hoàn thành dự án.");
+    else showSuccess("Dự án đã được hoàn thành!");
+    
+    fetchData();
+    setIsAcceptanceOpen(false);
+    setProjectToComplete(null);
   };
 
   const handleSaveProject = async (projectData: any) => {
@@ -261,32 +291,39 @@ const ProjectsPage = () => {
                 <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Tên dự án</TableHead>
+                <TableHead>Link</TableHead>
+                <TableHead>Nghiệm thu</TableHead>
                 <TableHead>Thời gian</TableHead>
                 <TableHead>Nhân sự</TableHead>
                 <TableHead>Giá trị HĐ</TableHead>
                 <TableHead>Đã thanh toán</TableHead>
                 <TableHead>Công nợ</TableHead>
                 <TableHead>Tiến độ TT</TableHead>
-                <TableHead>Link</TableHead>
                 <TableHead>Tiến độ</TableHead>
                 <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={12} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredProjects.map(project => {
                 const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                 const debt = project.contract_value - totalPaid;
-                const today = startOfToday();
-                const endDate = project.end_date ? new Date(project.end_date) : null;
-                const isOverdue = endDate && endDate < today && project.status !== 'completed';
-                const overdueDays = endDate ? differenceInDays(today, endDate) : 0;
+                const isOverdue = project.status === 'overdue';
+                const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
 
                 return (
                 <TableRow key={project.id} className="text-xs">
                   <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                   <TableCell>{project.client_name}</TableCell>
                   <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
+                  <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
+                  <TableCell>
+                    {project.acceptance_link ? (
+                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline"><CheckCircle className="h-4 w-4" /></a>
+                    ) : (
+                      <span>N/A</span>
+                    )}
+                  </TableCell>
                   <TableCell className={cn(isOverdue && "text-red-600")}>
                     <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
                     <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
@@ -317,13 +354,12 @@ const ProjectsPage = () => {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
                   <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
                   <TableCell className="text-right px-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem asChild><Link to={`/projects/${project.id}`}>Chi tiết</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenAcceptanceDialog(project)}>Hoàn thành</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Sửa</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleOpenDeleteAlert(project)} className="text-red-500">Xóa</DropdownMenuItem>
@@ -337,6 +373,7 @@ const ProjectsPage = () => {
         </div>
       </div>
       <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
+      <AcceptanceDialog open={isAcceptanceOpen} onOpenChange={setIsAcceptanceOpen} onConfirm={handleConfirmCompletion} />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader>
