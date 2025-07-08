@@ -131,10 +131,18 @@ const HRPage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!personnelToDelete) return;
-    const { error } = await supabase.from('personnel').delete().eq('id', personnelToDelete.id);
-    if (error) showError("Lỗi khi xóa nhân sự.");
-    else showSuccess("Đã xóa nhân sự.");
-    fetchPersonnel();
+
+    const { error } = await supabase.functions.invoke('delete-personnel-user', {
+      body: { userId: personnelToDelete.id },
+    });
+
+    if (error) {
+      showError("Lỗi khi xóa nhân sự: " + error.message);
+    } else {
+      showSuccess("Đã xóa nhân sự thành công.");
+      fetchPersonnel();
+    }
+    
     setIsDeleteAlertOpen(false);
     setPersonnelToDelete(null);
   };
