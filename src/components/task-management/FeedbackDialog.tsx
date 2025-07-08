@@ -15,11 +15,19 @@ interface FeedbackDialogProps {
   taskName: string;
   history: Feedback[];
   onAddFeedback: (message: string) => void;
+  currentUser: { id: string; name: string };
 }
 
-export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFeedback }: FeedbackDialogProps) => {
+export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFeedback, currentUser }: FeedbackDialogProps) => {
   const [newMessage, setNewMessage] = useState('');
+  const [localHistory, setLocalHistory] = useState<Feedback[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setLocalHistory(history);
+    }
+  }, [history, open]);
 
   useEffect(() => {
     if (open) {
@@ -30,10 +38,18 @@ export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFee
         }
       }, 100);
     }
-  }, [history, open]);
+  }, [localHistory, open]);
 
   const handleSend = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && currentUser.id) {
+      const tempFeedback: Feedback = {
+        id: Date.now().toString(), // Temporary unique key for rendering
+        user_id: currentUser.id,
+        user_name: currentUser.name,
+        message: newMessage.trim(),
+        timestamp: new Date().toISOString(),
+      };
+      setLocalHistory(prev => [...prev, tempFeedback]); // Optimistic update
       onAddFeedback(newMessage.trim());
       setNewMessage('');
     }
@@ -48,7 +64,7 @@ export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFee
         <div className="flex flex-col h-[500px]">
           <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
             <div className="space-y-6 py-4">
-              {history.map(fb => (
+              {localHistory.map(fb => (
                 <div key={fb.id} className="flex items-start gap-3">
                   <Avatar className="h-9 w-9 border">
                     <AvatarFallback>{fb.user_name.charAt(0)}</AvatarFallback>
@@ -66,7 +82,7 @@ export const FeedbackDialog = ({ open, onOpenChange, taskName, history, onAddFee
                   </div>
                 </div>
               ))}
-              {history.length === 0 && (
+              {localHistory.length === 0 && (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   Chưa có feedback nào.
                 </div>
