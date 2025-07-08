@@ -6,14 +6,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfToday } from 'date-fns';
+import { startOfToday, startOfWeek, endOfWeek, subDays, isSameDay, format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -39,6 +43,9 @@ const InternsPage = () => {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [internFilter, setInternFilter] = useState('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: startOfToday(), to: startOfToday() });
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
@@ -49,7 +56,7 @@ const InternsPage = () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
       supabase.from("intern_tasks").select("*").order('deadline', { ascending: true }),
-      supabase.from("personnel").select("*").eq('role', 'Thực tập'),
+      supabase.from("personnel").select("*"),
     ]);
 
     if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
@@ -64,7 +71,7 @@ const InternsPage = () => {
       setTasks(updatedTasks as InternTask[]);
     }
 
-    if (personnelRes.error) showError("Lỗi khi tải dữ liệu thực tập sinh.");
+    if (personnelRes.error) showError("Lỗi khi tải dữ liệu nhân sự.");
     else setPersonnel(personnelRes.data as Personnel[]);
     
     setLoading(false);
@@ -77,18 +84,28 @@ const InternsPage = () => {
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task =>
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.intern_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [tasks, searchTerm]);
+    return tasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.intern_name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesIntern = internFilter === 'all' || task.intern_name === internFilter;
+
+      const taskDate = new Date(task.created_at);
+      const matchesDate = dateRange?.from ? 
+        (task.status !== 'Hoàn thành' || (task.status === 'Hoàn thành' && isSameDay(taskDate, dateRange.from))) &&
+        taskDate >= dateRange.from && taskDate <= (dateRange.to || dateRange.from)
+        : true;
+
+      return matchesSearch && matchesIntern && matchesDate;
+    });
+  }, [tasks, searchTerm, internFilter, dateRange]);
 
   const stats = useMemo(() => ({
-    total: tasks.length,
-    inProgress: tasks.filter(t => t.status === 'Đang làm').length,
-    completed: tasks.filter(t => t.status === 'Hoàn thành').length,
-    overdue: tasks.filter(t => t.status === 'Quá hạn').length,
-  }), [tasks]);
+    total: filteredTasks.length,
+    inProgress: filteredTasks.filter(t => t.status === 'Đang làm').length,
+    completed: filteredTasks.filter(t => t.status === 'Hoàn thành').length,
+    overdue: filteredTasks.filter(t => t.status === 'Quá hạn').length,
+  }), [filteredTasks]);
 
   const handleOpenAddDialog = () => {
     setActiveTask(null);
@@ -111,12 +128,13 @@ const InternsPage = () => {
   };
 
   const handleSaveTask = async (taskData: any) => {
+    const dataToSave = { ...taskData, assigner_name: "Admin" }; // Mock user
     if (activeTask && activeTask.id) {
-      const { error } = await supabase.from('intern_tasks').update(taskData).eq('id', activeTask.id);
+      const { error } = await supabase.from('intern_tasks').update(dataToSave).eq('id', activeTask.id);
       if (error) showError("Lỗi khi cập nhật công việc.");
       else showSuccess("Công việc đã được cập nhật!");
     } else {
-      const { error } = await supabase.from('intern_tasks').insert([{ ...taskData, status: 'Chưa làm' }]);
+      const { error } = await supabase.from('intern_tasks').insert([{ ...dataToSave, status: 'Chưa làm' }]);
       if (error) showError("Lỗi khi giao việc mới.");
       else showSuccess("Đã giao việc mới thành công!");
     }
@@ -136,11 +154,8 @@ const InternsPage = () => {
 
   const handleUpdateStatus = async (task: InternTask, newStatus: InternTask['status']) => {
     let updateData: Partial<InternTask> = { status: newStatus };
-    if (newStatus === 'Đang làm') {
-      updateData.started_at = new Date().toISOString();
-    } else if (newStatus === 'Hoàn thành') {
-      updateData.completed_at = new Date().toISOString();
-    }
+    if (newStatus === 'Đang làm') updateData.started_at = new Date().toISOString();
+    else if (newStatus === 'Hoàn thành') updateData.completed_at = new Date().toISOString();
 
     const { error } = await supabase.from('intern_tasks').update(updateData).eq('id', task.id);
     if (error) showError("Lỗi khi cập nhật trạng thái.");
@@ -179,14 +194,29 @@ const InternsPage = () => {
           <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" />
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm công việc hoặc thực tập sinh..."
-            className="pl-10 py-6 text-base"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input placeholder="Tìm kiếm công việc hoặc thực tập sinh..." className="pl-10 py-6 text-base" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <Select value={internFilter} onValueChange={setInternFilter}>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả thực tập sinh</SelectItem>
+              {interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")) : <span>Chọn ngày...</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
@@ -194,11 +224,11 @@ const InternsPage = () => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>NGƯỜI GIAO</TableHead>
+                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>DEADLINE</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead>HÀNH ĐỘNG</TableHead>
-                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
@@ -207,23 +237,19 @@ const InternsPage = () => {
               filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell>
-                    <div className="max-w-xs">
-                      <p className="font-medium truncate">{task.title}</p>
+                    <div className="max-w-xs cursor-pointer" onClick={() => handleOpenDetailsDialog(task)}>
+                      <p className="font-medium truncate hover:underline">{task.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
-                      <ExternalLink className="h-5 w-5" />
-                    </a>
-                  </TableCell>
+                  <TableCell>{task.assigner_name}</TableCell>
+                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>
                     {task.status === 'Chưa làm' && <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => handleUpdateStatus(task, 'Đang làm')}><Play className="mr-2 h-4 w-4" />Bắt đầu</Button>}
                     {task.status === 'Đang làm' && <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleUpdateStatus(task, 'Hoàn thành')}><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</Button>}
                   </TableCell>
-                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
