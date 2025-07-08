@@ -132,12 +132,12 @@ const HRPage = () => {
   const handleDeleteConfirm = async () => {
     if (!personnelToDelete) return;
 
-    const { error } = await supabase.functions.invoke('delete-personnel-user', {
+    const { data, error } = await supabase.functions.invoke('delete-personnel-user', {
       body: { userId: personnelToDelete.id },
     });
 
-    if (error) {
-      showError("Lỗi khi xóa nhân sự: " + error.message);
+    if (error || (data && data.error)) {
+      showError("Lỗi khi xóa nhân sự: " + (error?.message || data.error));
     } else {
       showSuccess("Đã xóa nhân sự thành công.");
       fetchPersonnel();
