@@ -30,6 +30,7 @@ import {
   Eye,
   Pen,
   Trash2,
+  ExternalLink,
   Archive,
   RotateCcw,
   List,
@@ -134,9 +135,11 @@ const ClientsPage = () => {
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
     
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
     const matchesSearch =
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.contact_person.toLowerCase().includes(searchTerm.toLowerCase());
+      client.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      client.contact_person.toLowerCase().includes(lowerCaseSearchTerm) ||
+      (client.industry && client.industry.toLowerCase().includes(lowerCaseSearchTerm));
     
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
 
