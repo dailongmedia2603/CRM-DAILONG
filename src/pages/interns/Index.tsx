@@ -20,7 +20,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -53,7 +53,7 @@ const InternsPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeDateFilter, setActiveDateFilter] = useState('today');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [isTimeFilterOpen, setIsTimeFilterOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
@@ -231,8 +231,12 @@ const InternsPage = () => {
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     setDateRange(range);
     setActiveDateFilter('custom');
-    if (range?.from) {
-      setIsDatePopoverOpen(false);
+    if (range?.from && range?.to) {
+      setIsTimeFilterOpen(false);
+    } else if (range?.from && !range.to) {
+      // If user clicks one date in range mode, set both from and to
+      setDateRange({ from: range.from, to: range.from });
+      setIsTimeFilterOpen(false);
     }
   };
 
@@ -277,7 +281,7 @@ const InternsPage = () => {
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
           
-          <DropdownMenu>
+          <DropdownMenu open={isTimeFilterOpen} onOpenChange={setIsTimeFilterOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-[180px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
@@ -289,14 +293,24 @@ const InternsPage = () => {
               <DropdownMenuItem onSelect={() => setActiveDateFilter('yesterday')}>Hôm qua</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setActiveDateFilter('thisWeek')}>Tuần này</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chọn ngày...</DropdownMenuItem>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" side="right" align="start">
-                  <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={handleDateRangeSelect} numberOfMonths={1} />
-                </PopoverContent>
-              </Popover>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <span>Chọn ngày...</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="w-auto p-0">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={handleDateRangeSelect}
+                      numberOfMonths={1}
+                    />
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
 
