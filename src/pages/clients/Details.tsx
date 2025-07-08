@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, DollarSign, Briefcase, FileText } from "lucide-react";
+import { ArrowLeft, Edit, DollarSign, Briefcase, FileText, CheckCircle } from "lucide-react";
 import { Client, Project } from "@/types";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
 import { ProfileList } from "@/components/clients/ProfileList";
@@ -92,6 +92,7 @@ const ClientDetailsPage = () => {
   }
   
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  const formatDate = (dateString: string) => dateString ? new Date(dateString).toLocaleDateString('vi-VN') : 'N/A';
 
   return (
     <MainLayout>
@@ -155,7 +156,7 @@ const ClientDetailsPage = () => {
                         <div className="space-y-4">
                           {clientProjects.slice(0, 5).map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.end_date).toLocaleDateString('vi-VN')}</p></div>
+                              <div><Link to={`/projects?search=${project.name}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {formatDate(project.end_date)}</p></div>
                               <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
                             </div>
                           ))}
@@ -173,12 +174,38 @@ const ClientDetailsPage = () => {
                   <CardContent>
                       {clientProjects.length > 0 ? (
                         <div className="space-y-4">
-                          {clientProjects.map((project) => (
-                            <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                              <div><Link to={`/projects/${project.id}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {new Date(project.end_date).toLocaleDateString('vi-VN')}</p></div>
-                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
-                            </div>
-                          ))}
+                          {clientProjects.map((project) => {
+                            const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+                            const debt = project.contract_value - totalPaid;
+                            return (
+                              <div key={project.id} className="p-4 rounded-lg border hover:bg-gray-50">
+                                <div className="flex justify-between items-start">
+                                  <Link to={`/projects?search=${project.name}`} className="font-semibold text-lg hover:underline">{project.name}</Link>
+                                  <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
+                                </div>
+                                <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <p><span className="font-medium">Bắt đầu:</span> {formatDate(project.start_date)}</p>
+                                    <p><span className="font-medium">Kết thúc:</span> {formatDate(project.end_date)}</p>
+                                  </div>
+                                  <div>
+                                    <p><span className="font-medium">Giá trị HĐ:</span> {formatCurrency(project.contract_value)}</p>
+                                    <p className="text-red-600"><span className="font-medium">Công nợ:</span> {formatCurrency(debt)}</p>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <p className="font-medium mb-1">Tiến độ thanh toán:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {(project.payments || []).map((payment, index) => (
+                                        <Badge key={index} variant={payment.paid ? "default" : "secondary"} className={cn(payment.paid && "bg-green-500")}>
+                                          Đợt {index + 1}: {formatCurrency(payment.amount)} {payment.paid && <CheckCircle className="ml-1 h-3 w-3"/>}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-48"><Briefcase className="h-12 w-12 text-muted-foreground" /><p className="mt-4 text-muted-foreground">Chưa có dự án nào</p></div>
