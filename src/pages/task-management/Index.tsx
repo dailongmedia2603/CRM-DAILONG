@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, List, ArrowLeft, AlertTriangle, Clock, ChevronDown, Archive, RotateCcw } from "lucide-react";
+import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, List, ArrowLeft, AlertTriangle, Clock, ChevronDown, Archive, RotateCcw, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TaskStatsCard } from "@/components/task-management/TaskStatsCard";
 import { TaskFormDialog } from "@/components/task-management/TaskFormDialog";
@@ -32,6 +32,7 @@ const TasksManagementPage = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false, bulkDelete: false });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -46,7 +47,7 @@ const TasksManagementPage = () => {
   const fetchData = async () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)"),
+      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)").order('created_at', { ascending: false }),
       supabase.from("personnel").select("*"),
     ]);
 
@@ -86,6 +87,19 @@ const TasksManagementPage = () => {
     }
     return filtered;
   }, [tasks, dateFilter, searchTerm, statusFilter, priorityFilter, showCompleted, showArchived]);
+
+  const paginatedTasks = useMemo(() => {
+    const { pageIndex, pageSize } = pagination;
+    if (pageSize === 0) return filteredTasks; // Show all
+    const start = pageIndex * pageSize;
+    const end = start + pageSize;
+    return filteredTasks.slice(start, end);
+  }, [filteredTasks, pagination]);
+
+  const pageCount = useMemo(() => {
+    if (pagination.pageSize === 0) return 1;
+    return Math.ceil(filteredTasks.length / pagination.pageSize);
+  }, [filteredTasks, pagination.pageSize]);
 
   const stats = useMemo(() => {
     const relevantTasks = dateFilter ? tasks.filter(task => isSameDay(new Date(task.created_at), dateFilter)) : tasks;
@@ -250,7 +264,7 @@ const TasksManagementPage = () => {
             <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
-              filteredTasks.map(task => (
+              paginatedTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
@@ -270,6 +284,73 @@ const TasksManagementPage = () => {
               ))}
             </TableBody>
           </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            {selectedTasks.length} của {filteredTasks.length} dòng được chọn.
+          </div>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Số dòng mỗi trang</p>
+            <Select
+              value={`${pagination.pageSize}`}
+              onValueChange={(value) => {
+                setPagination(prev => ({ ...prev, pageSize: Number(value), pageIndex: 0 }));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[20, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+                <SelectItem value="0">Tất cả</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Trang {pagination.pageIndex + 1} của {pageCount}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to first page</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to last page</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
