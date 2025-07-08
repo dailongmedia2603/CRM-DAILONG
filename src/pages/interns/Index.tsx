@@ -67,20 +67,17 @@ const InternsPage = () => {
       supabase.from("personnel").select("*").eq('role', 'Thực tập'),
     ]);
 
-    if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
-    else {
-      const today = new Date();
-      const updatedTasks = tasksRes.data.map(task => {
-        if (new Date(task.deadline) < today && task.status !== 'Hoàn thành') {
-          return { ...task, status: 'Quá hạn' };
-        }
-        return task;
-      });
-      setTasks(updatedTasks as InternTask[]);
+    if (tasksRes.error) {
+      showError("Lỗi khi tải dữ liệu công việc.");
+    } else {
+      setTasks(tasksRes.data as InternTask[]);
     }
 
-    if (personnelRes.error) showError("Lỗi khi tải dữ liệu thực tập sinh.");
-    else setPersonnel(personnelRes.data as Personnel[]);
+    if (personnelRes.error) {
+      showError("Lỗi khi tải dữ liệu thực tập sinh.");
+    } else {
+      setPersonnel(personnelRes.data as Personnel[]);
+    }
     
     setLoading(false);
   };
@@ -103,11 +100,19 @@ const InternsPage = () => {
         dateMatch = taskDate >= dateRange.from;
       }
 
+      const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
+      let statusMatch = true;
+      if (statusFilter === 'Quá hạn') {
+        statusMatch = isOverdue;
+      } else if (statusFilter !== 'all') {
+        statusMatch = task.status === statusFilter;
+      }
+
       return (
         (task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.intern_name.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (internFilter === 'all' || task.intern_name === internFilter) &&
-        (statusFilter === 'all' || task.status === statusFilter) &&
+        statusMatch &&
         dateMatch
       );
     });
@@ -117,7 +122,7 @@ const InternsPage = () => {
     total: filteredTasks.length,
     inProgress: filteredTasks.filter(t => t.status === 'Đang làm').length,
     completed: filteredTasks.filter(t => t.status === 'Hoàn thành').length,
-    overdue: filteredTasks.filter(t => t.status === 'Quá hạn').length,
+    overdue: filteredTasks.filter(t => new Date(t.deadline) < new Date() && t.status !== 'Hoàn thành').length,
   }), [filteredTasks]);
 
   const handleOpenAddDialog = () => {
@@ -196,11 +201,11 @@ const InternsPage = () => {
     setSelectedTasks([]);
   };
 
-  const getStatusBadge = (status: InternTask['status']) => {
+  const getStatusBadgeStyle = (status: InternTask['status'], isOverdue: boolean) => {
+    if (isOverdue) return 'bg-red-100 text-red-800';
     switch (status) {
       case 'Đang làm': return 'bg-blue-100 text-blue-800';
       case 'Hoàn thành': return 'bg-green-100 text-green-800';
-      case 'Quá hạn': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -292,6 +297,8 @@ const InternsPage = () => {
                 const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                 const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
                 const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
+                const displayStatus = isOverdue ? 'Quá hạn' : task.status;
+
                 return (
                 <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
@@ -323,15 +330,15 @@ const InternsPage = () => {
                   </TableCell>
                   <TableCell>{task.assigner_name}</TableCell>
                   <TableCell>{task.intern_name}</TableCell>
-                  <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
+                  <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
                   <TableCell>
                     {task.status !== 'Hoàn thành' && (
                       <Button 
                         size="sm" 
-                        className={cn(task.status === 'Chưa làm' || task.status === 'Quá hạn' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
-                        onClick={() => handleUpdateStatus(task, (task.status === 'Chưa làm' || task.status === 'Quá hạn') ? 'Đang làm' : 'Hoàn thành')}
+                        className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                        onClick={() => handleUpdateStatus(task, task.status === 'Chưa làm' ? 'Đang làm' : 'Hoàn thành')}
                       >
-                        {(task.status === 'Chưa làm' || task.status === 'Quá hạn') ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                        {task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
                       </Button>
                     )}
                   </TableCell>
