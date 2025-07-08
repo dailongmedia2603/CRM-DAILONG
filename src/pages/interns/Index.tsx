@@ -71,7 +71,7 @@ const InternsPage = () => {
     else {
       const today = new Date();
       const updatedTasks = tasksRes.data.map(task => {
-        if (new Date(task.deadline) < today && task.status === 'Chưa làm') {
+        if (new Date(task.deadline) < today && task.status !== 'Hoàn thành') {
           return { ...task, status: 'Quá hạn' };
         }
         return task;
@@ -286,10 +286,11 @@ const InternsPage = () => {
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => {
+                const isCompletedLate = task.status === 'Hoàn thành' && task.completed_at && new Date(task.completed_at) > new Date(task.deadline);
                 const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                 const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
                 return (
-                <TableRow key={task.id}>
+                <TableRow key={task.id} className={cn(isCompletedLate && "bg-red-50")}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell>
                     <div className="max-w-xs">
