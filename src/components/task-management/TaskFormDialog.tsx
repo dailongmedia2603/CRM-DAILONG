@@ -34,8 +34,8 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
   useEffect(() => {
     if (task) {
       setName(task.name);
-      setDescription(task.description);
-      setLinks(task.links.length > 0 ? task.links : ['']);
+      setDescription(task.description || '');
+      setLinks(task.links && task.links.length > 0 ? task.links : ['']);
       setAssigneeId(task.assignee.id);
       const taskDeadline = new Date(task.deadline);
       setDeadline(taskDeadline);
@@ -85,26 +85,28 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
       showError("Vui lòng điền đầy đủ các trường bắt buộc: Tên công việc, Người nhận, Deadline.");
       return;
     }
-    const assignee = personnel.find(p => p.id === assigneeId);
-    if (!assignee) {
-        showError("Người nhận không hợp lệ.");
-        return;
-    }
-
+    
     const finalDeadline = new Date(deadline);
     finalDeadline.setHours(parseInt(hour, 10));
     finalDeadline.setMinutes(parseInt(minute, 10));
     finalDeadline.setSeconds(0);
     finalDeadline.setMilliseconds(0);
 
-    onSave({
+    const dataToSave: any = {
       name,
       description,
       links: links.filter(link => link.trim() !== ''),
-      assignee: { id: assignee.id, name: assignee.name },
+      assignee_id: assigneeId,
       deadline: finalDeadline.toISOString(),
       priority,
-    });
+    };
+
+    if (!task) { // This is a new task
+      dataToSave.assigner_id = currentUser.id;
+      dataToSave.status = 'Chưa làm';
+    }
+
+    onSave(dataToSave);
     onOpenChange(false);
   };
 
