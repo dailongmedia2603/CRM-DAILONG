@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { InternTask } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle } from "lucide-react";
+import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle, Play, Check } from "lucide-react";
 
 interface InternTaskDetailsDialogProps {
   open: boolean;
@@ -33,13 +33,18 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
     }
   };
 
-  const getStatusBadge = (status: InternTask['comment_status']) => {
+  const getStatusBadge = (status: InternTask['status']) => {
     switch (status) {
       case 'Đang làm': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Chờ xử lý': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Hoàn thành': return 'bg-green-100 text-green-800 border-green-200';
-      default: return '';
+      case 'Quá hạn': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm");
   };
 
   return (
@@ -56,14 +61,13 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <DetailItem icon={<User className="h-5 w-5" />} label="Thực tập sinh" value={task.intern_name} />
-              <DetailItem icon={<Calendar className="h-5 w-5" />} label="Deadline" value={format(new Date(task.deadline), "dd/MM/yyyy")} />
-              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Số lượng Comment" value={<Badge variant="secondary">{task.comment_count}</Badge>} />
-              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Số lượng Post" value={<Badge variant="secondary">{task.post_count}</Badge>} />
+              <DetailItem icon={<Calendar className="h-5 w-5" />} label="Deadline" value={formatDate(task.deadline)} />
+              <DetailItem icon={<Play className="h-5 w-5" />} label="Thời gian bắt đầu" value={formatDate(task.started_at)} />
+              <DetailItem icon={<Check className="h-5 w-5" />} label="Thời gian hoàn thành" value={formatDate(task.completed_at)} />
             </div>
             <div className="space-y-4">
               <DetailItem icon={<AlertTriangle className="h-5 w-5" />} label="Ưu tiên" value={<Badge className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge>} />
-              <DetailItem icon={<MessageSquare className="h-5 w-5" />} label="Trạng thái Comment" value={<Badge className={cn(getStatusBadge(task.comment_status))}>{task.comment_status}</Badge>} />
-              <DetailItem icon={<CheckSquare className="h-5 w-5" />} label="Trạng thái Post" value={<Badge className={cn(getStatusBadge(task.post_status))}>{task.post_status}</Badge>} />
+              <DetailItem icon={<Hash className="h-5 w-5" />} label="Trạng thái" value={<Badge className={cn(getStatusBadge(task.status))}>{task.status}</Badge>} />
               <DetailItem icon={<LinkIcon className="h-5 w-5" />} label="Link làm việc" value={<a href={task.work_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem link</a>} />
             </div>
           </div>

@@ -6,13 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { startOfToday } from 'date-fns';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -47,12 +48,21 @@ const InternsPage = () => {
   const fetchData = async () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("intern_tasks").select("*"),
+      supabase.from("intern_tasks").select("*").order('deadline', { ascending: true }),
       supabase.from("personnel").select("*").eq('role', 'Thực tập'),
     ]);
 
     if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
-    else setTasks(tasksRes.data as InternTask[]);
+    else {
+      const today = startOfToday();
+      const updatedTasks = tasksRes.data.map(task => {
+        if (new Date(task.deadline) < today && task.status !== 'Hoàn thành') {
+          return { ...task, status: 'Quá hạn' };
+        }
+        return task;
+      });
+      setTasks(updatedTasks as InternTask[]);
+    }
 
     if (personnelRes.error) showError("Lỗi khi tải dữ liệu thực tập sinh.");
     else setPersonnel(personnelRes.data as Personnel[]);
@@ -75,9 +85,9 @@ const InternsPage = () => {
 
   const stats = useMemo(() => ({
     total: tasks.length,
-    inProgress: tasks.filter(t => t.comment_status === 'Đang làm' || t.post_status === 'Đang làm').length,
-    completed: tasks.filter(t => t.comment_status === 'Hoàn thành' && t.post_status === 'Hoàn thành').length,
-    overdue: tasks.filter(t => new Date(t.deadline) < new Date()).length,
+    inProgress: tasks.filter(t => t.status === 'Đang làm').length,
+    completed: tasks.filter(t => t.status === 'Hoàn thành').length,
+    overdue: tasks.filter(t => t.status === 'Quá hạn').length,
   }), [tasks]);
 
   const handleOpenAddDialog = () => {
@@ -106,7 +116,7 @@ const InternsPage = () => {
       if (error) showError("Lỗi khi cập nhật công việc.");
       else showSuccess("Công việc đã được cập nhật!");
     } else {
-      const { error } = await supabase.from('intern_tasks').insert([taskData]);
+      const { error } = await supabase.from('intern_tasks').insert([{ ...taskData, status: 'Chưa làm' }]);
       if (error) showError("Lỗi khi giao việc mới.");
       else showSuccess("Đã giao việc mới thành công!");
     }
@@ -124,12 +134,28 @@ const InternsPage = () => {
     setTaskToDelete(null);
   };
 
-  const getPriorityBadge = (priority: InternTask['priority']) => {
-    switch (priority) {
-      case 'Cao': return 'bg-red-100 text-red-800';
-      case 'Bình thường': return 'bg-blue-100 text-blue-800';
-      case 'Thấp': return 'bg-gray-100 text-gray-800';
-      default: return '';
+  const handleUpdateStatus = async (task: InternTask, newStatus: InternTask['status']) => {
+    let updateData: Partial<InternTask> = { status: newStatus };
+    if (newStatus === 'Đang làm') {
+      updateData.started_at = new Date().toISOString();
+    } else if (newStatus === 'Hoàn thành') {
+      updateData.completed_at = new Date().toISOString();
+    }
+
+    const { error } = await supabase.from('intern_tasks').update(updateData).eq('id', task.id);
+    if (error) showError("Lỗi khi cập nhật trạng thái.");
+    else {
+      showSuccess("Đã cập nhật trạng thái công việc.");
+      fetchData();
+    }
+  };
+
+  const getStatusBadge = (status: InternTask['status']) => {
+    switch (status) {
+      case 'Đang làm': return 'bg-blue-100 text-blue-800';
+      case 'Hoàn thành': return 'bg-green-100 text-green-800';
+      case 'Quá hạn': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -168,17 +194,16 @@ const InternsPage = () => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead className="text-center">FILE LÀM VIỆC</TableHead>
+                <TableHead>FILE LÀM VIỆC</TableHead>
                 <TableHead>DEADLINE</TableHead>
-                <TableHead>SL COMMENT</TableHead>
-                <TableHead>SL POST</TableHead>
-                <TableHead>ƯU TIÊN</TableHead>
+                <TableHead>TRẠNG THÁI</TableHead>
+                <TableHead>HÀNH ĐỘNG</TableHead>
                 <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={7} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell>
@@ -193,13 +218,11 @@ const InternsPage = () => {
                     </a>
                   </TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
+                  <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
+                    {task.status === 'Chưa làm' && <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => handleUpdateStatus(task, 'Đang làm')}><Play className="mr-2 h-4 w-4" />Bắt đầu</Button>}
+                    {task.status === 'Đang làm' && <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleUpdateStatus(task, 'Hoàn thành')}><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</Button>}
                   </TableCell>
-                  <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
-                  </TableCell>
-                  <TableCell><Badge className={cn("capitalize", getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
                   <TableCell>{task.intern_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">

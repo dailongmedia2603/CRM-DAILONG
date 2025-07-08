@@ -106,6 +106,9 @@ export interface InternTask {
   comment_count: number;
   post_count: number;
   work_link: string;
+  status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành' | 'Quá hạn';
+  started_at?: string;
+  completed_at?: string;
 }
 
 export interface LeadHistory {
