@@ -275,6 +275,9 @@ const InternsPage = () => {
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
+                <TableHead>SL COMMENT</TableHead>
+                <TableHead>SL POST</TableHead>
+                <TableHead>FILE LÀM VIỆC</TableHead>
                 <TableHead>NGƯỜI GIAO</TableHead>
                 <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>DEADLINE</TableHead>
@@ -284,19 +287,25 @@ const InternsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => {
-                const isCompletedLate = task.status === 'Hoàn thành' && task.completed_at && new Date(task.completed_at) > new Date(task.deadline);
                 const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                 const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
                 return (
-                <TableRow key={task.id} className={cn(isCompletedLate && "bg-red-50")}>
+                <TableRow key={task.id} className={cn(isOverdue && task.status === 'Hoàn thành' && "bg-red-50")}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell>
                     <div className="max-w-xs">
                       <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>{task.comment_count}</TableCell>
+                  <TableCell>{task.post_count}</TableCell>
+                  <TableCell className="text-center">
+                    <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
+                      <ExternalLink className="h-5 w-5" />
+                    </a>
                   </TableCell>
                   <TableCell>{task.assigner_name}</TableCell>
                   <TableCell>{task.intern_name}</TableCell>
