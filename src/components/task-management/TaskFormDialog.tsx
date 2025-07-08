@@ -27,8 +27,6 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
   const [links, setLinks] = useState<string[]>(['']);
   const [assigneeId, setAssigneeId] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>();
-  const [hour, setHour] = useState('00');
-  const [minute, setMinute] = useState('00');
   const [priority, setPriority] = useState<'Cao' | 'Trung bình' | 'Thấp'>('Trung bình');
 
   useEffect(() => {
@@ -37,10 +35,7 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
       setDescription(task.description || '');
       setLinks(task.links && task.links.length > 0 ? task.links : ['']);
       setAssigneeId(task.assignee.id);
-      const taskDeadline = new Date(task.deadline);
-      setDeadline(taskDeadline);
-      setHour(format(taskDeadline, 'HH'));
-      setMinute(format(taskDeadline, 'mm'));
+      setDeadline(task.deadline ? new Date(task.deadline) : undefined);
       setPriority(task.priority);
     } else {
       setName('');
@@ -48,8 +43,6 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
       setLinks(['']);
       setAssigneeId('');
       setDeadline(undefined);
-      setHour('00');
-      setMinute('00');
       setPriority('Trung bình');
     }
   }, [task, open]);
@@ -69,15 +62,23 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
     }
   };
 
-  const handleTimeChange = (setter: React.Dispatch<React.SetStateAction<string>>, max: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value, 10);
-    if (isNaN(value) || value < 0) {
-        value = 0;
+  const handleDateTimeChange = (newDatePart?: Date, newTimePart?: {hour?: string, minute?: string}) => {
+    const newDeadline = deadline ? new Date(deadline) : new Date();
+    
+    if (newDatePart) {
+      newDeadline.setFullYear(newDatePart.getFullYear());
+      newDeadline.setMonth(newDatePart.getMonth());
+      newDeadline.setDate(newDatePart.getDate());
     }
-    if (value > max) {
-        value = max;
+
+    if (newTimePart?.hour) {
+      newDeadline.setHours(parseInt(newTimePart.hour, 10));
     }
-    setter(value.toString().padStart(2, '0'));
+    if (newTimePart?.minute) {
+      newDeadline.setMinutes(parseInt(newTimePart.minute, 10));
+    }
+    
+    setDeadline(newDeadline);
   };
 
   const handleSubmit = () => {
@@ -86,18 +87,12 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
       return;
     }
     
-    const finalDeadline = new Date(deadline);
-    finalDeadline.setHours(parseInt(hour, 10));
-    finalDeadline.setMinutes(parseInt(minute, 10));
-    finalDeadline.setSeconds(0);
-    finalDeadline.setMilliseconds(0);
-
     const dataToSave: any = {
       name,
       description,
       links: links.filter(link => link.trim() !== ''),
       assignee_id: assigneeId,
-      deadline: finalDeadline.toISOString(),
+      deadline: deadline.toISOString(),
       priority,
     };
 
@@ -154,30 +149,53 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="deadline">Deadline <span className="text-red-500">*</span></Label>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {deadline ? format(deadline, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus /></PopoverContent>
-                </Popover>
-                <Input
-                    type="number"
-                    value={hour}
-                    onChange={handleTimeChange(setHour, 23)}
-                    className="w-16 text-center"
-                />
-                <span>:</span>
-                <Input
-                    type="number"
-                    value={minute}
-                    onChange={handleTimeChange(setMinute, 59)}
-                    className="w-16 text-center"
-                />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline ? format(deadline, "dd/MM/yyyy HH:mm") : <span>Chọn ngày & giờ</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={deadline}
+                    onSelect={(date) => handleDateTimeChange(date)}
+                    initialFocus
+                  />
+                  <div className="p-2 border-t border-border">
+                    <div className="flex items-center justify-center gap-2">
+                      <Select
+                        value={deadline ? format(deadline, 'HH') : '00'}
+                        onValueChange={(hour) => handleDateTimeChange(undefined, { hour })}
+                      >
+                        <SelectTrigger className="w-[80px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>:</span>
+                      <Select
+                        value={deadline ? format(deadline, 'mm') : '00'}
+                        onValueChange={(minute) => handleDateTimeChange(undefined, { minute })}
+                      >
+                        <SelectTrigger className="w-[80px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(m => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority">Ưu tiên</Label>
