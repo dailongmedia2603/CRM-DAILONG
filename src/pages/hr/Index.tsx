@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PositionConfigTab } from '@/components/hr/PositionConfigTab';
 import { PermissionsTab } from '@/components/hr/PermissionsTab';
 import { supabase } from "@/integrations/supabase/client";
+import { Can } from "@/components/auth/Can";
 
 const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -87,24 +88,17 @@ const HRPage = () => {
   }, []);
 
   const handlePositionsChange = async (newPositions: string[]) => {
-    // This is a simplified approach. A more robust solution would compare old and new arrays.
-    // For now, we'll clear and re-insert. This is not ideal for production.
-    
-    // Delete all existing positions
     const { error: deleteError } = await supabase.from('positions').delete().neq('name', 'dummy_value_to_delete_all');
     if (deleteError) {
       showError("Lỗi khi xóa vị trí cũ.");
       return;
     }
-
-    // Insert new positions
     const { error: insertError } = await supabase.from('positions').insert(newPositions.map(name => ({ name })));
     if (insertError) {
       showError("Lỗi khi lưu vị trí mới.");
       return;
     }
-    
-    fetchPositions(); // Re-fetch to confirm
+    fetchPositions();
   };
 
   const filteredPersonnel = useMemo(() =>
@@ -167,7 +161,7 @@ const HRPage = () => {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="list">Danh sách nhân sự</TabsTrigger>
             <TabsTrigger value="config">Cấu hình vị trí</TabsTrigger>
-            <TabsTrigger value="permissions">Phân quyền</TabsTrigger>
+            <Can I="permissions.view"><TabsTrigger value="permissions">Phân quyền</TabsTrigger></Can>
           </TabsList>
           <TabsContent value="list" className="mt-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
@@ -181,10 +175,12 @@ const HRPage = () => {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Tìm kiếm theo tên, email, vị trí..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
-              <Button onClick={handleOpenAddDialog}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Thêm Nhân sự
-              </Button>
+              <Can I="hr.create">
+                <Button onClick={handleOpenAddDialog}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Thêm Nhân sự
+                </Button>
+              </Can>
             </div>
 
             <Card>
@@ -220,8 +216,8 @@ const HRPage = () => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleOpenEditDialog(p)}>Sửa</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenDeleteAlert(p)} className="text-red-500">Xóa</DropdownMenuItem>
+                            <Can I="hr.edit"><DropdownMenuItem onClick={() => handleOpenEditDialog(p)}>Sửa</DropdownMenuItem></Can>
+                            <Can I="hr.delete"><DropdownMenuItem onClick={() => handleOpenDeleteAlert(p)} className="text-red-500">Xóa</DropdownMenuItem></Can>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -234,9 +230,11 @@ const HRPage = () => {
           <TabsContent value="config" className="mt-6">
             <PositionConfigTab positions={positions} onPositionsChange={handlePositionsChange} />
           </TabsContent>
-          <TabsContent value="permissions" className="mt-6">
-            <PermissionsTab />
-          </TabsContent>
+          <Can I="permissions.view">
+            <TabsContent value="permissions" className="mt-6">
+              <PermissionsTab />
+            </TabsContent>
+          </Can>
         </Tabs>
       </div>
 

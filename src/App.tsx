@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
+import { AbilityProvider } from "./context/AbilityProvider";
 
 // Pages
 import Index from "./pages/Index";
@@ -28,22 +29,24 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/clients" element={<ClientsPage />} />
-                <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/sales/leads" element={<LeadsPage />} />
-                <Route path="/task-management" element={<TasksManagementPage />} />
-                <Route path="/interns" element={<InternsPage />} />
-                <Route path="/hr" element={<HRPage />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AbilityProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/clients" element={<ClientsPage />} />
+                  <Route path="/clients/:clientId" element={<ClientDetailsPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/sales/leads" element={<LeadsPage />} />
+                  <Route path="/task-management" element={<TasksManagementPage />} />
+                  <Route path="/interns" element={<InternsPage />} />
+                  <Route path="/hr" element={<HRPage />} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AbilityProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Can } from "@/components/auth/Can";
+import { useAuth } from "@/context/AuthProvider";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -43,6 +45,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -84,54 +87,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <NavItem 
-              icon={<Home className="mr-3 h-5 w-5" />} 
-              href="/" 
-              label="Dashboard" 
-              active={pathname === "/"}
-            />
-            <NavItem 
-              icon={<Users className="mr-3 h-5 w-5" />} 
-              href="/clients" 
-              label="Clients" 
-              active={pathname.startsWith("/clients")}
-            />
-            <NavItem 
-              icon={<Briefcase className="mr-3 h-5 w-5" />} 
-              href="/projects" 
-              label="Dự án" 
-              active={pathname.startsWith("/projects")}
-            />
-            <NavItem 
-              icon={<DollarSign className="mr-3 h-5 w-5" />} 
-              href="/sales/leads" 
-              label="Quản lý sale" 
-              active={pathname.startsWith("/sales/leads")}
-            />
-            <NavItem 
-              icon={<GraduationCap className="mr-3 h-5 w-5" />}
-              href="/interns" 
-              label="Thực tập sinh"
-              active={pathname.startsWith("/interns")}
-            />
-            <NavItem 
-              icon={<FolderKanban className="mr-3 h-5 w-5" />} 
-              href="/task-management" 
-              label="Quản lý công việc"
-              active={pathname.startsWith("/task-management")}
-            />
-            <NavItem 
-              icon={<BarChart2 className="mr-3 h-5 w-5" />} 
-              href="/reports" 
-              label="Analytics & Reports" 
-              active={pathname.startsWith("/reports")}
-            />
-            <NavItem 
-              icon={<UserCog className="mr-3 h-5 w-5" />} 
-              href="/hr" 
-              label="Nhân sự" 
-              active={pathname.startsWith("/hr")}
-            />
+            <Can I="dashboard.view"><NavItem icon={<Home className="mr-3 h-5 w-5" />} href="/" label="Dashboard" active={pathname === "/"} /></Can>
+            <Can I="clients.view"><NavItem icon={<Users className="mr-3 h-5 w-5" />} href="/clients" label="Clients" active={pathname.startsWith("/clients")} /></Can>
+            <Can I="projects.view"><NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Dự án" active={pathname.startsWith("/projects")} /></Can>
+            <Can I="leads.view"><NavItem icon={<DollarSign className="mr-3 h-5 w-5" />} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} /></Can>
+            <Can I="intern_tasks.view"><NavItem icon={<GraduationCap className="mr-3 h-5 w-5" />} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} /></Can>
+            <Can I="tasks.view"><NavItem icon={<FolderKanban className="mr-3 h-5 w-5" />} href="/task-management" label="Quản lý công việc" active={pathname.startsWith("/task-management")} /></Can>
+            <Can I="reports.view"><NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} /></Can>
+            <Can I="hr.view"><NavItem icon={<UserCog className="mr-3 h-5 w-5" />} href="/hr" label="Nhân sự" active={pathname.startsWith("/hr")} /></Can>
           </nav>
 
           {/* User Profile Section */}
@@ -139,11 +102,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="/api/placeholder/40/40" alt="Admin User" />
-                <AvatarFallback className="bg-blue-600 text-white">AD</AvatarFallback>
+                <AvatarFallback className="bg-blue-600 text-white">{session?.user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">Admin User</p>
-                <p className="text-xs text-gray-500 truncate">admin@agency.com</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.email}</p>
+                <p className="text-xs text-gray-500 truncate">Online</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -243,14 +206,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                   <Button variant="ghost" className="flex items-center space-x-2 px-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/api/placeholder/32/32" alt="Admin" />
-                      <AvatarFallback className="bg-blue-600 text-white">AD</AvatarFallback>
+                      <AvatarFallback className="bg-blue-600 text-white">{session?.user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <span className="hidden md:block font-medium">Admin</span>
+                    <span className="hidden md:block font-medium">{session?.user?.email}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Admin User</DropdownMenuLabel>
+                  <DropdownMenuLabel>{session?.user?.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
