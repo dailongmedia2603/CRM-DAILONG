@@ -40,7 +40,8 @@ export const ClientFormDialog = ({
     } else {
       setFormData({ 
         status: "active",
-        creation_date: new Date().toISOString()
+        creation_date: new Date().toISOString(),
+        created_by: "Admin" // Giả định người dùng hiện tại
       });
     }
   }, [client, open]);
@@ -56,7 +57,7 @@ export const ClientFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { id, profiles, contract_value, ...dataToSave } = formData;
+    const { id, profiles, folders, ...dataToSave } = formData;
     onSave(dataToSave);
     onOpenChange(false);
   };
@@ -87,6 +88,10 @@ export const ClientFormDialog = ({
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="invoice_email" className="text-right">Mail hóa đơn</Label>
               <Input id="invoice_email" name="invoice_email" type="email" value={formData.invoice_email || ""} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="industry" className="text-right">Ngành</Label>
+              <Input id="industry" name="industry" value={formData.industry || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="classification" className="text-right">Phân loại</Label>

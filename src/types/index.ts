@@ -31,6 +31,8 @@ export interface Client {
   invoice_email: string;
   classification: 'Cá nhân' | 'Doanh nghiệp';
   source: 'Giới thiệu' | 'Website' | 'Sự kiện' | 'Khác';
+  industry: string;
+  created_by: string;
   archived: boolean;
   profiles?: Profile[];
   folders?: ProfileFolder[];

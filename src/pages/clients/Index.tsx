@@ -30,7 +30,6 @@ import {
   Eye,
   Pen,
   Trash2,
-  ExternalLink,
   Archive,
   RotateCcw,
   List,
@@ -194,7 +193,7 @@ const ClientsPage = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  const handleSaveClient = async (clientToSave: Omit<Client, 'id' | 'profiles'>) => {
+  const handleSaveClient = async (clientToSave: Omit<Client, 'id' | 'profiles' | 'folders'>) => {
     if (clientToEdit) {
       const { error } = await supabase.from('clients').update(clientToSave).eq('id', clientToEdit.id);
       if (error) showError("Lỗi khi cập nhật client.");
@@ -341,14 +340,15 @@ const ClientsPage = () => {
                 <TableHead>Tên Client</TableHead>
                 <TableHead>Người liên hệ</TableHead>
                 <TableHead>Giá trị hợp đồng</TableHead>
-                <TableHead>Link hợp đồng</TableHead>
+                <TableHead>Ngành</TableHead>
+                <TableHead>Người tạo</TableHead>
                 <TableHead>Ngày tạo</TableHead>
                 <TableHead>Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center">Đang tải...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
               ) : (
                 filteredClients.map((client) => (
                   <TableRow key={client.id}>
@@ -363,12 +363,8 @@ const ClientsPage = () => {
                     </TableCell>
                     <TableCell>{client.contact_person}</TableCell>
                     <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
-                    <TableCell>
-                      <a href={client.contract_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Xem hợp đồng
-                      </a>
-                    </TableCell>
+                    <TableCell>{client.industry}</TableCell>
+                    <TableCell>{client.created_by}</TableCell>
                     <TableCell>{formatDate(client.creation_date)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
