@@ -47,6 +47,7 @@ const InternsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [internFilter, setInternFilter] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: startOfToday(), to: startOfToday() });
+  const [dateFilterLabel, setDateFilterLabel] = useState('Hôm nay');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -181,11 +182,28 @@ const InternsPage = () => {
     const today = startOfToday();
     if (preset === 'today') {
       setDateRange({ from: today, to: today });
+      setDateFilterLabel('Hôm nay');
     } else if (preset === 'yesterday') {
       const yesterday = subDays(today, 1);
       setDateRange({ from: yesterday, to: yesterday });
+      setDateFilterLabel('Hôm qua');
     } else if (preset === 'thisWeek') {
       setDateRange({ from: startOfWeek(today, { locale: vi }), to: endOfWeek(today, { locale: vi }) });
+      setDateFilterLabel('Tuần này');
+    }
+  };
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from && range?.to) {
+      if (isSameDay(range.from, range.to)) {
+        setDateFilterLabel(format(range.from, "dd/MM/yyyy"));
+      } else {
+        setDateFilterLabel(`${format(range.from, "dd/MM/y")} - ${format(range.to, "dd/MM/y")}`);
+      }
+      setIsCalendarOpen(false);
+    } else if (range?.from) {
+      setDateFilterLabel(format(range.from, "dd/MM/yyyy"));
     }
   };
 
@@ -225,7 +243,7 @@ const InternsPage = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "dd/MM/y")} - ${format(dateRange.to, "dd/MM/y")}` : format(dateRange.from, "dd/MM/y")) : <span>Chọn ngày...</span>}
+                {dateFilterLabel}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -233,12 +251,12 @@ const InternsPage = () => {
               <DropdownMenuItem onSelect={() => setDateFilterPreset('yesterday')}>Hôm qua</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setDateFilterPreset('thisWeek')}>Tuần này</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <Popover>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" className="w-full justify-start">Chọn thời gian</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar locale={vi} mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+                  <Calendar locale={vi} mode="range" selected={dateRange} onSelect={handleDateSelect} numberOfMonths={2} />
                 </PopoverContent>
               </Popover>
             </DropdownMenuContent>
