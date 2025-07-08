@@ -45,14 +45,16 @@ export const AbilityProvider = ({ children }: { children: ReactNode }) => {
 
       const { data: rolePermsData, error: rolePermsError } = await supabase
         .from('role_permissions')
-        .select('permissions(name)')
+        .select('permissions ( name )')
         .eq('role_id', personnelData.role_id);
 
       if (rolePermsError) {
         console.error('Error fetching permissions:', rolePermsError);
         setPermissions(new Set());
       } else {
-        const perms = rolePermsData.map(p => p.permissions?.[0]?.name).filter(Boolean) as string[];
+        const perms = rolePermsData
+          .flatMap(p => p.permissions ? p.permissions.map(perm => perm.name) : [])
+          .filter(Boolean) as string[];
         setPermissions(new Set(perms));
       }
       
