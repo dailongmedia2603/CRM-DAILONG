@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface PersonnelFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void; // Changed to a simple callback
+  onSave: () => void;
   personnel?: Personnel | null;
   positions: string[];
 }
@@ -84,7 +84,7 @@ export const PersonnelFormDialog = ({
     setIsLoading(true);
 
     if (isEditing && personnel) {
-      // Logic for updating an existing user
+      // Logic for updating an existing user's profile
       const { error } = await supabase
         .from('personnel')
         .update({
@@ -99,32 +99,34 @@ export const PersonnelFormDialog = ({
         showError("Lỗi khi cập nhật nhân sự: " + error.message);
       } else {
         showSuccess("Cập nhật thông tin thành công!");
-        onSave(); // Callback to refetch data
+        onSave();
       }
     } else {
-      // Logic for creating a new user
+      // Logic for creating a new user and profile
       if (!formData.password) {
         showError("Vui lòng nhập mật khẩu cho người dùng mới.");
         setIsLoading(false);
         return;
       }
 
-      const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
-        body: { 
-          email: formData.email, 
-          password: formData.password,
-          name: formData.name,
-          position: formData.position,
-          role: formData.role,
-          status: formData.status,
-        },
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            position: formData.position,
+            role: formData.role,
+            status: formData.status,
+          }
+        }
       });
 
-      if (funcError || funcData.error) {
-        showError("Lỗi khi tạo tài khoản: " + (funcError?.message || funcData.error));
+      if (error) {
+        showError("Lỗi khi tạo tài khoản: " + error.message);
       } else {
-        showSuccess("Thêm nhân sự mới thành công!");
-        onSave(); // Callback to refetch data
+        showSuccess("Thêm nhân sự mới thành công! Tài khoản đã được tạo.");
+        onSave();
       }
     }
 
