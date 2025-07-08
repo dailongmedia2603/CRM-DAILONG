@@ -109,6 +109,7 @@ export interface InternTask {
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành' | 'Quá hạn';
   started_at?: string;
   completed_at?: string;
+  assigner_name?: string;
 }
 
 export interface LeadHistory {

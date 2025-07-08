@@ -6,19 +6,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfToday } from 'date-fns';
+import { startOfToday, startOfWeek, endOfWeek, subDays } from 'date-fns';
+import { DateRange } from "react-day-picker";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
+const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
+    <Card 
+      className={cn("shadow-sm hover:shadow-md transition-shadow cursor-pointer", isActive && "ring-2 ring-blue-500")}
+      onClick={onClick}
+    >
       <CardContent className="p-4 flex items-center">
         <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
           <Icon className="h-6 w-6 text-white" />
@@ -39,6 +47,10 @@ const InternsPage = () => {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [internFilter, setInternFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
@@ -77,18 +89,31 @@ const InternsPage = () => {
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task =>
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.intern_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [tasks, searchTerm]);
+    return tasks.filter(task => {
+      const taskDate = new Date(task.deadline);
+      let dateMatch = true;
+      if (dateRange?.from && dateRange?.to) {
+        dateMatch = taskDate >= dateRange.from && taskDate <= dateRange.to;
+      } else if (dateRange?.from) {
+        dateMatch = taskDate >= dateRange.from;
+      }
+
+      return (
+        (task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.intern_name.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (internFilter === 'all' || task.intern_name === internFilter) &&
+        (statusFilter === 'all' || task.status === statusFilter) &&
+        dateMatch
+      );
+    });
+  }, [tasks, searchTerm, internFilter, statusFilter, dateRange]);
 
   const stats = useMemo(() => ({
-    total: tasks.length,
-    inProgress: tasks.filter(t => t.status === 'Đang làm').length,
-    completed: tasks.filter(t => t.status === 'Hoàn thành').length,
-    overdue: tasks.filter(t => t.status === 'Quá hạn').length,
-  }), [tasks]);
+    total: filteredTasks.length,
+    inProgress: filteredTasks.filter(t => t.status === 'Đang làm').length,
+    completed: filteredTasks.filter(t => t.status === 'Hoàn thành').length,
+    overdue: filteredTasks.filter(t => t.status === 'Quá hạn').length,
+  }), [filteredTasks]);
 
   const handleOpenAddDialog = () => {
     setActiveTask(null);
@@ -111,12 +136,13 @@ const InternsPage = () => {
   };
 
   const handleSaveTask = async (taskData: any) => {
+    const dataToSave = { ...taskData, assigner_name: "Admin" }; // Mock assigner name
     if (activeTask && activeTask.id) {
-      const { error } = await supabase.from('intern_tasks').update(taskData).eq('id', activeTask.id);
+      const { error } = await supabase.from('intern_tasks').update(dataToSave).eq('id', activeTask.id);
       if (error) showError("Lỗi khi cập nhật công việc.");
       else showSuccess("Công việc đã được cập nhật!");
     } else {
-      const { error } = await supabase.from('intern_tasks').insert([{ ...taskData, status: 'Chưa làm' }]);
+      const { error } = await supabase.from('intern_tasks').insert([{ ...dataToSave, status: 'Chưa làm' }]);
       if (error) showError("Lỗi khi giao việc mới.");
       else showSuccess("Đã giao việc mới thành công!");
     }
@@ -159,6 +185,18 @@ const InternsPage = () => {
     }
   };
 
+  const setDateFilter = (filter: 'today' | 'yesterday' | 'thisWeek') => {
+    const today = new Date();
+    if (filter === 'today') {
+      setDateRange({ from: startOfToday(), to: startOfToday() });
+    } else if (filter === 'yesterday') {
+      const yesterday = subDays(today, 1);
+      setDateRange({ from: yesterday, to: yesterday });
+    } else if (filter === 'thisWeek') {
+      setDateRange({ from: startOfWeek(today), to: endOfWeek(today) });
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -173,20 +211,31 @@ const InternsPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" />
-          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" />
-          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" />
-          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" />
+          <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" onClick={() => setStatusFilter('all')} isActive={statusFilter === 'all'} />
+          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" onClick={() => setStatusFilter('Đang làm')} isActive={statusFilter === 'Đang làm'} />
+          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" onClick={() => setStatusFilter('Hoàn thành')} isActive={statusFilter === 'Hoàn thành'} />
+          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" onClick={() => setStatusFilter('Quá hạn')} isActive={statusFilter === 'Quá hạn'} />
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm công việc hoặc thực tập sinh..."
-            className="pl-10 py-6 text-base"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+          <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button id="date" variant={"outline"} className={cn("w-[260px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")) : <span>Chọn ngày</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <div className="p-2">
+                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('today')}>Hôm nay</Button>
+                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('yesterday')}>Hôm qua</Button>
+                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('thisWeek')}>Tuần này</Button>
+              </div>
+              <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
@@ -194,11 +243,11 @@ const InternsPage = () => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>NGƯỜI GIAO</TableHead>
+                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>DEADLINE</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead>HÀNH ĐỘNG</TableHead>
-                <TableHead>THỰC TẬP SINH</TableHead>
                 <TableHead>THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
@@ -208,22 +257,18 @@ const InternsPage = () => {
                 <TableRow key={task.id}>
                   <TableCell>
                     <div className="max-w-xs">
-                      <p className="font-medium truncate">{task.title}</p>
+                      <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
-                      <ExternalLink className="h-5 w-5" />
-                    </a>
-                  </TableCell>
+                  <TableCell>{task.assigner_name}</TableCell>
+                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>
                     {task.status === 'Chưa làm' && <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => handleUpdateStatus(task, 'Đang làm')}><Play className="mr-2 h-4 w-4" />Bắt đầu</Button>}
                     {task.status === 'Đang làm' && <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleUpdateStatus(task, 'Hoàn thành')}><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</Button>}
                   </TableCell>
-                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
                       <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
