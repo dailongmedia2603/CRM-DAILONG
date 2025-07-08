@@ -96,8 +96,8 @@ const InternsPage = () => {
 
       const taskDate = new Date(task.created_at);
       const matchesDate = dateRange?.from ? 
-        (task.status !== 'Hoàn thành' || (task.status === 'Hoàn thành' && isSameDay(taskDate, dateRange.from))) &&
-        taskDate >= dateRange.from && taskDate <= (dateRange.to || dateRange.from)
+        (task.status !== 'Hoàn thành' && (taskDate >= dateRange.from && taskDate <= (dateRange.to || dateRange.from))) ||
+        (task.status === 'Hoàn thành' && isSameDay(taskDate, dateRange.from))
         : true;
 
       return matchesSearch && matchesIntern && matchesDate;
