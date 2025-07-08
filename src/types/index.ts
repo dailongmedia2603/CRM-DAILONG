@@ -70,6 +70,7 @@ export interface Personnel {
   role: 'BOD' | 'Quản lý' | 'Nhân viên' | 'Thực tập';
   status: 'active' | 'inactive';
   created_at: string;
+  role_id?: number;
 }
 
 export interface Feedback {
@@ -141,4 +142,16 @@ export interface Lead {
     archived: boolean;
     lead_history: LeadHistory[];
     next_follow_up_date?: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Permission {
+  id: number;
+  name: string;
+  description: string;
 }

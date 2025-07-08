@@ -36,6 +36,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PositionConfigTab } from '@/components/hr/PositionConfigTab';
+import { PermissionsTab } from '@/components/hr/PermissionsTab';
 import { supabase } from "@/integrations/supabase/client";
 
 const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
@@ -162,10 +163,11 @@ const HRPage = () => {
           <p className="text-muted-foreground">Xem, thêm, sửa, và xóa thông tin nhân sự.</p>
         </div>
 
-        <Tabs defaultValue="list">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="list">Danh sách nhân sự</TabsTrigger>
             <TabsTrigger value="config">Cấu hình vị trí</TabsTrigger>
+            <TabsTrigger value="permissions">Phân quyền</TabsTrigger>
           </TabsList>
           <TabsContent value="list" className="mt-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
@@ -231,6 +233,9 @@ const HRPage = () => {
           </TabsContent>
           <TabsContent value="config" className="mt-6">
             <PositionConfigTab positions={positions} onPositionsChange={handlePositionsChange} />
+          </TabsContent>
+          <TabsContent value="permissions" className="mt-6">
+            <PermissionsTab />
           </TabsContent>
         </Tabs>
       </div>
