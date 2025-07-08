@@ -99,7 +99,6 @@ export interface InternTask {
   title: string;
   description: string;
   intern_name: string;
-  assigner_name: string;
   deadline: string;
   priority: 'Cao' | 'Bình thường' | 'Thấp';
   comment_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
@@ -110,7 +109,6 @@ export interface InternTask {
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành' | 'Quá hạn';
   started_at?: string;
   completed_at?: string;
-  created_at: string;
 }
 
 export interface LeadHistory {
