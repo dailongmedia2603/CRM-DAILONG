@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon, ChevronDown } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
@@ -20,6 +20,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -235,14 +236,21 @@ const InternsPage = () => {
     }
   };
 
-  const getDateFilterButtonLabel = () => {
-    if (activeDateFilter === 'custom' && dateRange?.from) {
-      if (dateRange.to && !isEqual(startOfDay(dateRange.from), startOfDay(dateRange.to))) {
-        return `${format(dateRange.from, "dd/MM")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
-      }
-      return format(dateRange.from, "dd/MM/yyyy");
+  const getTimeFilterLabel = () => {
+    switch (activeDateFilter) {
+      case 'today': return 'Hôm nay';
+      case 'yesterday': return 'Hôm qua';
+      case 'thisWeek': return 'Tuần này';
+      case 'custom':
+        if (dateRange?.from) {
+          if (dateRange.to && !isEqual(startOfDay(dateRange.from), startOfDay(dateRange.to))) {
+            return `${format(dateRange.from, "dd/MM")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
+          }
+          return format(dateRange.from, "dd/MM/yyyy");
+        }
+        return 'Chọn ngày';
+      default: return 'Thời gian';
     }
-    return 'Chọn ngày';
   };
 
   return (
@@ -269,22 +277,28 @@ const InternsPage = () => {
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
           
-          <div className="flex items-center gap-2">
-            <Button variant={activeDateFilter === 'today' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('today')}>Hôm nay</Button>
-            <Button variant={activeDateFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('yesterday')}>Hôm qua</Button>
-            <Button variant={activeDateFilter === 'thisWeek' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('thisWeek')}>Tuần này</Button>
-            <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button variant={activeDateFilter === 'custom' ? 'default' : 'outline'} className="w-[180px] justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {getDateFilterButtonLabel()}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={handleDateRangeSelect} numberOfMonths={1} />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-[180px] justify-start">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {getTimeFilterLabel()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setActiveDateFilter('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setActiveDateFilter('yesterday')}>Hôm qua</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setActiveDateFilter('thisWeek')}>Tuần này</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chọn ngày...</DropdownMenuItem>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" side="right" align="start">
+                  <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={handleDateRangeSelect} numberOfMonths={1} />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
         </div>
