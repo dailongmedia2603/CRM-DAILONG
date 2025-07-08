@@ -53,7 +53,7 @@ export const AbilityProvider = ({ children }: { children: ReactNode }) => {
         setPermissions(new Set());
       } else {
         const perms = rolePermsData
-          .flatMap(p => p.permissions ? p.permissions.map(perm => perm.name) : [])
+          .map(p => (p.permissions as any)?.name) // Safely access the name property
           .filter(Boolean) as string[];
         setPermissions(new Set(perms));
       }
