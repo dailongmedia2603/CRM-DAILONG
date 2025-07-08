@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon, ChevronDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon, ChevronDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, FileWarning } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
+import { ReportDialog } from '@/components/interns/ReportDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,6 +61,7 @@ const InternsPage = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
@@ -172,6 +174,11 @@ const InternsPage = () => {
     setIsDetailsOpen(true);
   };
 
+  const handleOpenReportDialog = (task: InternTask) => {
+    setActiveTask(task);
+    setIsReportOpen(true);
+  };
+
   const handleOpenDeleteDialog = (task: InternTask) => {
     setTaskToDelete(task);
     setIsDeleteAlertOpen(true);
@@ -218,6 +225,22 @@ const InternsPage = () => {
     }
   };
 
+  const handleReportSubmit = async (reason: string) => {
+    if (!activeTask) return;
+    const updateData: Partial<InternTask> = {
+      report_reason: reason,
+      status: 'Đang làm',
+      started_at: activeTask.started_at || new Date().toISOString(),
+    };
+    const { error } = await supabase.from('intern_tasks').update(updateData).eq('id', activeTask.id);
+    if (error) {
+      showError("Lỗi khi gửi báo cáo.");
+    } else {
+      showSuccess("Đã gửi báo cáo thành công.");
+      fetchData();
+    }
+  };
+
   const handleBulkAction = async (action: 'archive' | 'restore' | 'delete') => {
     if (selectedTasks.length === 0) return;
     if (action === 'delete') {
@@ -245,11 +268,7 @@ const InternsPage = () => {
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     setDateRange(range);
     setActiveDateFilter('custom');
-    if (range?.from && range?.to) {
-      setIsTimeFilterOpen(false);
-    } else if (range?.from && !range.to) {
-      // If user clicks one date in range mode, set both from and to
-      setDateRange({ from: range.from, to: range.from });
+    if (range?.from) {
       setIsTimeFilterOpen(false);
     }
   };
@@ -399,15 +418,21 @@ const InternsPage = () => {
                   <TableCell>{task.intern_name}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
                   <TableCell>
-                    {task.status !== 'Hoàn thành' && (
-                      <Button 
-                        size="sm" 
-                        className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
-                        onClick={() => handleUpdateStatus(task, task.status === 'Chưa làm' ? 'Đang làm' : 'Hoàn thành')}
-                      >
-                        {task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
-                      </Button>
-                    )}
+                    {task.status !== 'Hoàn thành' ? (
+                      isOverdue && task.status === 'Chưa làm' ? (
+                        <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
+                          <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                          onClick={() => handleUpdateStatus(task, task.status === 'Chưa làm' ? 'Đang làm' : 'Hoàn thành')}
+                        >
+                          {task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                        </Button>
+                      )
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
@@ -500,6 +525,11 @@ const InternsPage = () => {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
         task={activeTask}
+      />
+      <ReportDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        onSubmit={handleReportSubmit}
       />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>

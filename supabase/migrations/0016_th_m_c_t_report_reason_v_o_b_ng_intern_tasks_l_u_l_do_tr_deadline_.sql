@@ -1,0 +1,1 @@
+ALTER TABLE public.intern_tasks ADD COLUMN report_reason TEXT;

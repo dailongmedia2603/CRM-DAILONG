@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { InternTask } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle, Play, Check } from "lucide-react";
+import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle, Play, Check, FileWarning } from "lucide-react";
 
 interface InternTaskDetailsDialogProps {
   open: boolean;
@@ -58,6 +58,11 @@ export const InternTaskDetailsDialog = ({ open, onOpenChange, task }: InternTask
           <div className="space-y-4 rounded-lg border p-4">
             <DetailItem icon={<FileText className="h-5 w-5" />} label="Mô tả" value={<p className="text-sm">{task.description}</p>} />
           </div>
+          {task.report_reason && (
+            <div className="space-y-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+              <DetailItem icon={<FileWarning className="h-5 w-5 text-yellow-600" />} label="Lý do trễ deadline" value={<p className="text-sm text-yellow-800">{task.report_reason}</p>} />
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <DetailItem icon={<User className="h-5 w-5" />} label="Thực tập sinh" value={task.intern_name} />

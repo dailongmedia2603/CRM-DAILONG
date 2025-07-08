@@ -113,6 +113,7 @@ export interface InternTask {
   assigner_name?: string;
   archived?: boolean;
   created_at?: string;
+  report_reason?: string;
 }
 
 export interface LeadHistory {
