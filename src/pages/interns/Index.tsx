@@ -418,21 +418,26 @@ const InternsPage = () => {
                   <TableCell>{task.intern_name}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
                   <TableCell>
-                    {task.status !== 'Hoàn thành' ? (
-                      isOverdue && task.status === 'Chưa làm' ? (
-                        <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
-                          <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
-                        </Button>
-                      ) : (
+                    {(() => {
+                      if (task.status === 'Hoàn thành') return null;
+                      if (isOverdue && !task.report_reason) {
+                        return (
+                          <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
+                            <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                          </Button>
+                        );
+                      }
+                      const isStarted = task.status === 'Đang làm';
+                      return (
                         <Button 
                           size="sm" 
-                          className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
-                          onClick={() => handleUpdateStatus(task, task.status === 'Chưa làm' ? 'Đang làm' : 'Hoàn thành')}
+                          className={cn(!isStarted ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                          onClick={() => handleUpdateStatus(task, !isStarted ? 'Đang làm' : 'Hoàn thành')}
                         >
-                          {task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                          {!isStarted ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
                         </Button>
-                      )
-                    ) : null}
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
