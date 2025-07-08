@@ -115,23 +115,22 @@ export const PersonnelFormDialog = ({
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            position_id: formData.position_id,
-            role: formData.role,
-            status: formData.status,
-          }
-        }
+      const { data, error } = await supabase.functions.invoke('create-personnel-user', {
+        body: { 
+          email: formData.email, 
+          password: formData.password,
+          name: formData.name,
+          position: selectedPosition.name, // Pass the name
+          position_id: formData.position_id, // Pass the ID
+          role: formData.role,
+          status: formData.status,
+        },
       });
 
-      if (error) {
-        showError("Lỗi khi tạo tài khoản: " + error.message);
+      if (error || (data && data.error)) {
+        showError("Lỗi khi tạo tài khoản: " + (error?.message || data.error));
       } else {
-        showSuccess("Thêm nhân sự mới thành công! Tài khoản đã được tạo.");
+        showSuccess("Thêm nhân sự mới thành công!");
         onSave();
       }
     }

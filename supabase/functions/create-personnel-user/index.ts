@@ -14,9 +14,9 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, name, position, role, status } = await req.json()
+    const { email, password, name, position, position_id, role, status } = await req.json()
 
-    if (!email || !password || !name || !position || !role || !status) {
+    if (!email || !password || !name || !position || !position_id || !role || !status) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -31,8 +31,8 @@ serve(async (req) => {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true, // This is the key change: automatically confirm the user
-      user_metadata: { name, position, role, status } // Pass profile data to the trigger
+      email_confirm: true,
+      user_metadata: { name, position, position_id, role, status }
     })
 
     if (authError) {
