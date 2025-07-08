@@ -88,7 +88,6 @@ import { supabase } from "@/integrations/supabase/client";
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [salesPersons, setSalesPersons] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -345,10 +344,10 @@ const LeadsPage = () => {
           <CardContent>
             <div className="rounded-md border">
               <Table>
-                <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale tạo</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Ngày CS tiếp</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={11} className="text-center h-24">Đang tải...</TableCell></TableRow> :
-                  paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={11} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
+                  {loading ? <TableRow><TableCell colSpan={12} className="text-center h-24">Đang tải...</TableCell></TableRow> :
+                  paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={12} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
                     paginatedLeads.map((lead) => (
                       <TableRow key={lead.id}>
                         <TableCell><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={() => handleSelectLead(lead.id)} /></TableCell>
@@ -358,6 +357,7 @@ const LeadsPage = () => {
                         <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.lead_history?.length || 0})</Button></TableCell>
                         <TableCell>{lead.created_by_name || 'N/A'}</TableCell>
                         <TableCell>{formatDateDisplay(lead.created_at)}</TableCell>
+                        <TableCell>{formatDateDisplay(lead.next_follow_up_date)}</TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800")}>{lead.status}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>
@@ -440,7 +440,7 @@ const LeadsPage = () => {
       </div>
       
       <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLeadName} leadId={selectedLeadId} history={selectedLeadHistory} onAddHistory={handleAddHistory} />
-      <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersons} lead={leadToEdit} />
+      <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
