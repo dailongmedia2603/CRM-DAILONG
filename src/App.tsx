@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
+import { CreateAdmin } from "./components/temp/CreateAdmin"; // Import the temporary component
 
 // Pages
 import Index from "./pages/Index";
@@ -26,6 +27,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <CreateAdmin /> {/* This will run once to create the user */}
         <BrowserRouter>
           <AuthProvider>
             <Routes>
