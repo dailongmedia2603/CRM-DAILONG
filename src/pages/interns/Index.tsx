@@ -14,6 +14,7 @@ import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfToday, startOfWeek, endOfWeek, subDays, isSameDay, format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -210,11 +211,11 @@ const InternsPage = () => {
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")) : <span>Chọn ngày...</span>}
+                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "dd/MM/y")} - ${format(dateRange.to, "dd/MM/y")}` : format(dateRange.from, "dd/MM/y")) : <span>Chọn ngày...</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+              <Calendar locale={vi} mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
             </PopoverContent>
           </Popover>
         </div>
