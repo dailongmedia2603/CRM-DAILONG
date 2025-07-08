@@ -71,7 +71,7 @@ const InternsPage = () => {
     else {
       const today = new Date();
       const updatedTasks = tasksRes.data.map(task => {
-        if (new Date(task.deadline) < today && task.status === 'Chưa làm') {
+        if (new Date(task.deadline) < today && task.status !== 'Hoàn thành') {
           return { ...task, status: 'Quá hạn' };
         }
         return task;
