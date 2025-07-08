@@ -33,27 +33,27 @@ export const AbilityProvider = ({ children }: { children: ReactNode }) => {
 
       const { data: personnelData, error: personnelError } = await supabase
         .from('personnel')
-        .select('role_id')
+        .select('position_id')
         .eq('id', session.user.id)
         .single();
 
-      if (personnelError || !personnelData || !personnelData.role_id) {
+      if (personnelError || !personnelData || !personnelData.position_id) {
         setPermissions(new Set());
         setLoading(false);
         return;
       }
 
-      const { data: rolePermsData, error: rolePermsError } = await supabase
-        .from('role_permissions')
+      const { data: positionPermsData, error: positionPermsError } = await supabase
+        .from('position_permissions')
         .select('permissions ( name )')
-        .eq('role_id', personnelData.role_id);
+        .eq('position_id', personnelData.position_id);
 
-      if (rolePermsError) {
-        console.error('Error fetching permissions:', rolePermsError);
+      if (positionPermsError) {
+        console.error('Error fetching permissions:', positionPermsError);
         setPermissions(new Set());
       } else {
-        const perms = rolePermsData
-          .map(p => (p.permissions as any)?.name) // Safely access the name property
+        const perms = positionPermsData
+          .map(p => (p.permissions as any)?.name)
           .filter(Boolean) as string[];
         setPermissions(new Set(perms));
       }

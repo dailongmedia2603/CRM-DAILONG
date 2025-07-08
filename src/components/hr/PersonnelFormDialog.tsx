@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Personnel } from "@/types";
+import { Personnel, Position } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +26,7 @@ interface PersonnelFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
   personnel?: Personnel | null;
-  positions: string[];
+  positions: Position[];
 }
 
 export const PersonnelFormDialog = ({
@@ -39,7 +39,7 @@ export const PersonnelFormDialog = ({
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    position: "",
+    position_id: "",
     role: "Nhân viên" as Personnel['role'],
     status: "active" as Personnel['status'],
     password: "",
@@ -53,7 +53,7 @@ export const PersonnelFormDialog = ({
       setFormData({
         name: personnel.name,
         email: personnel.email,
-        position: personnel.position,
+        position_id: personnel.position_id || "",
         role: personnel.role,
         status: personnel.status,
         password: "",
@@ -62,7 +62,7 @@ export const PersonnelFormDialog = ({
       setFormData({
         name: "",
         email: "",
-        position: "",
+        position_id: "",
         role: "Nhân viên",
         status: "active",
         password: "",
@@ -83,13 +83,20 @@ export const PersonnelFormDialog = ({
     e.preventDefault();
     setIsLoading(true);
 
+    const selectedPosition = positions.find(p => p.id === formData.position_id);
+    if (!selectedPosition) {
+        showError("Vui lòng chọn một vị trí hợp lệ.");
+        setIsLoading(false);
+        return;
+    }
+
     if (isEditing && personnel) {
-      // Logic for updating an existing user's profile
       const { error } = await supabase
         .from('personnel')
         .update({
           name: formData.name,
-          position: formData.position,
+          position: selectedPosition.name,
+          position_id: formData.position_id,
           role: formData.role,
           status: formData.status,
         })
@@ -102,28 +109,29 @@ export const PersonnelFormDialog = ({
         onSave();
       }
     } else {
-      // Logic for creating a new user via Edge Function
       if (!formData.password) {
         showError("Vui lòng nhập mật khẩu cho người dùng mới.");
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('create-personnel-user', {
-        body: { 
-          email: formData.email, 
-          password: formData.password,
-          name: formData.name,
-          position: formData.position,
-          role: formData.role,
-          status: formData.status,
-        },
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            position_id: formData.position_id,
+            role: formData.role,
+            status: formData.status,
+          }
+        }
       });
 
-      if (error || (data && data.error)) {
-        showError("Lỗi khi tạo tài khoản: " + (error?.message || data.error));
+      if (error) {
+        showError("Lỗi khi tạo tài khoản: " + error.message);
       } else {
-        showSuccess("Thêm nhân sự mới thành công!");
+        showSuccess("Thêm nhân sự mới thành công! Tài khoản đã được tạo.");
         onSave();
       }
     }
@@ -158,12 +166,12 @@ export const PersonnelFormDialog = ({
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="position">Vị trí</Label>
-              <Select value={formData.position} onValueChange={(value) => handleSelectChange("position", value)}>
+              <Label htmlFor="position_id">Vị trí</Label>
+              <Select value={formData.position_id} onValueChange={(value) => handleSelectChange("position_id", value)}>
                 <SelectTrigger><SelectValue placeholder="Chọn vị trí" /></SelectTrigger>
                 <SelectContent>
-                  {positions.map((pos, index) => (
-                    <SelectItem key={index} value={pos}>{pos}</SelectItem>
+                  {positions.map((pos) => (
+                    <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

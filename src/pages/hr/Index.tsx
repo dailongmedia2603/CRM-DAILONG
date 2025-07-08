@@ -30,7 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Search, MoreHorizontal, Users, UserCheck, UserX } from "lucide-react";
-import { Personnel } from "@/types";
+import { Personnel, Position } from "@/types";
 import { PersonnelFormDialog } from "@/components/hr/PersonnelFormDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,7 @@ const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: Reac
 
 const HRPage = () => {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [positions, setPositions] = useState<string[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -77,9 +77,9 @@ const HRPage = () => {
   };
 
   const fetchPositions = async () => {
-    const { data, error } = await supabase.from("positions").select("name");
+    const { data, error } = await supabase.from("positions").select("*");
     if (error) showError("Lỗi khi tải dữ liệu vị trí.");
-    else setPositions(data.map(p => p.name));
+    else setPositions(data as Position[]);
   };
 
   useEffect(() => {
@@ -228,7 +228,7 @@ const HRPage = () => {
             </Card>
           </TabsContent>
           <TabsContent value="config" className="mt-6">
-            <PositionConfigTab positions={positions} onPositionsChange={handlePositionsChange} />
+            <PositionConfigTab positions={positions.map(p => p.name)} onPositionsChange={handlePositionsChange} />
           </TabsContent>
           <Can I="permissions.view">
             <TabsContent value="permissions" className="mt-6">

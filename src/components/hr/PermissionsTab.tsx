@@ -4,12 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Role, Permission } from '@/types';
+import { Position, Permission } from '@/types';
 import { showSuccess, showError } from '@/utils/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 
-// Helper to group permissions by module (e.g., 'clients.view' -> 'clients')
 const groupPermissions = (permissions: Permission[]) => {
   const grouped: { [key: string]: Permission[] } = {};
   permissions.forEach(p => {
@@ -23,24 +22,23 @@ const groupPermissions = (permissions: Permission[]) => {
 };
 
 export const PermissionsTab = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
-  const [rolePermissions, setRolePermissions] = useState<Set<number>>(new Set());
+  const [selectedPositionId, setSelectedPositionId] = useState<string>('');
+  const [positionPermissions, setPositionPermissions] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch all roles and permissions on component mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const [rolesRes, permissionsRes] = await Promise.all([
-        supabase.from('roles').select('*'),
+      const [positionsRes, permissionsRes] = await Promise.all([
+        supabase.from('positions').select('*'),
         supabase.from('permissions').select('*').order('name'),
       ]);
 
-      if (rolesRes.error) showError('Lỗi khi tải danh sách vai trò.');
-      else setRoles(rolesRes.data);
+      if (positionsRes.error) showError('Lỗi khi tải danh sách vị trí.');
+      else setPositions(positionsRes.data);
 
       if (permissionsRes.error) showError('Lỗi khi tải danh sách quyền.');
       else setPermissions(permissionsRes.data);
@@ -50,48 +48,46 @@ export const PermissionsTab = () => {
     fetchData();
   }, []);
 
-  // Fetch permissions for the selected role
   useEffect(() => {
-    if (!selectedRoleId) return;
+    if (!selectedPositionId) return;
 
-    const fetchRolePermissions = async () => {
+    const fetchPositionPermissions = async () => {
       const { data, error } = await supabase
-        .from('role_permissions')
+        .from('position_permissions')
         .select('permission_id')
-        .eq('role_id', selectedRoleId);
+        .eq('position_id', selectedPositionId);
 
       if (error) {
-        showError('Lỗi khi tải quyền của vai trò.');
-        setRolePermissions(new Set());
+        showError('Lỗi khi tải quyền của vị trí.');
+        setPositionPermissions(new Set());
       } else {
-        setRolePermissions(new Set(data.map(p => p.permission_id)));
+        setPositionPermissions(new Set(data.map(p => p.permission_id)));
       }
     };
-    fetchRolePermissions();
-  }, [selectedRoleId]);
+    fetchPositionPermissions();
+  }, [selectedPositionId]);
 
   const handlePermissionChange = (permissionId: number, checked: boolean) => {
-    const newPermissions = new Set(rolePermissions);
+    const newPermissions = new Set(positionPermissions);
     if (checked) {
       newPermissions.add(permissionId);
     } else {
       newPermissions.delete(permissionId);
     }
-    setRolePermissions(newPermissions);
+    setPositionPermissions(newPermissions);
   };
 
   const handleSavePermissions = async () => {
-    if (!selectedRoleId) {
-      showError('Vui lòng chọn một vai trò để cập nhật.');
+    if (!selectedPositionId) {
+      showError('Vui lòng chọn một vị trí để cập nhật.');
       return;
     }
     setIsSaving(true);
 
-    // Delete all existing permissions for this role
     const { error: deleteError } = await supabase
-      .from('role_permissions')
+      .from('position_permissions')
       .delete()
-      .eq('role_id', selectedRoleId);
+      .eq('position_id', selectedPositionId);
 
     if (deleteError) {
       showError('Lỗi khi xóa quyền cũ: ' + deleteError.message);
@@ -99,15 +95,14 @@ export const PermissionsTab = () => {
       return;
     }
 
-    // Insert the new set of permissions
-    const newPermissionsToInsert = Array.from(rolePermissions).map(permissionId => ({
-      role_id: parseInt(selectedRoleId),
+    const newPermissionsToInsert = Array.from(positionPermissions).map(permissionId => ({
+      position_id: selectedPositionId,
       permission_id: permissionId,
     }));
 
     if (newPermissionsToInsert.length > 0) {
         const { error: insertError } = await supabase
-            .from('role_permissions')
+            .from('position_permissions')
             .insert(newPermissionsToInsert);
 
         if (insertError) {
@@ -117,7 +112,7 @@ export const PermissionsTab = () => {
         }
     }
 
-    showSuccess('Đã cập nhật quyền cho vai trò thành công!');
+    showSuccess('Đã cập nhật quyền cho vị trí thành công!');
     setIsSaving(false);
   };
 
@@ -132,13 +127,13 @@ export const PermissionsTab = () => {
       <CardContent className="space-y-6">
         <div>
           <Label>Chọn vị trí cần phân quyền</Label>
-          <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+          <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
             <SelectTrigger className="w-[280px]">
               <SelectValue placeholder="Chọn một vị trí..." />
             </SelectTrigger>
             <SelectContent>
-              {roles.map(role => (
-                <SelectItem key={role.id} value={role.id.toString()}>{role.name}</SelectItem>
+              {positions.map(pos => (
+                <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -155,7 +150,7 @@ export const PermissionsTab = () => {
             </div>
         )}
 
-        {selectedRoleId && !isLoading && (
+        {selectedPositionId && !isLoading && (
           <div className="space-y-6">
             {Object.entries(groupedPermissions).map(([module, perms]) => (
               <div key={module}>
@@ -165,7 +160,7 @@ export const PermissionsTab = () => {
                     <div key={perm.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`perm-${perm.id}`}
-                        checked={rolePermissions.has(perm.id)}
+                        checked={positionPermissions.has(perm.id)}
                         onCheckedChange={(checked) => handlePermissionChange(perm.id, !!checked)}
                       />
                       <label
