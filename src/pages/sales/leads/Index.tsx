@@ -87,6 +87,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [salesPersons, setSalesPersons] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -115,9 +116,14 @@ const LeadsPage = () => {
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
+  const salesPersonsOnly = useMemo(() => 
+    personnel.filter(p => p.position.toLowerCase() === 'sale'), 
+    [personnel]
+  );
+
   const fetchData = async () => {
     setLoading(true);
-    const [leadsRes, salesRes] = await Promise.all([
+    const [leadsRes, personnelRes] = await Promise.all([
         supabase.from("leads").select("*, lead_history(*)").order('created_at', { ascending: false }),
         supabase.from("personnel").select("*")
     ]);
@@ -125,8 +131,11 @@ const LeadsPage = () => {
     if(leadsRes.error) showError("Lỗi khi tải dữ liệu leads.");
     else setLeads(leadsRes.data as any[]);
 
-    if(salesRes.error) showError("Lỗi khi tải dữ liệu nhân viên sale.");
-    else setSalesPersons(salesRes.data as Personnel[]);
+    if(personnelRes.error) showError("Lỗi khi tải dữ liệu nhân viên.");
+    else {
+      setPersonnel(personnelRes.data as Personnel[]);
+      setSalesPersons(personnelRes.data.filter(p => p.position.toLowerCase() === 'sale') as Personnel[]);
+    }
 
     setLoading(false);
   };
@@ -303,7 +312,7 @@ const LeadsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
           <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <div className="flex w-full md:w-auto space-x-4">
-            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersons.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
+            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersonsOnly.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
