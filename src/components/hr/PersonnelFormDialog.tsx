@@ -102,30 +102,28 @@ export const PersonnelFormDialog = ({
         onSave();
       }
     } else {
-      // Logic for creating a new user and profile
+      // Logic for creating a new user via Edge Function
       if (!formData.password) {
         showError("Vui lòng nhập mật khẩu cho người dùng mới.");
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            position: formData.position,
-            role: formData.role,
-            status: formData.status,
-          }
-        }
+      const { data, error } = await supabase.functions.invoke('create-personnel-user', {
+        body: { 
+          email: formData.email, 
+          password: formData.password,
+          name: formData.name,
+          position: formData.position,
+          role: formData.role,
+          status: formData.status,
+        },
       });
 
-      if (error) {
-        showError("Lỗi khi tạo tài khoản: " + error.message);
+      if (error || (data && data.error)) {
+        showError("Lỗi khi tạo tài khoản: " + (error?.message || data.error));
       } else {
-        showSuccess("Thêm nhân sự mới thành công! Tài khoản đã được tạo.");
+        showSuccess("Thêm nhân sự mới thành công!");
         onSave();
       }
     }
