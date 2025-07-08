@@ -275,12 +275,12 @@ const InternsPage = () => {
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
-                <TableHead>SL COMMENT</TableHead>
-                <TableHead>SL POST</TableHead>
+                <TableHead>CMT</TableHead>
+                <TableHead>POST</TableHead>
                 <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>DEADLINE</TableHead>
                 <TableHead>NGƯỜI GIAO</TableHead>
                 <TableHead>THỰC TẬP SINH</TableHead>
-                <TableHead>DEADLINE</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead>HÀNH ĐỘNG</TableHead>
                 <TableHead>THAO TÁC</TableHead>
@@ -300,15 +300,17 @@ const InternsPage = () => {
                       <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{task.comment_count}</TableCell>
-                  <TableCell>{task.post_count}</TableCell>
+                  <TableCell>
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
+                  </TableCell>
                   <TableCell className="text-center">
                     <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
                       <ExternalLink className="h-5 w-5" />
                     </a>
                   </TableCell>
-                  <TableCell>{task.assigner_name}</TableCell>
-                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell className={cn(isOverdue && "text-red-600")}>
                     {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     {isOverdue && (
@@ -318,6 +320,8 @@ const InternsPage = () => {
                       </div>
                     )}
                   </TableCell>
+                  <TableCell>{task.assigner_name}</TableCell>
+                  <TableCell>{task.intern_name}</TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>
                     {task.status !== 'Hoàn thành' && (
