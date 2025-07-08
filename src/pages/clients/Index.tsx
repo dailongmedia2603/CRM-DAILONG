@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client, Project } from "@/types";
+import { Client, Project, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -80,9 +80,10 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 const ClientsPage = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [creatorFilter, setCreatorFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
@@ -95,24 +96,20 @@ const ClientsPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [clientsRes, projectsRes] = await Promise.all([
+    const [clientsRes, projectsRes, personnelRes] = await Promise.all([
       supabase.from("clients").select("*"),
-      supabase.from("projects").select("client_id, contract_value")
+      supabase.from("projects").select("client_id, contract_value"),
+      supabase.from("personnel").select("name")
     ]);
 
-    if (clientsRes.error) {
-      showError("Lỗi khi tải dữ liệu khách hàng.");
-      console.error(clientsRes.error);
-    } else {
-      setClients(clientsRes.data as Client[]);
-    }
+    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
+    else setClients(clientsRes.data as Client[]);
 
-    if (projectsRes.error) {
-      showError("Lỗi khi tải dữ liệu dự án.");
-      console.error(projectsRes.error);
-    } else {
-      setProjects(projectsRes.data as Project[]);
-    }
+    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
+    else setProjects(projectsRes.data as Project[]);
+
+    if (personnelRes.error) showError("Lỗi khi tải dữ liệu nhân sự.");
+    else setPersonnel(personnelRes.data as Personnel[]);
 
     setLoading(false);
   };
@@ -141,7 +138,7 @@ const ClientsPage = () => {
       client.contact_person.toLowerCase().includes(lowerCaseSearchTerm) ||
       (client.industry && client.industry.toLowerCase().includes(lowerCaseSearchTerm));
     
-    const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+    const matchesCreator = creatorFilter === "all" || client.created_by === creatorFilter;
 
     if (dateFilter === 'thisMonth') {
       if (!client.creation_date) return false;
@@ -152,8 +149,8 @@ const ClientsPage = () => {
       }
     }
 
-    return matchesSearch && matchesStatus;
-  }), [clients, searchTerm, statusFilter, showArchived, dateFilter]);
+    return matchesSearch && matchesCreator;
+  }), [clients, searchTerm, creatorFilter, showArchived, dateFilter]);
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
@@ -293,14 +290,15 @@ const ClientsPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={creatorFilter} onValueChange={setCreatorFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Tất cả trạng thái" />
+                <SelectValue placeholder="Tất cả người tạo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">Tất cả người tạo</SelectItem>
+                {personnel.map((p) => (
+                  <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
