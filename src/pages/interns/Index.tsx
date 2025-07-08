@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -50,6 +51,8 @@ const InternsPage = () => {
   const [internFilter, setInternFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [showArchived, setShowArchived] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -66,7 +69,7 @@ const InternsPage = () => {
 
     if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
     else {
-      const today = startOfToday();
+      const today = new Date();
       const updatedTasks = tasksRes.data.map(task => {
         if (new Date(task.deadline) < today && task.status !== 'Hoàn thành') {
           return { ...task, status: 'Quá hạn' };
@@ -90,6 +93,8 @@ const InternsPage = () => {
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
+      if (!!task.archived !== showArchived) return false;
+
       const taskDate = new Date(task.deadline);
       let dateMatch = true;
       if (dateRange?.from && dateRange?.to) {
@@ -106,7 +111,7 @@ const InternsPage = () => {
         dateMatch
       );
     });
-  }, [tasks, searchTerm, internFilter, statusFilter, dateRange]);
+  }, [tasks, searchTerm, internFilter, statusFilter, dateRange, showArchived]);
 
   const stats = useMemo(() => ({
     total: filteredTasks.length,
@@ -176,6 +181,21 @@ const InternsPage = () => {
     }
   };
 
+  const handleBulkAction = async (action: 'archive' | 'restore' | 'delete') => {
+    if (selectedTasks.length === 0) return;
+    if (action === 'delete') {
+      const { error } = await supabase.from('intern_tasks').delete().in('id', selectedTasks);
+      if (error) showError("Lỗi khi xóa hàng loạt.");
+      else showSuccess(`Đã xóa ${selectedTasks.length} công việc.`);
+    } else {
+      const { error } = await supabase.from('intern_tasks').update({ archived: action === 'archive' }).in('id', selectedTasks);
+      if (error) showError(`Lỗi khi ${action === 'archive' ? 'lưu trữ' : 'khôi phục'} công việc.`);
+      else showSuccess(`Đã ${action === 'archive' ? 'lưu trữ' : 'khôi phục'} ${selectedTasks.length} công việc.`);
+    }
+    fetchData();
+    setSelectedTasks([]);
+  };
+
   const getStatusBadge = (status: InternTask['status']) => {
     switch (status) {
       case 'Đang làm': return 'bg-blue-100 text-blue-800';
@@ -236,12 +256,24 @@ const InternsPage = () => {
               <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
             </PopoverContent>
           </Popover>
+          <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
         </div>
+        
+        {selectedTasks.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => handleBulkAction(showArchived ? 'restore' : 'archive')}>
+              {showArchived ? <RotateCcw className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
+              {showArchived ? 'Khôi phục' : 'Lưu trữ'} ({selectedTasks.length})
+            </Button>
+            <Button variant="destructive" onClick={() => handleBulkAction('delete')}><Trash2 className="mr-2 h-4 w-4" />Xóa ({selectedTasks.length})</Button>
+          </div>
+        )}
 
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
+                <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
                 <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
                 <TableHead>NGƯỜI GIAO</TableHead>
                 <TableHead>THỰC TẬP SINH</TableHead>
@@ -252,9 +284,10 @@ const InternsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={7} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => (
                 <TableRow key={task.id}>
+                  <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell>
                     <div className="max-w-xs">
                       <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>

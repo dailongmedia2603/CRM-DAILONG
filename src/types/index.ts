@@ -110,6 +110,7 @@ export interface InternTask {
   started_at?: string;
   completed_at?: string;
   assigner_name?: string;
+  archived?: boolean;
 }
 
 export interface LeadHistory {
