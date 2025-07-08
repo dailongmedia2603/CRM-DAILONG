@@ -6,14 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfToday, startOfWeek, endOfWeek, subDays } from 'date-fns';
+import { startOfToday, startOfWeek, endOfWeek, subDays, differenceInDays } from 'date-fns';
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -167,7 +167,7 @@ const InternsPage = () => {
 
   const handleUpdateStatus = async (task: InternTask, newStatus: InternTask['status']) => {
     let updateData: Partial<InternTask> = { status: newStatus };
-    if (newStatus === 'Đang làm') {
+    if (newStatus === 'Đang làm' && !task.started_at) {
       updateData.started_at = new Date().toISOString();
     } else if (newStatus === 'Hoàn thành') {
       updateData.completed_at = new Date().toISOString();
@@ -285,7 +285,10 @@ const InternsPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow> :
-              filteredTasks.map(task => (
+              filteredTasks.map(task => {
+                const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
+                const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
+                return (
                 <TableRow key={task.id}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell>
@@ -296,11 +299,26 @@ const InternsPage = () => {
                   </TableCell>
                   <TableCell>{task.assigner_name}</TableCell>
                   <TableCell>{task.intern_name}</TableCell>
-                  <TableCell>{new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
+                  <TableCell className={cn(isOverdue && "text-red-600")}>
+                    {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {isOverdue && (
+                      <div className="flex items-center font-bold mt-1 text-xs">
+                        <AlertCircleIcon className="h-3 w-3 mr-1" />
+                        <span>Trễ {overdueDays} ngày</span>
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell><Badge className={cn("capitalize", getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>
-                    {task.status === 'Chưa làm' && <Button size="sm" className="bg-blue-500 hover:bg-blue-600" onClick={() => handleUpdateStatus(task, 'Đang làm')}><Play className="mr-2 h-4 w-4" />Bắt đầu</Button>}
-                    {task.status === 'Đang làm' && <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleUpdateStatus(task, 'Hoàn thành')}><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</Button>}
+                    {task.status !== 'Hoàn thành' && (
+                      <Button 
+                        size="sm" 
+                        className={cn(task.status === 'Chưa làm' || task.status === 'Quá hạn' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                        onClick={() => handleUpdateStatus(task, (task.status === 'Chưa làm' || task.status === 'Quá hạn') ? 'Đang làm' : 'Hoàn thành')}
+                      >
+                        {(task.status === 'Chưa làm' || task.status === 'Quá hạn') ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0">
@@ -310,7 +328,7 @@ const InternsPage = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </div>
