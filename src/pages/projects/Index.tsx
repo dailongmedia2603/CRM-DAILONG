@@ -61,12 +61,14 @@ import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { AcceptanceDialog } from "@/components/projects/AcceptanceDialog";
-import { Client, Project } from "@/types";
+import { Client, Project, Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfToday } from 'date-fns';
+import { useAuth } from "@/context/AuthProvider";
 
 const ProjectsPage = () => {
+  const { session } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,9 +88,32 @@ const ProjectsPage = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const fetchData = async () => {
+    if (!session) return;
     setLoading(true);
+
+    const { data: userPersonnel, error: userError } = await supabase
+      .from('personnel')
+      .select('role, id')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError) {
+      showError("Không thể tải thông tin người dùng.");
+      setLoading(false);
+      return;
+    }
+
+    let projectsQuery = supabase
+      .from("projects")
+      .select("*")
+      .order('created_at', { ascending: false });
+
+    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
+      projectsQuery = projectsQuery.filter('team', 'cs', `[{"id":"${session.user.id}"}]`);
+    }
+
     const [projectsRes, clientsRes] = await Promise.all([
-      supabase.from("projects").select("*").order('created_at', { ascending: false }),
+      projectsQuery,
       supabase.from("clients").select("id, company_name, name"),
     ]);
 
@@ -111,8 +136,10 @@ const ProjectsPage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (session) {
+      fetchData();
+    }
+  }, [session]);
 
   const statusTextMap: { [key: string]: string } = {
     planning: "Pending",

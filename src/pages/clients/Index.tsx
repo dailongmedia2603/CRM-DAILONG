@@ -48,9 +48,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client, Project } from "@/types";
+import { Client, Project, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthProvider";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -78,6 +79,7 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 };
 
 const ClientsPage = () => {
+  const { session } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,9 +96,29 @@ const ClientsPage = () => {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
   const fetchData = async () => {
+    if (!session) return;
     setLoading(true);
+
+    const { data: userPersonnel, error: userError } = await supabase
+      .from('personnel')
+      .select('role, name')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError) {
+      showError("Không thể tải thông tin người dùng.");
+      setLoading(false);
+      return;
+    }
+
+    let clientsQuery = supabase.from("clients").select("*");
+
+    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
+      clientsQuery = clientsQuery.eq('created_by', userPersonnel.name);
+    }
+
     const [clientsRes, projectsRes] = await Promise.all([
-      supabase.from("clients").select("*"),
+      clientsQuery,
       supabase.from("projects").select("client_id, contract_value")
     ]);
 
@@ -118,8 +140,10 @@ const ClientsPage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (session) {
+      fetchData();
+    }
+  }, [session]);
 
   const clientContractValues = useMemo(() => {
     const valueMap = new Map<string, number>();
