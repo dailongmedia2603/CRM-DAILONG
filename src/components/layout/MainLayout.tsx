@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { 
   Menu, 
   Home, 
@@ -21,7 +20,7 @@ import {
   Briefcase, 
   DollarSign, 
   GraduationCap, 
-  ClipboardList, 
+  FolderKanban, 
   BarChart2, 
   UserCog,
   X,
@@ -30,11 +29,10 @@ import {
   Settings,
   LogOut,
   User,
-  ChevronDown,
-  ChevronRight,
-  FolderKanban
+  ChevronDown
 } from "lucide-react";
 import React from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -44,9 +42,15 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -159,7 +163,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     Preferences
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
                   </DropdownMenuItem>
@@ -257,7 +261,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
                   </DropdownMenuItem>
@@ -281,15 +285,11 @@ const NavItem = ({
   icon, 
   href, 
   label, 
-  indent = false,
-  badge,
   active = false
 }: { 
   icon?: React.ReactNode; 
   href: string; 
   label: string; 
-  indent?: boolean;
-  badge?: string;
   active?: boolean;
 }) => {
   return (
@@ -297,7 +297,6 @@ const NavItem = ({
       href={href} 
       className={cn(
         "flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150",
-        indent && "ml-6",
         active 
           ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
           : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
@@ -307,57 +306,7 @@ const NavItem = ({
         {icon}
         <span>{label}</span>
       </div>
-      {badge && (
-        <Badge variant="secondary" className="ml-2 bg-gray-200 text-gray-700 text-xs">
-          {badge}
-        </Badge>
-      )}
     </a>
-  );
-};
-
-// Navigation Group Component
-const NavGroup = ({ 
-  icon, 
-  label, 
-  children 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  children: React.ReactNode;
-}) => {
-  const { pathname } = useLocation();
-  const isChildActive = React.Children.toArray(children).some(
-    (child) => React.isValidElement(child) && pathname.startsWith(child.props.href)
-  );
-  const [open, setOpen] = useState(isChildActive);
-
-  useEffect(() => {
-    if (isChildActive) {
-      setOpen(true);
-    }
-  }, [isChildActive, pathname]);
-
-  return (
-    <div>
-      <button 
-        onClick={() => setOpen(!open)} 
-        className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-all duration-150"
-      >
-        <div className="flex items-center">
-          {icon}
-          <span>{label}</span>
-        </div>
-        {open ? (
-          <ChevronDown className="w-4 h-4 transition-transform" />
-        ) : (
-          <ChevronRight className="w-4 h-4 transition-transform" />
-        )}
-      </button>
-      <div className={`mt-1 space-y-1 ${open ? 'block' : 'hidden'}`}>
-        {children}
-      </div>
-    </div>
   );
 };
 
