@@ -109,33 +109,19 @@ export const PersonnelFormDialog = ({
         return;
       }
 
-      // Step 1: Call the Edge Function to create the user in auth
       const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
-        body: { email: formData.email, password: formData.password },
+        body: { 
+          email: formData.email, 
+          password: formData.password,
+          name: formData.name,
+          position: formData.position,
+          role: formData.role,
+          status: formData.status,
+        },
       });
 
       if (funcError || funcData.error) {
         showError("Lỗi khi tạo tài khoản: " + (funcError?.message || funcData.error));
-        setIsLoading(false);
-        return;
-      }
-
-      const newUserId = funcData.user.id;
-
-      // Step 2: Insert the profile into the personnel table
-      const { error: profileError } = await supabase
-        .from('personnel')
-        .insert({
-          id: newUserId,
-          name: formData.name,
-          email: formData.email,
-          position: formData.position,
-          role: formData.role,
-          status: formData.status,
-        });
-
-      if (profileError) {
-        showError("Lỗi khi lưu thông tin nhân sự: " + profileError.message);
       } else {
         showSuccess("Thêm nhân sự mới thành công!");
         onSave(); // Callback to refetch data
