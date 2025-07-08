@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   PlusCircle,
   Search,
@@ -61,7 +62,7 @@ import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { AcceptanceDialog } from "@/components/projects/AcceptanceDialog";
-import { Client, Project } from "@/types";
+import { Client, Project, Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfToday } from 'date-fns';
@@ -69,6 +70,7 @@ import { differenceInDays, startOfToday } from 'date-fns';
 const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
@@ -87,9 +89,10 @@ const ProjectsPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [projectsRes, clientsRes] = await Promise.all([
+    const [projectsRes, clientsRes, personnelRes] = await Promise.all([
       supabase.from("projects").select("*").order('created_at', { ascending: false }),
       supabase.from("clients").select("id, company_name, name"),
+      supabase.from("personnel").select("id, name, avatar"),
     ]);
 
     if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
@@ -106,6 +109,9 @@ const ProjectsPage = () => {
 
     if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
     else setClients(clientsRes.data as Client[]);
+
+    if (personnelRes.error) showError("Lỗi khi tải dữ liệu nhân sự.");
+    else setPersonnel(personnelRes.data as Personnel[]);
     
     setLoading(false);
   };
@@ -350,9 +356,18 @@ const ProjectsPage = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      {(project.team || []).map((member, index) => (
-                        <div key={index}>{member.role}: {member.name}</div>
-                      ))}
+                      {(project.team || []).map((member, index) => {
+                        const person = personnel.find(p => p.id === member.id);
+                        return (
+                          <div key={index} className="flex items-center gap-2">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={person?.avatar} />
+                              <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span>{member.role}: {member.name}</span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </TableCell>
                   <TableCell>{formatCurrency(project.contract_value)}</TableCell>

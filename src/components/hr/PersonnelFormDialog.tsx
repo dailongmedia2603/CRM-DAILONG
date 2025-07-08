@@ -19,12 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PersonnelFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void; // Changed to a simple callback
+  onSave: (personnel: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string }) => void;
   personnel?: Personnel | null;
   positions: string[];
 }
@@ -43,8 +42,8 @@ export const PersonnelFormDialog = ({
     role: "Nhân viên" as Personnel['role'],
     status: "active" as Personnel['status'],
     password: "",
+    avatar: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const isEditing = !!personnel;
 
@@ -56,9 +55,11 @@ export const PersonnelFormDialog = ({
         position: personnel.position,
         role: personnel.role,
         status: personnel.status,
-        password: "",
+        password: "", // Không hiển thị mật khẩu cũ
+        avatar: personnel.avatar || "",
       });
     } else {
+      // Reset form for new personnel
       setFormData({
         name: "",
         email: "",
@@ -66,6 +67,7 @@ export const PersonnelFormDialog = ({
         role: "Nhân viên",
         status: "active",
         password: "",
+        avatar: "",
       });
     }
   }, [personnel, open]);
@@ -79,70 +81,29 @@ export const PersonnelFormDialog = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    if (isEditing && personnel) {
-      // Logic for updating an existing user
-      const { error } = await supabase
-        .from('personnel')
-        .update({
-          name: formData.name,
-          position: formData.position,
-          role: formData.role,
-          status: formData.status,
-        })
-        .eq('id', personnel.id);
-
-      if (error) {
-        showError("Lỗi khi cập nhật nhân sự: " + error.message);
-      } else {
-        showSuccess("Cập nhật thông tin thành công!");
-        onSave(); // Callback to refetch data
-      }
-    } else {
-      // Logic for creating a new user
-      if (!formData.password) {
-        showError("Vui lòng nhập mật khẩu cho người dùng mới.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 1: Call the Edge Function to create the user in auth
-      const { data: funcData, error: funcError } = await supabase.functions.invoke('create-user', {
-        body: { email: formData.email, password: formData.password },
-      });
-
-      if (funcError || funcData.error) {
-        showError("Lỗi khi tạo tài khoản: " + (funcError?.message || funcData.error));
-        setIsLoading(false);
-        return;
-      }
-
-      const newUserId = funcData.user.id;
-
-      // Step 2: Insert the profile into the personnel table
-      const { error: profileError } = await supabase
-        .from('personnel')
-        .insert({
-          id: newUserId,
-          name: formData.name,
-          email: formData.email,
-          position: formData.position,
-          role: formData.role,
-          status: formData.status,
-        });
-
-      if (profileError) {
-        showError("Lỗi khi lưu thông tin nhân sự: " + profileError.message);
-      } else {
-        showSuccess("Thêm nhân sự mới thành công!");
-        onSave(); // Callback to refetch data
-      }
+    if (!formData.name || !formData.email || !formData.position) {
+      showError("Vui lòng điền đầy đủ các trường bắt buộc.");
+      return;
+    }
+    if (!isEditing && !formData.password) {
+      showError("Vui lòng nhập mật khẩu cho người dùng mới.");
+      return;
     }
 
-    setIsLoading(false);
+    const dataToSave: Omit<Personnel, 'id' | 'created_at'> & { id?: string; password?: string } = {
+      ...formData,
+    };
+    
+    if (personnel) {
+      dataToSave.id = personnel.id;
+    }
+    if (!formData.password) {
+      delete dataToSave.password;
+    }
+
+    onSave(dataToSave);
     onOpenChange(false);
   };
 
@@ -163,14 +124,16 @@ export const PersonnelFormDialog = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email (Tài khoản đăng nhập)</Label>
-              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} disabled={isEditing} />
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} />
             </div>
-            {!isEditing && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <Input id="password" name="password" type="password" value={formData.password} onChange={handleChange} />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="avatar">Link ảnh đại diện</Label>
+              <Input id="avatar" name="avatar" value={formData.avatar} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Mật khẩu</Label>
+              <Input id="password" name="password" type="password" value={formData.password} onChange={handleChange} placeholder={isEditing ? "Để trống nếu không đổi" : ""} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="position">Vị trí</Label>
               <Select value={formData.position} onValueChange={(value) => handleSelectChange("position", value)}>
@@ -209,7 +172,7 @@ export const PersonnelFormDialog = ({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Hủy</Button>
-            <Button type="submit" disabled={isLoading}>{isLoading ? "Đang lưu..." : "Lưu"}</Button>
+            <Button type="submit">Lưu</Button>
           </DialogFooter>
         </form>
       </DialogContent>
