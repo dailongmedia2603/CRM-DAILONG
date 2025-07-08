@@ -1,0 +1,1 @@
+ALTER TABLE public.intern_tasks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now();

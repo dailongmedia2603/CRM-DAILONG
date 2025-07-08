@@ -111,6 +111,7 @@ export interface InternTask {
   completed_at?: string;
   assigner_name?: string;
   archived?: boolean;
+  created_at?: string;
 }
 
 export interface LeadHistory {

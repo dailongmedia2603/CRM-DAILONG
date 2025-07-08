@@ -13,7 +13,7 @@ import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsD
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfToday, startOfWeek, endOfWeek, subDays, differenceInDays } from 'date-fns';
+import { startOfDay, startOfToday, startOfWeek, subDays, differenceInDays, endOfDay, addDays, isEqual } from 'date-fns';
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -50,7 +50,9 @@ const InternsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [internFilter, setInternFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeDateFilter, setActiveDateFilter] = useState('today');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
@@ -86,18 +88,33 @@ const InternsPage = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const today = new Date();
+    if (activeDateFilter === 'today') {
+      setDateRange({ from: startOfToday(), to: endOfDay(today) });
+    } else if (activeDateFilter === 'yesterday') {
+      const yesterday = subDays(today, 1);
+      setDateRange({ from: startOfDay(yesterday), to: endOfDay(yesterday) });
+    } else if (activeDateFilter === 'thisWeek') {
+      const start = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+      const end = endOfDay(addDays(start, 5)); // Saturday
+      setDateRange({ from: start, to: end });
+    }
+  }, [activeDateFilter]);
+
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       if (!!task.archived !== showArchived) return false;
 
-      const taskDate = new Date(task.deadline);
       let dateMatch = true;
-      if (dateRange?.from && dateRange?.to) {
-        dateMatch = taskDate >= dateRange.from && taskDate <= dateRange.to;
-      } else if (dateRange?.from) {
-        dateMatch = taskDate >= dateRange.from;
+      if (dateRange?.from) {
+        if (!task.created_at) return false;
+        const taskDate = new Date(task.created_at);
+        const fromDate = startOfDay(dateRange.from);
+        const toDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+        dateMatch = taskDate >= fromDate && taskDate <= toDate;
       }
 
       const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
@@ -210,16 +227,22 @@ const InternsPage = () => {
     }
   };
 
-  const setDateFilter = (filter: 'today' | 'yesterday' | 'thisWeek') => {
-    const today = new Date();
-    if (filter === 'today') {
-      setDateRange({ from: startOfToday(), to: startOfToday() });
-    } else if (filter === 'yesterday') {
-      const yesterday = subDays(today, 1);
-      setDateRange({ from: yesterday, to: yesterday });
-    } else if (filter === 'thisWeek') {
-      setDateRange({ from: startOfWeek(today), to: endOfWeek(today) });
+  const handleDateRangeSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setActiveDateFilter('custom');
+    if (range?.from) {
+      setIsDatePopoverOpen(false);
     }
+  };
+
+  const getDateFilterButtonLabel = () => {
+    if (activeDateFilter === 'custom' && dateRange?.from) {
+      if (dateRange.to && !isEqual(startOfDay(dateRange.from), startOfDay(dateRange.to))) {
+        return `${format(dateRange.from, "dd/MM")} - ${format(dateRange.to, "dd/MM/yyyy")}`;
+      }
+      return format(dateRange.from, "dd/MM/yyyy");
+    }
+    return 'Chọn ngày';
   };
 
   return (
@@ -245,22 +268,24 @@ const InternsPage = () => {
         <div className="flex items-center gap-2">
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button id="date" variant={"outline"} className={cn("w-[260px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")) : <span>Chọn ngày</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <div className="p-2">
-                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('today')}>Hôm nay</Button>
-                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('yesterday')}>Hôm qua</Button>
-                <Button variant="ghost" className="w-full justify-start" onClick={() => setDateFilter('thisWeek')}>Tuần này</Button>
-              </div>
-              <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
-            </PopoverContent>
-          </Popover>
+          
+          <div className="flex items-center gap-2">
+            <Button variant={activeDateFilter === 'today' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('today')}>Hôm nay</Button>
+            <Button variant={activeDateFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('yesterday')}>Hôm qua</Button>
+            <Button variant={activeDateFilter === 'thisWeek' ? 'default' : 'outline'} onClick={() => setActiveDateFilter('thisWeek')}>Tuần này</Button>
+            <Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant={activeDateFilter === 'custom' ? 'default' : 'outline'} className="w-[180px] justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {getDateFilterButtonLabel()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={handleDateRangeSelect} numberOfMonths={1} />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
         </div>
         
