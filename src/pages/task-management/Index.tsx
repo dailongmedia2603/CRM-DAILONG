@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, List, ArrowLeft, AlertTriangle, Clock, ChevronDown } from "lucide-react";
+import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle, MessageSquare, List, ArrowLeft, AlertTriangle, Clock, ChevronDown, Archive, RotateCcw } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TaskStatsCard } from "@/components/task-management/TaskStatsCard";
 import { TaskFormDialog } from "@/components/task-management/TaskFormDialog";
 import { FeedbackDialog } from "@/components/task-management/FeedbackDialog";
@@ -29,9 +30,10 @@ const TasksManagementPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
-  const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false });
+  const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false, bulkDelete: false });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const currentUser = useMemo(() => {
@@ -74,14 +76,16 @@ const TasksManagementPage = () => {
   }, []);
 
   const filteredTasks = useMemo(() => {
-    let filtered = tasks;
+    let filtered = tasks.filter(task => task.archived === showArchived);
     if (dateFilter) filtered = filtered.filter(task => isSameDay(new Date(task.created_at), dateFilter));
     if (searchTerm) filtered = filtered.filter(task => task.name.toLowerCase().includes(searchTerm.toLowerCase()));
     if (statusFilter !== 'all') filtered = filtered.filter(task => task.status === statusFilter);
     if (priorityFilter !== 'all') filtered = filtered.filter(task => task.priority === priorityFilter);
-    filtered = filtered.filter(task => showCompleted ? task.status === 'Hoàn thành' : task.status !== 'Hoàn thành');
+    if (!showArchived) {
+      filtered = filtered.filter(task => showCompleted ? task.status === 'Hoàn thành' : task.status !== 'Hoàn thành');
+    }
     return filtered;
-  }, [tasks, dateFilter, searchTerm, statusFilter, priorityFilter, showCompleted]);
+  }, [tasks, dateFilter, searchTerm, statusFilter, priorityFilter, showCompleted, showArchived]);
 
   const stats = useMemo(() => {
     const relevantTasks = dateFilter ? tasks.filter(task => isSameDay(new Date(task.created_at), dateFilter)) : tasks;
@@ -147,12 +151,28 @@ const TasksManagementPage = () => {
     closeDialog('delete');
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkAction = async (action: 'archive' | 'restore' | 'delete') => {
+    if (action === 'delete') {
+      openDialog('bulkDelete');
+      return;
+    }
+    const archiveValue = action === 'archive';
+    const { error } = await supabase.from('tasks').update({ archived: archiveValue }).in('id', selectedTasks);
+    if (error) showError(`Lỗi khi ${archiveValue ? 'lưu trữ' : 'khôi phục'} công việc.`);
+    else {
+      showSuccess(`Đã ${archiveValue ? 'lưu trữ' : 'khôi phục'} ${selectedTasks.length} công việc.`);
+      fetchData();
+      setSelectedTasks([]);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
     const { error } = await supabase.from('tasks').delete().in('id', selectedTasks);
     if (error) showError("Lỗi khi xóa hàng loạt.");
     else showSuccess(`Đã xóa ${selectedTasks.length} công việc.`);
     fetchData();
     setSelectedTasks([]);
+    closeDialog('bulkDelete');
   };
 
   const handleActionClick = async (task: Task) => {
@@ -205,9 +225,21 @@ const TasksManagementPage = () => {
             <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
             <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="Chưa làm">Chưa làm</SelectItem><SelectItem value="Đang làm">Đang làm</SelectItem><SelectItem value="Hoàn thành">Hoàn thành</SelectItem></SelectContent></Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Ưu tiên" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả ưu tiên</SelectItem><SelectItem value="Cao">Cao</SelectItem><SelectItem value="Trung bình">Trung bình</SelectItem><SelectItem value="Thấp">Thấp</SelectItem></SelectContent></Select>
-            {selectedTasks.length > 0 && <Button variant="destructive" size="sm" onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" />Xóa ({selectedTasks.length})</Button>}
+            {selectedTasks.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline">Thao tác hàng loạt ({selectedTasks.length})</Button></DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleBulkAction(showArchived ? 'restore' : 'archive')}>
+                    {showArchived ? <RotateCcw className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
+                    {showArchived ? 'Khôi phục' : 'Lưu trữ'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkAction('delete')} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" />Xóa</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Lưu trữ"}</Button>
             <Button variant="outline" onClick={() => setShowCompleted(!showCompleted)}>{showCompleted ? <><ArrowLeft className="mr-2 h-4 w-4" />Trở về</> : <><List className="mr-2 h-4 w-4" />CV Hoàn thành</>}</Button>
             <Button onClick={() => openDialog('form')} disabled={loading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm công việc</Button>
           </div>
@@ -215,12 +247,12 @@ const TasksManagementPage = () => {
 
         <div className="rounded-md border">
           <Table>
-            <TableHeader><TableRow><TableHead className="w-12"><Checkbox /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => (
                 <TableRow key={task.id}>
-                  <TableCell><Checkbox /></TableCell>
+                  <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
                   <TableCell>{task.assigner?.name || 'N/A'}</TableCell>
                   <TableCell>{task.assignee?.name || 'N/A'}</TableCell>
@@ -245,6 +277,7 @@ const TasksManagementPage = () => {
       {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} currentUser={currentUser} />}
       {activeTask && <TaskDetailsDialog open={dialogs.details} onOpenChange={() => closeDialog('details')} task={activeTask} />}
       {activeTask && <AlertDialog open={dialogs.delete} onOpenChange={() => closeDialog('delete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn công việc "{activeTask.name}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(activeTask)}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
+      <AlertDialog open={dialogs.bulkDelete} onOpenChange={() => closeDialog('bulkDelete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa hàng loạt?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn {selectedTasks.length} công việc đã chọn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleBulkDeleteConfirm}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </MainLayout>
   );
 };

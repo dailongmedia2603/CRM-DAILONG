@@ -92,6 +92,7 @@ export interface Task {
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành';
   feedbackHistory: Feedback[];
   created_at: string;
+  archived: boolean;
 }
 
 export interface InternTask {
