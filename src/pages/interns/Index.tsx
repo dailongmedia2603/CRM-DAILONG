@@ -291,8 +291,9 @@ const InternsPage = () => {
               filteredTasks.map(task => {
                 const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                 const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
+                const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
                 return (
-                <TableRow key={task.id} className={cn(isOverdue && task.status === 'Hoàn thành' && "bg-red-50")}>
+                <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
                   <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
                   <TableCell>
                     <div className="max-w-xs">
