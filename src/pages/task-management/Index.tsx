@@ -34,20 +34,37 @@ const TasksManagementPage = () => {
   const [dialogs, setDialogs] = useState({ form: false, feedback: false, description: false, delete: false });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  const currentUser = { id: 'user-1', name: 'Nguyễn Văn Minh' }; // Mock current user
+  const currentUser = useMemo(() => {
+    if (personnel.length > 0) {
+      return { id: personnel[0].id, name: personnel[0].name };
+    }
+    return { id: '', name: '' };
+  }, [personnel]);
 
   const fetchData = async () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*)"),
+      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)"),
       supabase.from("personnel").select("*"),
     ]);
 
-    if (tasksRes.error) showError("Lỗi khi tải dữ liệu công việc.");
-    else setTasks(tasksRes.data as any[]);
+    if (tasksRes.error) {
+      showError("Lỗi khi tải dữ liệu công việc.");
+      console.error(tasksRes.error);
+    } else {
+      const tasksWithFeedback = tasksRes.data.map(task => ({
+        ...task,
+        feedbackHistory: task.feedback || [],
+      }));
+      setTasks(tasksWithFeedback as any[]);
+    }
 
-    if (personnelRes.error) showError("Lỗi khi tải dữ liệu nhân sự.");
-    else setPersonnel(personnelRes.data as Personnel[]);
+    if (personnelRes.error) {
+      showError("Lỗi khi tải dữ liệu nhân sự.");
+      console.error(personnelRes.error);
+    } else {
+      setPersonnel(personnelRes.data as Personnel[]);
+    }
     
     setLoading(false);
   };
@@ -99,12 +116,24 @@ const TasksManagementPage = () => {
     const { id, ...taskData } = data;
     if (activeTask) {
       const { error } = await supabase.from('tasks').update(taskData).eq('id', activeTask.id);
-      if (error) showError("Lỗi khi cập nhật công việc.");
-      else showSuccess("Cập nhật công việc thành công!");
+      if (error) {
+        console.error("Update Error:", error);
+        showError("Lỗi khi cập nhật công việc.");
+      } else {
+        showSuccess("Cập nhật công việc thành công!");
+      }
     } else {
+      if (!taskData.assigner_id) {
+        showError("Không thể tạo công việc: thiếu người giao việc.");
+        return;
+      }
       const { error } = await supabase.from('tasks').insert([taskData]);
-      if (error) showError("Lỗi khi thêm công việc mới.");
-      else showSuccess("Thêm công việc mới thành công!");
+      if (error) {
+        console.error("Insert Error:", error);
+        showError("Lỗi khi thêm công việc mới.");
+      } else {
+        showSuccess("Thêm công việc mới thành công!");
+      }
     }
     fetchData();
     closeDialog('form');
@@ -174,7 +203,7 @@ const TasksManagementPage = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setShowCompleted(!showCompleted)}>{showCompleted ? <><ArrowLeft className="mr-2 h-4 w-4" />Trở về</> : <><List className="mr-2 h-4 w-4" />CV Hoàn thành</>}</Button>
-            <Button onClick={() => openDialog('form')}><PlusCircle className="mr-2 h-4 w-4" />Thêm công việc</Button>
+            <Button onClick={() => openDialog('form')} disabled={loading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm công việc</Button>
           </div>
         </div>
 
