@@ -87,6 +87,13 @@ const ClientDetailsPage = () => {
     };
   }, [clientProjects]);
 
+  const statusTextMap: { [key: string]: string } = {
+    planning: "Pending",
+    "in-progress": "Đang chạy",
+    completed: "Hoàn thành",
+    overdue: "Quá hạn",
+  };
+
   if (!client) {
     return <MainLayout><div>Loading...</div></MainLayout>;
   }
@@ -157,7 +164,7 @@ const ClientDetailsPage = () => {
                           {clientProjects.slice(0, 5).map((project) => (
                             <div key={project.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
                               <div><Link to={`/projects?search=${project.name}`} className="font-medium hover:underline">{project.name}</Link><p className="text-sm text-muted-foreground">Hạn chót: {formatDate(project.end_date)}</p></div>
-                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
+                              <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status] || project.status}</Badge>
                             </div>
                           ))}
                         </div>
@@ -181,7 +188,7 @@ const ClientDetailsPage = () => {
                               <div key={project.id} className="p-4 rounded-lg border hover:bg-gray-50">
                                 <div className="flex justify-between items-start">
                                   <Link to={`/projects?search=${project.name}`} className="font-semibold text-lg hover:underline">{project.name}</Link>
-                                  <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{project.status}</Badge>
+                                  <Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status] || project.status}</Badge>
                                 </div>
                                 <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
                                   <div>
