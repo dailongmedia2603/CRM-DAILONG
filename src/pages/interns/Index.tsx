@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
@@ -19,6 +19,7 @@ import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -176,10 +177,15 @@ const InternsPage = () => {
     }
   };
 
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setDateRange(range);
-    if (range?.from && range?.to) {
-      setIsCalendarOpen(false);
+  const setDateFilterPreset = (preset: 'today' | 'yesterday' | 'thisWeek') => {
+    const today = startOfToday();
+    if (preset === 'today') {
+      setDateRange({ from: today, to: today });
+    } else if (preset === 'yesterday') {
+      const yesterday = subDays(today, 1);
+      setDateRange({ from: yesterday, to: yesterday });
+    } else if (preset === 'thisWeek') {
+      setDateRange({ from: startOfWeek(today, { locale: vi }), to: endOfWeek(today, { locale: vi }) });
     }
   };
 
@@ -215,17 +221,28 @@ const InternsPage = () => {
               {interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "dd/MM/y")} - ${format(dateRange.to, "dd/MM/y")}` : format(dateRange.from, "dd/MM/y")) : <span>Chọn ngày...</span>}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar locale={vi} mode="range" selected={dateRange} onSelect={handleDateSelect} numberOfMonths={2} />
-            </PopoverContent>
-          </Popover>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => setDateFilterPreset('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setDateFilterPreset('yesterday')}>Hôm qua</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setDateFilterPreset('thisWeek')}>Tuần này</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">Chọn thời gian</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar locale={vi} mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
