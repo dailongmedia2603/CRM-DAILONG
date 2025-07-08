@@ -13,7 +13,7 @@ import { PlusCircle, Search, Trash2, CalendarIcon, Eye, Edit, Play, CheckCircle,
 import { TaskStatsCard } from "@/components/task-management/TaskStatsCard";
 import { TaskFormDialog } from "@/components/task-management/TaskFormDialog";
 import { FeedbackDialog } from "@/components/task-management/FeedbackDialog";
-import { DescriptionDialog } from "@/components/task-management/DescriptionDialog";
+import { TaskDetailsDialog } from "@/components/task-management/TaskDetailsDialog";
 import { Task, Feedback, Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ const TasksManagementPage = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
-  const [dialogs, setDialogs] = useState({ form: false, feedback: false, description: false, delete: false });
+  const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const currentUser = useMemo(() => {
@@ -177,6 +177,12 @@ const TasksManagementPage = () => {
     return 'bg-gray-100 text-gray-800';
   };
 
+  const getStatusBadge = (status: Task['status']) => {
+    if (status === 'Hoàn thành') return 'bg-green-100 text-green-800';
+    if (status === 'Đang làm') return 'bg-yellow-100 text-yellow-800';
+    return 'bg-gray-100 text-gray-800';
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -209,21 +215,22 @@ const TasksManagementPage = () => {
 
         <div className="rounded-md border">
           <Table>
-            <TableHeader><TableRow><TableHead className="w-12"><Checkbox /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Mô tả</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead className="w-12"><Checkbox /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={9} className="text-center">Đang tải...</TableCell></TableRow> :
+              {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
               filteredTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell><Checkbox /></TableCell>
                   <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
-                  <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('description', task)}>Chi tiết</Button></TableCell>
+                  <TableCell>{task.assigner?.name || 'N/A'}</TableCell>
+                  <TableCell>{task.assignee?.name || 'N/A'}</TableCell>
                   <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy HH:mm")}</TableCell>
                   <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
                   <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('feedback', task)} className={cn({ "text-red-600 border-red-500 hover:bg-red-50 hover:text-red-700 font-bold": task.feedbackHistory.length > 0 })}><MessageSquare className="mr-2 h-4 w-4" />{task.feedbackHistory.length}</Button></TableCell>
-                  <TableCell><Badge variant={task.status === 'Hoàn thành' ? 'default' : 'secondary'} className={cn({'bg-green-500': task.status === 'Hoàn thành'})}>{task.status}</Badge></TableCell>
+                  <TableCell><Badge variant="outline" className={cn(getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>{task.status !== 'Hoàn thành' && (<Button size="sm" onClick={() => handleActionClick(task)} className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white')}>{task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openDialog('description', task)}><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDialog('details', task)}><Eye className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openDialog('form', task)}><Edit className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => openDialog('delete', task)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                   </TableCell>
@@ -236,7 +243,7 @@ const TasksManagementPage = () => {
 
       <TaskFormDialog open={dialogs.form} onOpenChange={() => closeDialog('form')} onSave={handleSaveTask} task={activeTask} personnel={personnel} currentUser={currentUser} />
       {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} currentUser={currentUser} />}
-      {activeTask && <DescriptionDialog open={dialogs.description} onOpenChange={() => closeDialog('description')} title={activeTask.name} description={activeTask.description} />}
+      {activeTask && <TaskDetailsDialog open={dialogs.details} onOpenChange={() => closeDialog('details')} task={activeTask} />}
       {activeTask && <AlertDialog open={dialogs.delete} onOpenChange={() => closeDialog('delete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn công việc "{activeTask.name}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(activeTask)}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
     </MainLayout>
   );
