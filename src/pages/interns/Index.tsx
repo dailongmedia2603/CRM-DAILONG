@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon, ChevronDown } from 'lucide-react';
+import { Plus, Search, List, Clock, CheckCircle, AlertTriangle, Eye, ExternalLink, TrendingUp, Edit, Trash2, Play, Calendar as CalendarIcon, Archive, RotateCcw, AlertCircle as AlertCircleIcon, ChevronDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { InternTask, Personnel } from '@/types';
 import { InternTaskFormDialog } from '@/components/interns/InternTaskFormDialog';
 import { InternTaskDetailsDialog } from '@/components/interns/InternTaskDetailsDialog';
@@ -56,6 +56,7 @@ const InternsPage = () => {
   const [isTimeFilterOpen, setIsTimeFilterOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -66,7 +67,7 @@ const InternsPage = () => {
   const fetchData = async () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("intern_tasks").select("*").order('deadline', { ascending: true }),
+      supabase.from("intern_tasks").select("*").order('created_at', { ascending: false }),
       supabase.from("personnel").select("*").eq('role', 'Thực tập'),
     ]);
 
@@ -135,6 +136,19 @@ const InternsPage = () => {
       );
     });
   }, [tasks, searchTerm, internFilter, statusFilter, dateRange, showArchived]);
+
+  const paginatedTasks = useMemo(() => {
+    const { pageIndex, pageSize } = pagination;
+    if (pageSize === 0) return filteredTasks; // Show all
+    const start = pageIndex * pageSize;
+    const end = start + pageSize;
+    return filteredTasks.slice(start, end);
+  }, [filteredTasks, pagination]);
+
+  const pageCount = useMemo(() => {
+    if (pagination.pageSize === 0) return 1;
+    return Math.ceil(filteredTasks.length / pagination.pageSize);
+  }, [filteredTasks, pagination.pageSize]);
 
   const stats = useMemo(() => ({
     total: filteredTasks.length,
@@ -346,7 +360,7 @@ const InternsPage = () => {
             </TableHeader>
             <TableBody>
               {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
-              filteredTasks.map(task => {
+              paginatedTasks.map(task => {
                 const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                 const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
                 const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
@@ -406,6 +420,73 @@ const InternsPage = () => {
               )})}
             </TableBody>
           </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            {selectedTasks.length} của {filteredTasks.length} dòng được chọn.
+          </div>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Số dòng mỗi trang</p>
+            <Select
+              value={`${pagination.pageSize}`}
+              onValueChange={(value) => {
+                setPagination(prev => ({ ...prev, pageSize: Number(value), pageIndex: 0 }));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[20, 50, 100].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+                <SelectItem value="0">Tất cả</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Trang {pagination.pageIndex + 1} của {pageCount}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to first page</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+              disabled={pagination.pageIndex === 0}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+              disabled={pagination.pageIndex >= pageCount - 1}
+            >
+              <span className="sr-only">Go to last page</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
       <InternTaskFormDialog
