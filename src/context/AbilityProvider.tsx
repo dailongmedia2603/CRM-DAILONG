@@ -43,18 +43,38 @@ export const AbilityProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Step 1: Fetch permission IDs for the user's position
       const { data: positionPermsData, error: positionPermsError } = await supabase
         .from('position_permissions')
-        .select('permissions ( name )')
+        .select('permission_id')
         .eq('position_id', personnelData.position_id);
 
-      if (positionPermsError) {
-        console.error('Error fetching permissions:', positionPermsError);
+      if (positionPermsError || !positionPermsData) {
+        console.error('Error fetching position permissions:', positionPermsError);
+        setPermissions(new Set());
+        setLoading(false);
+        return;
+      }
+
+      const permissionIds = positionPermsData.map(p => p.permission_id);
+
+      if (permissionIds.length === 0) {
+        setPermissions(new Set());
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Fetch the names of those permissions
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('permissions')
+        .select('name')
+        .in('id', permissionIds);
+
+      if (permissionsError) {
+        console.error('Error fetching permissions:', permissionsError);
         setPermissions(new Set());
       } else {
-        const perms = positionPermsData
-          .map(p => (p.permissions as any)?.name)
-          .filter(Boolean) as string[];
+        const perms = permissionsData.map(p => p.name).filter(Boolean) as string[];
         setPermissions(new Set(perms));
       }
       
