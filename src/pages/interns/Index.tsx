@@ -46,6 +46,7 @@ const InternsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [internFilter, setInternFilter] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: startOfToday(), to: startOfToday() });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -175,6 +176,13 @@ const InternsPage = () => {
     }
   };
 
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from && range?.to) {
+      setIsCalendarOpen(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -207,7 +215,7 @@ const InternsPage = () => {
               {interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
@@ -215,7 +223,7 @@ const InternsPage = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar locale={vi} mode="range" selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+              <Calendar locale={vi} mode="range" selected={dateRange} onSelect={handleDateSelect} numberOfMonths={2} />
             </PopoverContent>
           </Popover>
         </div>
