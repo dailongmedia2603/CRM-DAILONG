@@ -274,13 +274,13 @@ const InternsPage = () => {
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
-                <TableHead className="w-[30%]">CÔNG VIỆC</TableHead>
+                <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
                 <TableHead>CMT</TableHead>
                 <TableHead>POST</TableHead>
-                <TableHead>FILE LÀM VIỆC</TableHead>
+                <TableHead>FILE</TableHead>
                 <TableHead>DEADLINE</TableHead>
                 <TableHead>NGƯỜI GIAO</TableHead>
-                <TableHead>THỰC TẬP SINH</TableHead>
+                <TableHead>NGƯỜI NHẬN</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead>HÀNH ĐỘNG</TableHead>
                 <TableHead>THAO TÁC</TableHead>
