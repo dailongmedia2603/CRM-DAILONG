@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client, Project, Personnel } from "@/types";
+import { Client, Project } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -80,7 +80,6 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 const ClientsPage = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [creatorFilter, setCreatorFilter] = useState("all");
@@ -96,20 +95,24 @@ const ClientsPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [clientsRes, projectsRes, personnelRes] = await Promise.all([
+    const [clientsRes, projectsRes] = await Promise.all([
       supabase.from("clients").select("*"),
-      supabase.from("projects").select("client_id, contract_value"),
-      supabase.from("personnel").select("name")
+      supabase.from("projects").select("client_id, contract_value")
     ]);
 
-    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
-    else setClients(clientsRes.data as Client[]);
+    if (clientsRes.error) {
+      showError("Lỗi khi tải dữ liệu khách hàng.");
+      console.error(clientsRes.error);
+    } else {
+      setClients(clientsRes.data as Client[]);
+    }
 
-    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
-    else setProjects(projectsRes.data as Project[]);
-
-    if (personnelRes.error) showError("Lỗi khi tải dữ liệu nhân sự.");
-    else setPersonnel(personnelRes.data as Personnel[]);
+    if (projectsRes.error) {
+      showError("Lỗi khi tải dữ liệu dự án.");
+      console.error(projectsRes.error);
+    } else {
+      setProjects(projectsRes.data as Project[]);
+    }
 
     setLoading(false);
   };
@@ -128,6 +131,16 @@ const ClientsPage = () => {
     });
     return valueMap;
   }, [projects]);
+
+  const creators = useMemo(() => {
+    const creatorSet = new Set<string>();
+    clients.forEach(client => {
+      if (client.created_by) {
+        creatorSet.add(client.created_by);
+      }
+    });
+    return Array.from(creatorSet);
+  }, [clients]);
 
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
@@ -296,8 +309,8 @@ const ClientsPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả người tạo</SelectItem>
-                {personnel.map((p) => (
-                  <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                {creators.map((creator) => (
+                  <SelectItem key={creator} value={creator}>{creator}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
