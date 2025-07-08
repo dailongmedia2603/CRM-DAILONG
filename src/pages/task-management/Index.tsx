@@ -20,10 +20,8 @@ import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthProvider";
 
 const TasksManagementPage = () => {
-  const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,40 +38,16 @@ const TasksManagementPage = () => {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const currentUser = useMemo(() => {
-    if (session && personnel.length > 0) {
-      const user = personnel.find(p => p.id === session.user.id);
-      return user ? { id: user.id, name: user.name } : { id: '', name: '' };
+    if (personnel.length > 0) {
+      return { id: personnel[0].id, name: personnel[0].name };
     }
     return { id: '', name: '' };
-  }, [personnel, session]);
+  }, [personnel]);
 
   const fetchData = async () => {
-    if (!session) return;
     setLoading(true);
-
-    const { data: userPersonnel, error: userError } = await supabase
-      .from('personnel')
-      .select('role, id')
-      .eq('id', session.user.id)
-      .single();
-
-    if (userError) {
-      showError("Không thể tải thông tin người dùng.");
-      setLoading(false);
-      return;
-    }
-
-    let tasksQuery = supabase
-      .from("tasks")
-      .select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)")
-      .order('created_at', { ascending: false });
-
-    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
-      tasksQuery = tasksQuery.or(`assigner_id.eq.${session.user.id},assignee_id.eq.${session.user.id}`);
-    }
-
     const [tasksRes, personnelRes] = await Promise.all([
-      tasksQuery,
+      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)").order('created_at', { ascending: false }),
       supabase.from("personnel").select("*"),
     ]);
 
@@ -99,10 +73,8 @@ const TasksManagementPage = () => {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
+    fetchData();
+  }, []);
 
   const filteredTasks = useMemo(() => {
     let filtered = tasks.filter(task => task.archived === showArchived);

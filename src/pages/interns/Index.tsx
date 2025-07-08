@@ -22,7 +22,6 @@ import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/context/AuthProvider';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -47,7 +46,6 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive
 };
 
 const InternsPage = () => {
-  const { session } = useAuth();
   const [tasks, setTasks] = useState<InternTask[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,32 +67,9 @@ const InternsPage = () => {
   const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
 
   const fetchData = async () => {
-    if (!session) return;
     setLoading(true);
-
-    const { data: userPersonnel, error: userError } = await supabase
-      .from('personnel')
-      .select('role, name')
-      .eq('id', session.user.id)
-      .single();
-
-    if (userError) {
-      showError("Không thể tải thông tin người dùng.");
-      setLoading(false);
-      return;
-    }
-
-    let tasksQuery = supabase
-      .from("intern_tasks")
-      .select("*")
-      .order('created_at', { ascending: false });
-
-    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
-      tasksQuery = tasksQuery.or(`intern_name.eq.${userPersonnel.name},assigner_name.eq.${userPersonnel.name}`);
-    }
-
     const [tasksRes, personnelRes] = await Promise.all([
-      tasksQuery,
+      supabase.from("intern_tasks").select("*").order('created_at', { ascending: false }),
       supabase.from("personnel").select("*").eq('role', 'Thực tập'),
     ]);
 
@@ -114,10 +89,8 @@ const InternsPage = () => {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const today = new Date();

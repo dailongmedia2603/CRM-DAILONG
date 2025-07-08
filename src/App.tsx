@@ -18,7 +18,6 @@ import HRPage from "./pages/hr/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import NoAccessPage from "./pages/NoAccess";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +32,6 @@ const App = () => {
             <AbilityProvider>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/no-access" element={<NoAccessPage />} />
                 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Index />} />

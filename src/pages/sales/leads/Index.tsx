@@ -84,10 +84,8 @@ import { Lead, LeadHistory, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, isEqual } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthProvider";
 
 const LeadsPage = () => {
-  const { session } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,32 +121,9 @@ const LeadsPage = () => {
   );
 
   const fetchData = async () => {
-    if (!session) return;
     setLoading(true);
-
-    const { data: userPersonnel, error: userError } = await supabase
-      .from('personnel')
-      .select('role, id')
-      .eq('id', session.user.id)
-      .single();
-
-    if (userError) {
-      showError("Không thể tải thông tin người dùng.");
-      setLoading(false);
-      return;
-    }
-
-    let leadsQuery = supabase
-      .from("leads")
-      .select("*, lead_history(*)")
-      .order('created_at', { ascending: false });
-
-    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
-      leadsQuery = leadsQuery.eq('created_by_id', session.user.id);
-    }
-
     const [leadsRes, personnelRes] = await Promise.all([
-        leadsQuery,
+        supabase.from("leads").select("*, lead_history(*)").order('created_at', { ascending: false }),
         supabase.from("personnel").select("*")
     ]);
 
@@ -162,10 +137,8 @@ const LeadsPage = () => {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
+    fetchData();
+  }, []);
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {

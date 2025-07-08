@@ -4,30 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
-import { useAbility } from '@/context/AbilityProvider';
-
-const permissionRouteMap = [
-    { permission: 'dashboard.view', path: '/' },
-    { permission: 'clients.view', path: '/clients' },
-    { permission: 'projects.view', path: '/projects' },
-    { permission: 'leads.view', path: '/sales/leads' },
-    { permission: 'intern_tasks.view', path: '/interns' },
-    { permission: 'tasks.view', path: '/task-management' },
-    { permission: 'reports.view', path: '/reports' },
-    { permission: 'hr.view', path: '/hr' },
-];
 
 const LoginPage = () => {
   const { session } = useAuth();
-  const { can, loading: abilityLoading } = useAbility();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (session && !abilityLoading) {
-      const defaultRoute = permissionRouteMap.find(route => can(route.permission))?.path;
-      navigate(defaultRoute || '/no-access', { replace: true });
+    if (session) {
+      navigate('/', { replace: true });
     }
-  }, [session, navigate, can, abilityLoading]);
+  }, [session, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
