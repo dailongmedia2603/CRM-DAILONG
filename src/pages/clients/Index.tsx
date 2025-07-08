@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client } from "@/types";
+import { Client, Project } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,6 +79,7 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 
 const ClientsPage = () => {
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -92,21 +93,44 @@ const ClientsPage = () => {
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-  const fetchClients = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("clients").select("*");
-    if (error) {
+    const [clientsRes, projectsRes] = await Promise.all([
+      supabase.from("clients").select("*"),
+      supabase.from("projects").select("client_id, contract_value")
+    ]);
+
+    if (clientsRes.error) {
       showError("Lỗi khi tải dữ liệu khách hàng.");
-      console.error(error);
+      console.error(clientsRes.error);
     } else {
-      setClients(data as Client[]);
+      setClients(clientsRes.data as Client[]);
     }
+
+    if (projectsRes.error) {
+      showError("Lỗi khi tải dữ liệu dự án.");
+      console.error(projectsRes.error);
+    } else {
+      setProjects(projectsRes.data as Project[]);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchClients();
+    fetchData();
   }, []);
+
+  const clientContractValues = useMemo(() => {
+    const valueMap = new Map<string, number>();
+    projects.forEach(project => {
+      if (project.client_id) {
+        const currentTotal = valueMap.get(project.client_id) || 0;
+        valueMap.set(project.client_id, currentTotal + (project.contract_value || 0));
+      }
+    });
+    return valueMap;
+  }, [projects]);
 
   const filteredClients = useMemo(() => clients.filter((client) => {
     if (!!client.archived !== showArchived) return false;
@@ -131,7 +155,7 @@ const ClientsPage = () => {
 
   const stats = useMemo(() => {
     const activeClients = clients.filter(c => !c.archived);
-    const totalValue = activeClients.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
+    const totalValue = Array.from(clientContractValues.values()).reduce((sum, value) => sum + value, 0);
     
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -143,7 +167,7 @@ const ClientsPage = () => {
       return creationDate.getMonth() === currentMonth && creationDate.getFullYear() === currentYear;
     });
 
-    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (Number(client.contract_value) || 0), 0);
+    const valueThisMonth = clientsThisMonth.reduce((sum, client) => sum + (clientContractValues.get(client.id) || 0), 0);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     
@@ -153,7 +177,7 @@ const ClientsPage = () => {
       clientsThisMonth: clientsThisMonth.length,
       valueThisMonth: formatCurrency(valueThisMonth),
     };
-  }, [clients]);
+  }, [clients, clientContractValues]);
 
   const handleOpenAddDialog = () => {
     setClientToEdit(null);
@@ -180,7 +204,7 @@ const ClientsPage = () => {
       if (error) showError("Lỗi khi thêm client mới.");
       else showSuccess("Client mới đã được thêm!");
     }
-    fetchClients();
+    fetchData();
     setIsFormOpen(false);
   };
 
@@ -189,7 +213,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
     if (error) showError("Lỗi khi xóa client.");
     else showSuccess("Client đã được xóa.");
-    fetchClients();
+    fetchData();
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
   };
@@ -198,7 +222,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: true }).in('id', selectedClients);
     if (error) showError("Lỗi khi lưu trữ clients.");
     else showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
-    fetchClients();
+    fetchData();
     setSelectedClients([]);
   };
 
@@ -206,7 +230,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: false }).in('id', selectedClients);
     if (error) showError("Lỗi khi khôi phục clients.");
     else showSuccess(`${selectedClients.length} client đã được khôi phục.`);
-    fetchClients();
+    fetchData();
     setSelectedClients([]);
   };
 
@@ -214,7 +238,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().in('id', selectedClients);
     if (error) showError("Lỗi khi xóa clients.");
     else showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
-    fetchClients();
+    fetchData();
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
   };
@@ -338,7 +362,7 @@ const ClientsPage = () => {
                       </Link>
                     </TableCell>
                     <TableCell>{client.contact_person}</TableCell>
-                    <TableCell>{formatCurrency(client.contract_value)}</TableCell>
+                    <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
                     <TableCell>
                       <a href={client.contract_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                         <ExternalLink className="h-4 w-4 mr-1" />

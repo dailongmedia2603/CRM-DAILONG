@@ -56,8 +56,7 @@ export const ClientFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation removed as per user request
-    const { id, profiles, ...dataToSave } = formData;
+    const { id, profiles, contract_value, ...dataToSave } = formData;
     onSave(dataToSave);
     onOpenChange(false);
   };
@@ -90,10 +89,6 @@ export const ClientFormDialog = ({
               <Input id="invoice_email" name="invoice_email" type="email" value={formData.invoice_email || ""} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contract_value" className="text-right">Giá trị HĐ</Label>
-              <Input id="contract_value" name="contract_value" type="number" value={formData.contract_value || 0} onChange={handleChange} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="classification" className="text-right">Phân loại</Label>
               <Select value={formData.classification} onValueChange={(value) => handleSelectChange("classification", value)}>
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn phân loại" /></SelectTrigger>
@@ -108,9 +103,13 @@ export const ClientFormDialog = ({
               <Select value={formData.source} onValueChange={(value) => handleSelectChange("source", value)}>
                 <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn nguồn" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Giới thiệu">Giới thiệu</SelectItem>
+                  <SelectItem value="Facebook Ads">Facebook Ads</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
                   <SelectItem value="Website">Website</SelectItem>
-                  <SelectItem value="Sự kiện">Sự kiện</SelectItem>
+                  <SelectItem value="Fanpage">Fanpage</SelectItem>
+                  <SelectItem value="CTV Sale">CTV Sale</SelectItem>
+                  <SelectItem value="Giới thiệu">Giới thiệu</SelectItem>
+                  <SelectItem value="Seeding">Seeding</SelectItem>
                   <SelectItem value="Khác">Khác</SelectItem>
                 </SelectContent>
               </Select>
