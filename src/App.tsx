@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { AbilityProvider } from "./context/AbilityProvider";
+import { CleanupUsers } from "./components/temp/CleanupUsers"; // Import the cleanup component
 
 // Pages
 import Index from "./pages/Index";
@@ -27,6 +28,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <CleanupUsers /> {/* This will run once to clean up users */}
         <BrowserRouter>
           <AuthProvider>
             <AbilityProvider>
