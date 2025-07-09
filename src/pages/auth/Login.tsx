@@ -19,11 +19,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-4xl mx-auto bg-white shadow-xl rounded-2xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
         <div className="bg-[#002c47] p-12 flex-col justify-center items-center hidden md:flex">
-          {/* 
-            VUI LÒNG THAY THẾ URL BÊN DƯỚI BẰNG URL LOGO CỦA BẠN.
-            Bạn có thể tải logo lên một dịch vụ như Imgur để có URL.
-          */}
-          <img src="https://i.imgur.com/pYf5gso.png" alt="Vua Seeding Logo" className="w-48" />
+          <img src="https://i.ibb.co/ZppNPhb/Logo-Dai-Long-Media-dark.jpg" alt="Vua Seeding Logo" className="w-48" />
         </div>
         <div className="p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-8">Đăng nhập CRM Vua Seeding</h2>
