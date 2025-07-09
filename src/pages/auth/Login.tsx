@@ -2,7 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthProvider';
-import { Crown } from 'lucide-react'; // Icon cho logo
 
 const LoginPage = () => {
   const { session } = useAuth();
@@ -43,20 +42,12 @@ const LoginPage = () => {
         <div 
           className="hidden md:flex flex-col justify-center items-center p-12 text-white text-center"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070&auto=format&fit=crop')",
+            background: 'linear-gradient(to right, #4facfe, #00f2fe)',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
         >
-          <div className="bg-black bg-opacity-20 p-10 rounded-xl">
-            <div className="flex justify-center items-center gap-3 mb-4">
-              <Crown size={48} />
-              <h1 className="text-5xl font-bold tracking-wider">VUA SEEDING</h1>
-            </div>
-            <p className="text-lg font-light">
-              Nền tảng quản lý và chăm sóc khách hàng toàn diện
-            </p>
-          </div>
+          <img src="https://i.postimg.cc/HxThpPbk/logo-vua-Seeding.png" alt="Vua Seeding Logo" className="w-auto h-auto max-w-sm" />
         </div>
 
         {/* Right Panel - Login Form */}
