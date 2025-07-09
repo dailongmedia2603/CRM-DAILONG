@@ -79,6 +79,7 @@ import {
 import { LeadStatsCard } from "@/components/sales/leads/LeadStatsCard";
 import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
 import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
+import { LeadDetailsDialog } from "@/components/sales/leads/LeadDetailsDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { Lead, LeadHistory, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
@@ -105,9 +106,8 @@ const LeadsPage = () => {
   const [selectAll, setSelectAll] = useState(false);
 
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [selectedLeadHistory, setSelectedLeadHistory] = useState<LeadHistory[]>([]);
-  const [selectedLeadName, setSelectedLeadName] = useState("");
-  const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null);
@@ -252,10 +252,13 @@ const LeadsPage = () => {
   };
 
   const handleOpenHistory = (lead: Lead) => {
-    setSelectedLeadHistory(lead.lead_history || []);
-    setSelectedLeadName(lead.name);
-    setSelectedLeadId(lead.id);
+    setSelectedLead(lead);
     setHistoryDialogOpen(true);
+  };
+
+  const handleOpenDetails = (lead: Lead) => {
+    setSelectedLead(lead);
+    setDetailsDialogOpen(true);
   };
 
   const handleAddHistory = async (leadId: string, newHistoryData: any) => {
@@ -387,7 +390,24 @@ const LeadsPage = () => {
                         <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800")}>{lead.status}</Badge></TableCell>
                         <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>
-                        <TableCell className="text-right"><div className="flex justify-end space-x-1"><TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenHistory(lead)}><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Xem lịch sử</p></TooltipContent></Tooltip></TooltipProvider><TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(lead)}><PenLine className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Sửa</p></TooltipContent></Tooltip></TooltipProvider><TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(lead)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TooltipTrigger><TooltipContent><p>Xóa</p></TooltipContent></Tooltip></TooltipProvider></div></TableCell>
+                        <TableCell className="text-right">
+                          <TooltipProvider>
+                            <div className="flex justify-end space-x-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenDetails(lead)}><Eye className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipContent><p>Xem chi tiết</p></TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(lead)}><PenLine className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipContent><p>Sửa</p></TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(lead)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                                <TooltipContent><p>Xóa</p></TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -465,7 +485,8 @@ const LeadsPage = () => {
         </Card>
       </div>
       
-      <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLeadName} leadId={selectedLeadId} history={selectedLeadHistory} onAddHistory={handleAddHistory} />
+      {selectedLead && <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLead.name} leadId={selectedLead.id} history={selectedLead.lead_history} onAddHistory={handleAddHistory} />}
+      {selectedLead && <LeadDetailsDialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen} lead={selectedLead} />}
       <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
