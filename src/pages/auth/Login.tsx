@@ -18,22 +18,15 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-4xl mx-auto bg-white shadow-xl rounded-2xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-        <div className="bg-blue-600 text-white p-12 flex-col justify-center items-start hidden md:flex">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-blue-600 font-bold text-2xl">A</span>
-            </div>
-            <span className="text-3xl font-bold">Agency CRM</span>
-          </div>
-          <h1 className="text-4xl font-bold leading-tight mb-4">Your place to work.</h1>
-          <p className="text-2xl font-light text-blue-100">Plan. Create. Control.</p>
-          <div className="mt-8 w-full">
-            <img src="https://i.imgur.com/sC22T6A.png" alt="Kanban board illustration" className="w-full h-auto" />
-          </div>
+        <div className="bg-[#002c47] p-12 flex-col justify-center items-center hidden md:flex">
+          {/* 
+            VUI LÒNG THAY THẾ URL BÊN DƯỚI BẰNG URL LOGO CỦA BẠN.
+            Bạn có thể tải logo lên một dịch vụ như Imgur để có URL.
+          */}
+          <img src="https://i.imgur.com/pYf5gso.png" alt="Vua Seeding Logo" className="w-48" />
         </div>
         <div className="p-8 md:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In to Agency CRM</h2>
-          <p className="text-gray-500 mb-8">Enter your details below.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">Đăng nhập CRM Vua Seeding</h2>
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: ThemeSupa }}
