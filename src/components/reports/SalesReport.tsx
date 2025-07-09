@@ -1,69 +1,141 @@
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { ChartCard } from "@/components/dashboard/ChartCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Users, Percent, TrendingUp } from "lucide-react";
-
-const salesData = [
-  { name: "Jan", "Doanh thu": 4000, "Leads": 24 },
-  { name: "Feb", "Doanh thu": 3000, "Leads": 13 },
-  { name: "Mar", "Doanh thu": 5000, "Leads": 98 },
-  { name: "Apr", "Doanh thu": 4780, "Leads": 39 },
-  { name: "May", "Doanh thu": 8890, "Leads": 48 },
-  { name: "Jun", "Doanh thu": 7390, "Leads": 38 },
-];
-
-const topSales = [
-  { name: "Nguyễn Văn A", leads: 120, conversion: "15%", revenue: "150,000,000đ" },
-  { name: "Trần Thị B", leads: 98, conversion: "12%", revenue: "120,000,000đ" },
-  { name: "Lê Văn C", leads: 85, conversion: "18%", revenue: "180,000,000đ" },
-];
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSalesReportData, TimeRange } from "@/hooks/useSalesReportData";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { Users, FileCheck, Percent, Clock } from "lucide-react";
 
 export const SalesReport = () => {
+  const { loading, processedData, salesPersonnel, timeRange, setTimeRange } = useSalesReportData();
+  const [selectedPersonnelId, setSelectedPersonnelId] = useState<string>('all');
+
+  const displayData = selectedPersonnelId === 'all' 
+    ? processedData 
+    : processedData.filter(p => p.salesPersonId === selectedPersonnelId);
+
+  const overallStats = processedData.reduce((acc, curr) => {
+    acc.totalLeads += curr.totalLeads;
+    acc.signedContract += curr.signedContract;
+    acc.currentOverdue += curr.currentOverdue;
+    acc.historicalLapses += curr.historicalLapses;
+    return acc;
+  }, { totalLeads: 0, signedContract: 0, currentOverdue: 0, historicalLapses: 0 });
+
+  const overallConversionRate = overallStats.totalLeads > 0 ? (overallStats.signedContract / overallStats.totalLeads) * 100 : 0;
+
+  const renderSkeleton = () => (
+    [...Array(3)].map((_, i) => (
+      <TableRow key={i}>
+        {[...Array(10)].map((_, j) => (
+          <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
+        ))}
+      </TableRow>
+    ))
+  );
+
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Bộ lọc báo cáo</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row gap-4">
+          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRange)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Phạm vi thời gian" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Hôm nay</SelectItem>
+              <SelectItem value="week">Tuần này</SelectItem>
+              <SelectItem value="month">Tháng này</SelectItem>
+              <SelectItem value="all">Toàn bộ</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedPersonnelId} onValueChange={setSelectedPersonnelId}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Nhân viên Sale" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả nhân viên</SelectItem>
+              {salesPersonnel.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Tổng doanh thu" value="1,250,000,000đ" icon={DollarSign} trend="up" trendValue="+12%" />
-        <StatsCard title="Tổng số Leads" value="1,420" icon={Users} trend="up" trendValue="+8%" />
-        <StatsCard title="Tỷ lệ chuyển đổi" value="14.5%" icon={Percent} trend="down" trendValue="-1.2%" />
-        <StatsCard title="Doanh thu trung bình / Lead" value="880,281đ" icon={TrendingUp} />
+        <StatsCard title="Tổng Leads" value={overallStats.totalLeads.toString()} icon={Users} />
+        <StatsCard title="Hợp đồng ký" value={overallStats.signedContract.toString()} icon={FileCheck} />
+        <StatsCard title="Tỷ lệ chuyển đổi" value={`${overallConversionRate.toFixed(2)}%`} icon={Percent} />
+        <StatsCard title="Leads quá hạn" value={overallStats.currentOverdue.toString()} icon={Clock} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard
-          title="Tăng trưởng Doanh thu & Leads"
-          data={salesData}
-          type="line"
-          dataKey="Doanh thu"
-          xAxis="name"
-        />
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Nhân viên Sale</CardTitle>
-          </CardHeader>
-          <CardContent>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>So sánh hiệu suất nhân viên</CardTitle>
+          <CardDescription>Biểu đồ so sánh tổng số lead và số hợp đồng đã ký.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={processedData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <XAxis dataKey="salesPersonName" stroke="#888888" fontSize={12} tickLine={false} axisLine={false}/>
+              <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false}/>
+              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '8px' }} />
+              <Legend wrapperStyle={{ fontSize: '14px' }} />
+              <Bar dataKey="totalLeads" name="Tổng Leads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="signedContract" name="Ký HĐ" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Báo cáo chi tiết</CardTitle>
+          <CardDescription>Phân tích chi tiết hiệu suất của từng nhân viên sale.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nhân viên</TableHead>
-                  <TableHead>Số Leads</TableHead>
-                  <TableHead>Tỷ lệ chuyển đổi</TableHead>
-                  <TableHead>Doanh thu mang về</TableHead>
+                  <TableHead>Tổng Leads</TableHead>
+                  <TableHead>Ký HĐ</TableHead>
+                  <TableHead>Tỷ lệ CĐ (%)</TableHead>
+                  <TableHead>Tiềm năng</TableHead>
+                  <TableHead>Đang làm việc</TableHead>
+                  <TableHead>Đang suy nghĩ</TableHead>
+                  <TableHead>Từ chối (Trạng thái)</TableHead>
+                  <TableHead>Đang quá hạn</TableHead>
+                  <TableHead>Lần trễ hẹn</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {topSales.map((sale, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{sale.name}</TableCell>
-                    <TableCell>{sale.leads}</TableCell>
-                    <TableCell>{sale.conversion}</TableCell>
-                    <TableCell>{sale.revenue}</TableCell>
+                {loading ? renderSkeleton() : displayData.map(data => (
+                  <TableRow key={data.salesPersonId}>
+                    <TableCell className="font-medium">{data.salesPersonName}</TableCell>
+                    <TableCell>{data.totalLeads}</TableCell>
+                    <TableCell>{data.signedContract}</TableCell>
+                    <TableCell>{data.conversionRate.toFixed(2)}%</TableCell>
+                    <TableCell>{data.potential}</TableCell>
+                    <TableCell>{data.working}</TableCell>
+                    <TableCell>{data.thinking}</TableCell>
+                    <TableCell>{data.rejectedStatus}</TableCell>
+                    <TableCell>{data.currentOverdue}</TableCell>
+                    <TableCell>{data.historicalLapses}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
