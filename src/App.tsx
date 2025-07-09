@@ -15,9 +15,11 @@ import LeadsPage from "./pages/sales/leads/Index";
 import TasksManagementPage from "./pages/task-management/Index";
 import InternsPage from "./pages/interns/Index";
 import HRPage from "./pages/hr/Index";
+import ReportsPage from "./pages/reports/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import NoAccessPage from "./pages/NoAccess";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,7 @@ const App = () => {
             <AbilityProvider>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/no-access" element={<NoAccessPage />} />
                 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<Index />} />
@@ -42,6 +45,7 @@ const App = () => {
                   <Route path="/task-management" element={<TasksManagementPage />} />
                   <Route path="/interns" element={<InternsPage />} />
                   <Route path="/hr" element={<HRPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />
