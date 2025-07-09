@@ -9,6 +9,27 @@ import { showSuccess, showError } from '@/utils/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 
+const translationMap: { [key: string]: string } = {
+  // Modules
+  clients: "Khách hàng",
+  dashboard: "Bảng điều khiển",
+  hr: "Nhân sự",
+  intern_tasks: "Việc Thực tập sinh",
+  leads: "Bán hàng (Leads)",
+  permissions: "Phân quyền",
+  projects: "Dự án",
+  reports: "Báo cáo & Phân tích",
+
+  // Actions
+  create: "Tạo mới",
+  delete: "Xóa",
+  edit: "Chỉnh sửa",
+  view: "Xem",
+  manage: "Quản lý",
+};
+
+const translate = (key: string) => translationMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
+
 const groupPermissions = (permissions: Permission[]) => {
   const grouped: { [key: string]: Permission[] } = {};
   permissions.forEach(p => {
@@ -49,7 +70,10 @@ export const PermissionsTab = () => {
   }, []);
 
   useEffect(() => {
-    if (!selectedPositionId) return;
+    if (!selectedPositionId) {
+        setPositionPermissions(new Set());
+        return;
+    };
 
     const fetchPositionPermissions = async () => {
       const { data, error } = await supabase
@@ -74,6 +98,18 @@ export const PermissionsTab = () => {
     } else {
       newPermissions.delete(permissionId);
     }
+    setPositionPermissions(newPermissions);
+  };
+
+  const handleSelectAllModule = (perms: Permission[], checked: boolean) => {
+    const newPermissions = new Set(positionPermissions);
+    perms.forEach(perm => {
+      if (checked) {
+        newPermissions.add(perm.id);
+      } else {
+        newPermissions.delete(perm.id);
+      }
+    });
     setPositionPermissions(newPermissions);
   };
 
@@ -119,66 +155,92 @@ export const PermissionsTab = () => {
   const groupedPermissions = useMemo(() => groupPermissions(permissions), [permissions]);
 
   return (
-    <Card>
+    <Card className="border-0 shadow-none">
       <CardHeader>
         <CardTitle>Phân quyền theo Vị trí</CardTitle>
         <CardDescription>Chọn một vị trí và cấp các quyền hạn tương ứng. Các thay đổi sẽ được áp dụng cho tất cả nhân sự thuộc vị trí đó.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
-          <Label>Chọn vị trí cần phân quyền</Label>
-          <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Chọn một vị trí..." />
-            </SelectTrigger>
-            <SelectContent>
-              {positions.map(pos => (
-                <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-grow">
+            <Label>Chọn vị trí cần phân quyền</Label>
+            <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
+              <SelectTrigger className="w-full sm:w-[280px] mt-1">
+                <SelectValue placeholder="Chọn một vị trí..." />
+              </SelectTrigger>
+              <SelectContent>
+                {positions.map(pos => (
+                  <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedPositionId && !isLoading && (
+            <Button onClick={handleSavePermissions} disabled={isSaving} className="w-full sm:w-auto">
+              {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </Button>
+          )}
         </div>
 
         {isLoading && (
-            <div className="space-y-4">
-                <Skeleton className="h-8 w-1/4" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2"><Skeleton className="h-4 w-4" /><Skeleton className="h-4 w-20" /></div>
+                  <div className="flex items-center space-x-2"><Skeleton className="h-4 w-4" /><Skeleton className="h-4 w-20" /></div>
+                  <div className="flex items-center space-x-2"><Skeleton className="h-4 w-4" /><Skeleton className="h-4 w-20" /></div>
+                  <div className="flex items-center space-x-2"><Skeleton className="h-4 w-4" /><Skeleton className="h-4 w-20" /></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         {selectedPositionId && !isLoading && (
-          <div className="space-y-6">
-            {Object.entries(groupedPermissions).map(([module, perms]) => (
-              <div key={module}>
-                <h4 className="font-semibold text-lg capitalize mb-3 border-b pb-2">{module}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {perms.map(perm => (
-                    <div key={perm.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`perm-${perm.id}`}
-                        checked={positionPermissions.has(perm.id)}
-                        onCheckedChange={(checked) => handlePermissionChange(perm.id, !!checked)}
-                      />
-                      <label
-                        htmlFor={`perm-${perm.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {perm.name.split('.')[1]}
-                      </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+            {Object.entries(groupedPermissions).map(([module, perms]) => {
+              const allModulePermsChecked = perms.every(p => positionPermissions.has(p.id));
+              const someModulePermsChecked = perms.some(p => positionPermissions.has(p.id)) && !allModulePermsChecked;
+
+              return (
+                <Card key={module} className="shadow-md hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{translate(module)}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`select-all-${module}`}
+                          checked={allModulePermsChecked ? true : someModulePermsChecked ? 'indeterminate' : false}
+                          onCheckedChange={(checked) => handleSelectAllModule(perms, !!checked)}
+                        />
+                        <Label htmlFor={`select-all-${module}`} className="text-sm font-normal">Tất cả</Label>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <div className="flex justify-end pt-4">
-                <Button onClick={handleSavePermissions} disabled={isSaving}>
-                    {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-                </Button>
-            </div>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-4">
+                    {perms.map(perm => (
+                      <div key={perm.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`perm-${perm.id}`}
+                          checked={positionPermissions.has(perm.id)}
+                          onCheckedChange={(checked) => handlePermissionChange(perm.id, !!checked)}
+                        />
+                        <Label
+                          htmlFor={`perm-${perm.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {translate(perm.name.split('.')[1])}
+                        </Label>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </CardContent>
