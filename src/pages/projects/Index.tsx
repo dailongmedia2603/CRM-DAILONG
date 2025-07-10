@@ -66,6 +66,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfToday } from 'date-fns';
 import { useAuth } from "@/context/AuthProvider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ProjectsPage = () => {
   const { session } = useAuth();
@@ -296,202 +297,202 @@ const ProjectsPage = () => {
 
   return (
     <MainLayout>
-      <div className="flex h-full flex-col">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Quản lý Dự án</h1>
-              <p className="text-muted-foreground">Theo dõi, quản lý và phân tích tất cả các dự án của bạn.</p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <ProjectStatsCard title="Tổng dự án" value={stats.total} description="Dự án đang hoạt động" icon={Folder} onClick={() => handleStatusFilterClick("all")} isActive={statusFilter === "all"} iconBgColor="bg-blue-500" />
-            <ProjectStatsCard title="Đang chạy" value={stats.inProgress} description="Dự án đang triển khai" icon={Clock} onClick={() => handleStatusFilterClick("in-progress")} isActive={statusFilter === "in-progress"} iconBgColor="bg-cyan-500" />
-            <ProjectStatsCard title="Hoàn thành" value={stats.completed} description="Dự án đã kết thúc" icon={CheckCircle} onClick={() => handleStatusFilterClick("completed")} isActive={statusFilter === "completed"} iconBgColor="bg-green-500" />
-            <ProjectStatsCard title="Pending" value={stats.planning} description="Dự án đang lên kế hoạch" icon={AlertTriangle} onClick={() => handleStatusFilterClick("planning")} isActive={statusFilter === "planning"} iconBgColor="bg-amber-500" />
-            <ProjectStatsCard title="Quá hạn" value={stats.overdue} description="Dự án trễ deadline" icon={XCircle} onClick={() => handleStatusFilterClick("overdue")} isActive={statusFilter === "overdue"} iconBgColor="bg-red-500" />
-          </div>
-
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex flex-col md:flex-row items-center gap-4 flex-1 w-full">
-              <div className="relative w-full md:w-auto md:flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm dự án..." className="pl-8 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiến độ" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả tiến độ</SelectItem><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent></Select>
-              <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Dự án hoạt động" : "Dự án lưu trữ"}</Button>
-            </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              {selectedProjects.length > 0 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button></DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {showArchived ? (<DropdownMenuItem onClick={handleBulkRestore}><RotateCcw className="mr-2 h-4 w-4" /> Khôi phục</DropdownMenuItem>) : (<DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem>)}
-                    <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              <Button onClick={handleOpenAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Thêm dự án</Button>
-            </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Quản lý Dự án</h1>
+            <p className="text-muted-foreground">Theo dõi, quản lý và phân tích tất cả các dự án của bạn.</p>
           </div>
         </div>
 
-        <div className="flex-1 rounded-lg border overflow-y-auto mt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Tên dự án</TableHead>
-                <TableHead>Link</TableHead>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>Nhân sự</TableHead>
-                <TableHead>Giá trị HĐ</TableHead>
-                <TableHead>Đã thanh toán</TableHead>
-                <TableHead>Công nợ</TableHead>
-                <TableHead>Tiến độ TT</TableHead>
-                <TableHead>Nghiệm thu</TableHead>
-                <TableHead>Tiến độ</TableHead>
-                <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
-              paginatedProjects.map(project => {
-                const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
-                const debt = project.contract_value - totalPaid;
-                const isOverdue = project.status === 'overdue';
-                const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <ProjectStatsCard title="Tổng dự án" value={stats.total} description="Dự án đang hoạt động" icon={Folder} onClick={() => handleStatusFilterClick("all")} isActive={statusFilter === "all"} iconBgColor="bg-blue-500" />
+          <ProjectStatsCard title="Đang chạy" value={stats.inProgress} description="Dự án đang triển khai" icon={Clock} onClick={() => handleStatusFilterClick("in-progress")} isActive={statusFilter === "in-progress"} iconBgColor="bg-cyan-500" />
+          <ProjectStatsCard title="Hoàn thành" value={stats.completed} description="Dự án đã kết thúc" icon={CheckCircle} onClick={() => handleStatusFilterClick("completed")} isActive={statusFilter === "completed"} iconBgColor="bg-green-500" />
+          <ProjectStatsCard title="Pending" value={stats.planning} description="Dự án đang lên kế hoạch" icon={AlertTriangle} onClick={() => handleStatusFilterClick("planning")} isActive={statusFilter === "planning"} iconBgColor="bg-amber-500" />
+          <ProjectStatsCard title="Quá hạn" value={stats.overdue} description="Dự án trễ deadline" icon={XCircle} onClick={() => handleStatusFilterClick("overdue")} isActive={statusFilter === "overdue"} iconBgColor="bg-red-500" />
+        </div>
 
-                return (
-                <TableRow key={project.id} className="text-xs">
-                  <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
-                  <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
-                  <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
-                  <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
-                  <TableCell className={cn(isOverdue && "text-red-600")}>
-                    <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
-                    <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
-                    {isOverdue && (
-                      <div className="flex items-center font-bold mt-1">
-                        <AlertCircleIcon className="h-4 w-4 mr-1" />
-                        <span>Trễ {overdueDays} ngày</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {(project.team || []).map((member, index) => (
-                        <div key={index}>{member.role}: {member.name}</div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatCurrency(project.contract_value)}</TableCell>
-                  <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
-                  <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {(project.payments || []).map((payment, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <span>{formatCurrency(payment.amount)}</span>
-                          <CheckCircle className={cn("h-4 w-4 cursor-pointer", payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400")} onClick={() => handleTogglePaymentStatus(project.id, index)} />
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4 flex-1 w-full">
+            <div className="relative w-full md:w-auto md:flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm dự án..." className="pl-8 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiến độ" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả tiến độ</SelectItem><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent></Select>
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Dự án hoạt động" : "Dự án lưu trữ"}</Button>
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            {selectedProjects.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="destructive">Thao tác hàng loạt ({selectedProjects.length})</Button></DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {showArchived ? (<DropdownMenuItem onClick={handleBulkRestore}><RotateCcw className="mr-2 h-4 w-4" /> Khôi phục</DropdownMenuItem>) : (<DropdownMenuItem onClick={handleBulkArchive}><Archive className="mr-2 h-4 w-4" /> Lưu trữ</DropdownMenuItem>)}
+                  <DropdownMenuItem onClick={() => setIsBulkDeleteAlertOpen(true)} className="text-red-500"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button onClick={handleOpenAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Thêm dự án</Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Tên dự án</TableHead>
+                    <TableHead>Link</TableHead>
+                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Nhân sự</TableHead>
+                    <TableHead>Giá trị HĐ</TableHead>
+                    <TableHead>Đã thanh toán</TableHead>
+                    <TableHead>Công nợ</TableHead>
+                    <TableHead>Tiến độ TT</TableHead>
+                    <TableHead>Nghiệm thu</TableHead>
+                    <TableHead>Tiến độ</TableHead>
+                    <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
+                  paginatedProjects.map(project => {
+                    const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+                    const debt = project.contract_value - totalPaid;
+                    const isOverdue = project.status === 'overdue';
+                    const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
+
+                    return (
+                    <TableRow key={project.id} className="text-xs">
+                      <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
+                      <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
+                      <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
+                      <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
+                      <TableCell className={cn(isOverdue && "text-red-600")}>
+                        <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
+                        <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
+                        {isOverdue && (
+                          <div className="flex items-center font-bold mt-1">
+                            <AlertCircleIcon className="h-4 w-4 mr-1" />
+                            <span>Trễ {overdueDays} ngày</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {(project.team || []).map((member, index) => (
+                            <div key={index}>{member.role}: {member.name}</div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {project.acceptance_link ? (
-                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a>
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </TableCell>
-                  <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
-                  <TableCell className="text-right px-2">
-                    <div className="flex items-center justify-end gap-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenAcceptanceDialog(project)}>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenEditDialog(project)}>
-                        <Edit className="h-4 w-4 text-blue-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(project)}>
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )})}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex-none">
-          <div className="flex items-center justify-end space-x-2 py-4">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {selectedProjects.length} của {filteredProjects.length} dòng được chọn.
+                      </TableCell>
+                      <TableCell>{formatCurrency(project.contract_value)}</TableCell>
+                      <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
+                      <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {(project.payments || []).map((payment, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <span>{formatCurrency(payment.amount)}</span>
+                              <CheckCircle className={cn("h-4 w-4 cursor-pointer", payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400")} onClick={() => handleTogglePaymentStatus(project.id, index)} />
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {project.acceptance_link ? (
+                          <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a>
+                        ) : (
+                          <span>N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
+                      <TableCell className="text-right px-2">
+                        <div className="flex items-center justify-end gap-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenAcceptanceDialog(project)}>
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenEditDialog(project)}>
+                            <Edit className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(project)}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )})}
+                </TableBody>
+              </Table>
             </div>
-            <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">Số dòng mỗi trang</p>
-              <Select
-                value={`${pagination.pageSize}`}
-                onValueChange={(value) => {
-                  setPagination(prev => ({ ...prev, pageSize: Number(value) }));
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[20, 50, 100].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="0">Tất cả</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-end space-x-2 p-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {selectedProjects.length} của {filteredProjects.length} dòng được chọn.
+              </div>
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">Số dòng mỗi trang</p>
+                <Select
+                  value={`${pagination.pageSize}`}
+                  onValueChange={(value) => {
+                    setPagination(prev => ({ ...prev, pageSize: Number(value) }));
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[20, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="0">Tất cả</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Trang {pagination.pageIndex + 1} của {pageCount}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+                  disabled={pagination.pageIndex === 0}
+                >
+                  <span className="sr-only">Go to first page</span>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                  disabled={pagination.pageIndex === 0}
+                >
+                  <span className="sr-only">Go to previous page</span>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                  disabled={pagination.pageIndex >= pageCount - 1}
+                >
+                  <span className="sr-only">Go to next page</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+                  disabled={pagination.pageIndex >= pageCount - 1}
+                >
+                  <span className="sr-only">Go to last page</span>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Trang {pagination.pageIndex + 1} của {pageCount}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-                disabled={pagination.pageIndex === 0}
-              >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                disabled={pagination.pageIndex === 0}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                disabled={pagination.pageIndex >= pageCount - 1}
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-                disabled={pagination.pageIndex >= pageCount - 1}
-              >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
       <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
       <AcceptanceDialog open={isAcceptanceOpen} onOpenChange={setIsAcceptanceOpen} onConfirm={handleConfirmCompletion} />
