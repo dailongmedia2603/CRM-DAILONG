@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { InternTask, Personnel } from "@/types";
@@ -15,16 +15,17 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, e
 import { vi } from 'date-fns/locale';
 import { DateRange } from "react-day-picker";
 import { MessageSquare, ClipboardList, Clock, AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const StatCard = ({ icon: Icon, title, value, description }: { icon: React.ElementType, title: string, value: string | number, description: string }) => (
   <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <Icon className="h-4 w-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      <p className="text-xs text-muted-foreground">{description}</p>
+    <CardContent className="p-6 flex items-center justify-between">
+      <div>
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-3xl font-bold mt-1">{value}</p>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </div>
+      <Icon className="h-6 w-6 text-muted-foreground" />
     </CardContent>
   </Card>
 );
@@ -72,8 +73,6 @@ export const InternsReport = () => {
     const stats = {
       totalAssignedComments: 0,
       totalAssignedPosts: 0,
-      totalCompletedComments: 0,
-      totalCompletedPosts: 0,
       overdueTasksCount: 0,
       unreportedOverdueTasks: [] as InternTask[],
     };
@@ -81,7 +80,6 @@ export const InternsReport = () => {
     const internStats: { [key: string]: { totalTasks: number, completedTasks: number } } = {};
 
     filteredTasks.forEach(task => {
-      // Initialize intern stats if not present
       if (!internStats[task.intern_name]) {
         internStats[task.intern_name] = { totalTasks: 0, completedTasks: 0 };
       }
@@ -91,8 +89,6 @@ export const InternsReport = () => {
       stats.totalAssignedPosts += task.post_count || 0;
 
       if (task.status === 'Hoàn thành') {
-        stats.totalCompletedComments += task.comment_count || 0;
-        stats.totalCompletedPosts += task.post_count || 0;
         internStats[task.intern_name].completedTasks++;
       }
 
@@ -126,11 +122,21 @@ export const InternsReport = () => {
   };
 
   if (loading) {
-    return <div className="space-y-6">
-      <Skeleton className="h-12 w-1/3" />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"><Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" /></div>
-      <div className="grid gap-6 md:grid-cols-2"><Skeleton className="h-96" /><Skeleton className="h-96" /></div>
-    </div>
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-96 lg:col-span-2" />
+          <Skeleton className="h-96" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -150,7 +156,7 @@ export const InternsReport = () => {
             <Button variant="outline" onClick={() => setTimeRangePreset('thisMonth')}>Tháng này</Button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal">
+                <Button variant="outline" className={cn("w-full sm:w-auto justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")) : <span>Chọn ngày</span>}
                 </Button>
@@ -179,7 +185,7 @@ export const InternsReport = () => {
                   <TableRow key={intern.name}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar><AvatarFallback>{intern.name.charAt(0)}</AvatarFallback></Avatar>
+                        <Avatar className="h-9 w-9"><AvatarFallback>{intern.name.charAt(0)}</AvatarFallback></Avatar>
                         <span className="font-medium">{intern.name}</span>
                       </div>
                     </TableCell>
@@ -196,7 +202,7 @@ export const InternsReport = () => {
           <CardHeader><CardTitle>Công việc quá hạn chưa báo cáo</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {reportData.unreportedOverdueTasks.length > 0 ? reportData.unreportedOverdueTasks.map(task => (
-              <div key={task.id} className="p-2 rounded-md border">
+              <div key={task.id} className="p-2 rounded-md border hover:bg-muted">
                 <Link to={`/interns?search=${task.title}`} className="font-medium hover:underline">{task.title}</Link>
                 <p className="text-sm text-muted-foreground">{task.intern_name} - Deadline: {format(new Date(task.deadline), "dd/MM/yyyy")}</p>
               </div>
