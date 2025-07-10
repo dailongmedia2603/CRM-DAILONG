@@ -45,7 +45,7 @@ const LoginPage = () => {
         {/* Left Panel */}
         <div className="w-1/2 bg-[#2e3192] p-12 flex-col justify-center items-center text-white hidden md:flex">
           <div className="flex flex-col items-center text-center">
-            <img src="https://i.postimg.cc/VLQjp9rg/logo-vua-Seeding.png" alt="Logo" className="w-full max-w-xs mb-8" />
+            <img src="https://i.postimg.cc/t4BcyRxB/logo-vua-Seeding-white.png" alt="Logo" className="w-full max-w-xs mb-8" />
             <h1 className="text-2xl font-light">Phần mềm quản trị nội bộ</h1>
           </div>
         </div>
