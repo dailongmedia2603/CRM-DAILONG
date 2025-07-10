@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,9 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
-import { InternTask, Personnel } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
+import { useInternsReport } from "@/hooks/useInternsReport";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { vi } from 'date-fns/locale';
 import { DateRange } from "react-day-picker";
 import { MessageSquare, ClipboardList, Clock, AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
@@ -30,87 +29,8 @@ const StatCard = ({ icon: Icon, title, value, description }: { icon: React.Eleme
   </Card>
 );
 
-const useInternsReport = () => {
-  const [tasks, setTasks] = useState<InternTask[]>([]);
-  const [interns, setInterns] = useState<Personnel[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [tasksRes, internsRes] = await Promise.all([
-        supabase.from('intern_tasks').select('*'),
-        supabase.from('personnel').select('*').eq('role', 'Thực tập')
-      ]);
-      if (tasksRes.data) setTasks(tasksRes.data);
-      if (internsRes.data) setInterns(internsRes.data);
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
-
-  return { tasks, interns, loading };
-};
-
 export const InternsReport = () => {
-  const { tasks, interns, loading } = useInternsReport();
-  const [selectedInternId, setSelectedInternId] = useState('all');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  });
-
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
-      const taskDate = new Date(task.created_at!);
-      const isInternMatch = selectedInternId === 'all' || task.intern_name === interns.find(i => i.id === selectedInternId)?.name;
-      const isDateMatch = dateRange?.from && dateRange?.to ? (taskDate >= startOfDay(dateRange.from) && taskDate <= endOfDay(dateRange.to)) : true;
-      return isInternMatch && isDateMatch;
-    });
-  }, [tasks, selectedInternId, dateRange, interns]);
-
-  const reportData = useMemo(() => {
-    const stats = {
-      totalAssignedComments: 0,
-      totalAssignedPosts: 0,
-      overdueTasksCount: 0,
-      unreportedOverdueTasks: [] as InternTask[],
-    };
-
-    const internStats: { [key: string]: { totalTasks: number, completedTasks: number } } = {};
-
-    filteredTasks.forEach(task => {
-      if (!internStats[task.intern_name]) {
-        internStats[task.intern_name] = { totalTasks: 0, completedTasks: 0 };
-      }
-      internStats[task.intern_name].totalTasks++;
-
-      stats.totalAssignedComments += task.comment_count || 0;
-      stats.totalAssignedPosts += task.post_count || 0;
-
-      if (task.status === 'Hoàn thành') {
-        internStats[task.intern_name].completedTasks++;
-      }
-
-      const isOverdue = task.completed_at && new Date(task.completed_at) > new Date(task.deadline);
-      if (isOverdue) {
-        stats.overdueTasksCount++;
-      }
-      
-      const isCurrentlyOverdue = new Date() > new Date(task.deadline) && task.status !== 'Hoàn thành';
-      if (isCurrentlyOverdue && !task.report_reason) {
-        stats.unreportedOverdueTasks.push(task);
-      }
-    });
-
-    const internPerformance = Object.entries(internStats).map(([name, data]) => ({
-      name,
-      ...data,
-      completionRate: data.totalTasks > 0 ? (data.completedTasks / data.totalTasks) * 100 : 0,
-    })).sort((a, b) => b.totalTasks - a.totalTasks);
-
-    return { ...stats, internPerformance };
-  }, [filteredTasks]);
+  const { loading, interns, reportData, selectedInternId, setSelectedInternId, dateRange, setDateRange } = useInternsReport();
 
   const setTimeRangePreset = (preset: 'thisWeek' | 'thisMonth') => {
     const now = new Date();
