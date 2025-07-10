@@ -1,158 +1,115 @@
-export interface ProfileFolder {
-  id: string;
-  name: string;
-  client_id: string;
-  created_at: string;
-}
-
-export interface Profile {
-  id: string;
-  client_id: string;
-  folder_id?: string | null;
-  name: string;
-  link: string;
-  status: 'KH check' | 'Đã ký' | 'Đã Ship' | 'Hoàn thành';
-  created_at: string;
-}
-
-export interface Client {
-  id: string;
-  name: string;
-  contact_person: string;
-  email: string;
-  phone: string;
-  location: string;
-  status: 'active' | 'inactive';
-  image?: string;
-  contract_value: number;
-  contract_link: string;
-  creation_date: string;
-  company_name: string;
-  invoice_email: string;
-  classification: 'Cá nhân' | 'Doanh nghiệp';
-  source: 'Giới thiệu' | 'Website' | 'Sự kiện' | 'Khác';
-  industry: string;
-  created_by: string;
-  archived: boolean;
-  profiles?: Profile[];
-  folders?: ProfileFolder[];
-}
-
-export interface Payment {
-  amount: number;
-  paid: boolean;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  client_name: string;
-  client_id?: string;
-  progress: number;
-  start_date: string;
-  end_date: string;
-  status: 'planning' | 'in-progress' | 'completed' | 'overdue' | 'on-hold';
-  contract_value: number;
-  link: string;
-  acceptance_link?: string;
-  archived: boolean;
-  created_at: string;
-  payments: Payment[];
-  team: { role: string; name: string; id: string }[];
-}
-
+// HR & Personnel
 export interface Position {
+  id: number;
+  name: string;
+}
+
+export interface Permission {
   id: string;
   name: string;
   description?: string;
-  created_at: string;
 }
 
 export interface Personnel {
   id: string;
   name: string;
   email: string;
+  role: string;
+  position?: string;
+  position_id?: number;
+  status: 'Active' | 'Inactive';
   avatar?: string;
-  position: string;
-  position_id?: string;
-  role: 'BOD' | 'Quản lý' | 'Nhân viên' | 'Thực tập';
-  status: 'active' | 'inactive';
   created_at: string;
+}
+
+// Interns & Tasks
+export interface InternTask {
+  id: number;
+  created_at?: string;
+  title: string;
+  description?: string;
+  intern_name: string;
+  assigner: string;
+  assigner_name?: string;
+  deadline: string;
+  status: string;
+  priority?: 'High' | 'Medium' | 'Low';
+  post_count?: number;
+  comment_count?: number;
+  report_reason?: string;
+  completed_at?: string;
+  started_at?: string;
+  work_link?: string;
+  archived?: boolean;
+}
+
+// Clients & Profiles
+export interface Client {
+  id: string;
+  name: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+  created_at: string;
+}
+
+export interface ProfileFolder {
+  id: string;
+  name: string;
+  client_id: string;
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  url: string;
+  folder_id: string;
+}
+
+// Projects
+export interface Project {
+  id: string;
+  name: string;
+  client_id: string;
+  status: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold';
+  start_date: string;
+  end_date: string;
+}
+
+// Sales & Leads
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'New' | 'Contacted' | 'Qualified' | 'Lost' | 'Won';
+  source: string;
+  created_at: string;
+}
+
+export interface LeadHistory {
+  id: string;
+  lead_id: string;
+  action: string;
+  notes?: string;
+  created_at: string;
+}
+
+// General Task Management
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  assignee_id: string;
+  project_id?: string;
+  status: 'To Do' | 'In Progress' | 'Done';
+  due_date: string;
 }
 
 export interface Feedback {
   id: string;
-  user_id: string;
-  user_name: string;
-  message: string;
-  timestamp: string;
-}
-
-export interface Task {
-  id: string;
-  name: string;
-  description: string;
-  links: string[];
-  assigner: { id: string; name: string };
-  assignee: { id: string; name: string };
-  deadline: string;
-  priority: 'Cao' | 'Trung bình' | 'Thấp';
-  status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành';
-  feedbackHistory: Feedback[];
+  task_id: string;
+  comment: string;
+  author_id: string;
   created_at: string;
-  archived: boolean;
-}
-
-export interface InternTask {
-  id: string;
-  title: string;
-  description: string;
-  intern_name: string;
-  deadline: string;
-  priority: 'Cao' | 'Bình thường' | 'Thấp';
-  comment_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
-  post_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
-  comment_count: number;
-  post_count: number;
-  work_link: string;
-  status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành' | 'Quá hạn';
-  started_at?: string;
-  completed_at?: string;
-  assigner_name?: string;
-  archived?: boolean;
-  created_at?: string;
-  report_reason?: string;
-}
-
-export interface LeadHistory {
-    id: string;
-    date: string;
-    user_id: string;
-    user_name: string;
-    content: string;
-    type: "note" | "call" | "email" | "meeting";
-    next_follow_up_date?: string;
-    next_follow_up_content?: string;
-}
-
-export interface Lead {
-    id: string;
-    name: string;
-    phone: string;
-    product: string;
-    created_by_id: string;
-    created_by_name: string;
-    created_at: string;
-    potential: "tiềm năng" | "không tiềm năng" | "chưa xác định";
-    status: "đang làm việc" | "đang suy nghĩ" | "im ru" | "từ chối";
-    result: "ký hợp đồng" | "chưa quyết định" | "từ chối" | "đang trao đổi";
-    archived: boolean;
-    lead_history: LeadHistory[];
-    next_follow_up_date?: string;
-}
-
-export interface Permission {
-  id: number;
-  name: string;
-  description: string;
 }
