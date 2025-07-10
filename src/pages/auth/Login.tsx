@@ -43,13 +43,11 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-5xl flex rounded-2xl shadow-lg overflow-hidden my-8 bg-white">
         {/* Left Panel */}
-        <div className="w-1/2 bg-[#3F8CFF] p-12 flex-col justify-between text-white hidden md:flex">
-          <img src="https://i.postimg.cc/VLQjp9rg/logo-vua-Seeding.png" alt="Logo" className="w-40" />
+        <div className="w-1/2 bg-[#2e3192] p-12 flex-col justify-center items-center text-white hidden md:flex">
           <div className="flex flex-col items-center text-center">
-            <img src="https://i.postimg.cc/P5gLpXhQ/undraw-scrum-board-re-wk2v-1.png" alt="Illustration" className="w-full max-w-sm mb-8" />
-            <h1 className="text-4xl font-bold">CRM VUA SEEDING</h1>
+            <img src="https://i.postimg.cc/VLQjp9rg/logo-vua-Seeding.png" alt="Logo" className="w-full max-w-xs mb-8" />
+            <h1 className="text-2xl font-light">Phần mềm quản trị nội bộ</h1>
           </div>
-          <div />
         </div>
 
         {/* Right Panel */}
