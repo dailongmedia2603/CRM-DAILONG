@@ -40,22 +40,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl flex rounded-2xl shadow-lg overflow-hidden my-8 bg-white">
-        {/* Left Panel */}
-        <div className="w-1/2 bg-[#2e3192] p-12 flex-col justify-center items-center text-white hidden md:flex">
-          <div className="flex flex-col items-center text-center">
-            <img src="https://i.postimg.cc/VLQjp9rg/logo-vua-Seeding.png" alt="Logo" className="w-full max-w-xs mb-8" />
-            <h1 className="text-2xl font-light">Phần mềm quản trị nội bộ</h1>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#1E2856] flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md text-center">
+        <img src="https://i.postimg.cc/t4BcyRxB/logo-vua-Seeding-white.png" alt="Logo" className="mx-auto mb-4 h-16" />
+        <h2 className="text-xl text-white/80 mb-8 font-light">CRM DAILONG MEDIA - Phần mềm nội bộ</h2>
 
-        {/* Right Panel */}
-        <div className="w-full md:w-1/2 p-12 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800">ĐĂNG NHẬP</h2>
-          <form onSubmit={handleLogin} className="space-y-6">
+        <div className="bg-white p-8 rounded-xl shadow-2xl">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">Đăng nhập</h3>
+          <form onSubmit={handleLogin} className="space-y-6 text-left">
             <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-500">Email Address</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-600">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -67,7 +61,7 @@ const LoginPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="password"  className="text-sm font-medium text-gray-500">Password</Label>
+              <Label htmlFor="password"  className="text-sm font-medium text-gray-600">Mật khẩu</Label>
               <div className="relative mt-2">
                 <Input
                   id="password"
@@ -88,20 +82,20 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Checkbox id="remember-me" />
-                <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Remember me</Label>
+                <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Ghi nhớ tôi</Label>
               </div>
-              <a href="#" className="text-sm text-gray-500 hover:text-gray-800">Forgot Password?</a>
+              <a href="#" className="text-sm text-blue-600 hover:underline">Quên mật khẩu?</a>
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#3F8CFF] hover:bg-[#3578E0] text-white font-bold py-3 px-4 rounded-full flex items-center justify-center h-12 text-base"
+              className="w-full bg-[#3F8CFF] hover:bg-[#3578E0] text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center h-12 text-base"
             >
               {loading ? 'Đang xử lý...' : (
                 <>
