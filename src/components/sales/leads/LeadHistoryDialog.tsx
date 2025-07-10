@@ -144,76 +144,75 @@ export const LeadHistoryDialog = ({
           </Button>
         </div>
 
-        {isAdding && (
-          <div className="space-y-4 border rounded-lg p-4 mb-4">
-            <div className="space-y-2">
-              <div className="font-medium text-sm">Loại hoạt động</div>
-              <Select value={type} onValueChange={(value: any) => setType(value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn loại hoạt động" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="note">Ghi chú</SelectItem>
-                  <SelectItem value="call">Cuộc gọi</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="meeting">Cuộc họp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="font-medium text-sm">Nội dung chăm sóc</div>
-              <Textarea 
-                value={content} 
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Nhập nội dung chăm sóc..."
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="font-medium text-sm">Nội dung chăm sóc tiếp theo</div>
-              <Textarea 
-                value={nextFollowUpContent} 
-                onChange={(e) => setNextFollowUpContent(e.target.value)}
-                placeholder="Nhập nội dung cho lần chăm sóc tiếp theo..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="font-medium text-sm">Ngày chăm sóc tiếp theo</div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !nextFollowUpDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {nextFollowUpDate ? format(nextFollowUpDate, "PPP", { locale: vi }) : <span>Chọn ngày</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={nextFollowUpDate}
-                    onSelect={setNextFollowUpDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <Button onClick={handleAddHistory} disabled={!content.trim()}>
-              Lưu lịch sử
-            </Button>
-          </div>
-        )}
-
         <ScrollArea className="h-[400px] pr-4">
+          {isAdding && (
+            <div className="space-y-4 border rounded-lg p-4 mb-4">
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Loại hoạt động</div>
+                <Select value={type} onValueChange={(value: any) => setType(value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn loại hoạt động" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="note">Ghi chú</SelectItem>
+                    <SelectItem value="call">Cuộc gọi</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="meeting">Cuộc họp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Nội dung chăm sóc</div>
+                <Textarea 
+                  value={content} 
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Nhập nội dung chăm sóc..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Nội dung chăm sóc tiếp theo</div>
+                <Textarea 
+                  value={nextFollowUpContent} 
+                  onChange={(e) => setNextFollowUpContent(e.target.value)}
+                  placeholder="Nhập nội dung cho lần chăm sóc tiếp theo..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Ngày chăm sóc tiếp theo</div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !nextFollowUpDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {nextFollowUpDate ? format(nextFollowUpDate, "PPP", { locale: vi }) : <span>Chọn ngày</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={nextFollowUpDate}
+                      onSelect={setNextFollowUpDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <Button onClick={handleAddHistory} disabled={!content.trim()}>
+                Lưu lịch sử
+              </Button>
+            </div>
+          )}
           <div className="space-y-4">
             {localHistory.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
