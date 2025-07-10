@@ -2,6 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthProvider';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
 const LoginPage = () => {
   const { session } = useAuth();
@@ -10,6 +15,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -29,69 +35,84 @@ const LoginPage = () => {
 
     if (error) {
       setError('Email hoặc mật khẩu không chính xác.');
-    } else {
-      // The AuthProvider will detect the session change and navigate
     }
     setLoading(false);
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col justify-center items-center p-4"
-      style={{ backgroundColor: '#1E2856' }}
-    >
-      <div className="text-center mb-10">
-        <img src="https://i.postimg.cc/yd5pF6wk/logo-vua-Seeding-white.png" alt="Vua Seeding Logo White" className="w-auto h-auto max-w-[250px] mx-auto" />
-        <p className="text-white mt-4 text-lg font-light tracking-wider">CRM DAILONG MEDIA - Phần mềm nội bộ</p>
-      </div>
-
-      <div className="w-full max-w-md">
-        <form onSubmit={handleLogin} className="bg-[#2a3469] bg-opacity-50 p-8 rounded-xl shadow-2xl">
-          <div className="mb-4">
-            <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Nhập email của bạn"
-              className="w-full px-4 py-3 rounded-lg bg-[#1E2856] border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl flex rounded-2xl shadow-lg overflow-hidden my-8 bg-white">
+        {/* Left Panel */}
+        <div className="w-1/2 bg-[#3F8CFF] p-12 flex-col justify-between text-white hidden md:flex">
+          <img src="https://i.postimg.cc/VLQjp9rg/logo-vua-Seeding.png" alt="Logo" className="w-40" />
+          <div className="flex flex-col items-center text-center">
+            <img src="https://i.postimg.cc/P5gLpXhQ/undraw-scrum-board-re-wk2v-1.png" alt="Illustration" className="w-full max-w-sm mb-8" />
+            <h1 className="text-4xl font-bold">CRM VUA SEEDING</h1>
           </div>
+          <div />
+        </div>
 
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-gray-300 text-sm font-bold" htmlFor="password">
-                Mật khẩu
-              </label>
-              <a href="#" className="text-sm text-blue-400 hover:text-blue-300 font-semibold">
-                Quên mật khẩu?
-              </a>
+        {/* Right Panel */}
+        <div className="w-full md:w-1/2 p-12 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold mb-8 text-gray-800">ĐĂNG NHẬP</h2>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-500">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="youremail@gmail.com"
+                className="mt-2 h-12 rounded-lg"
+                required
+              />
             </div>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu"
-              className="w-full px-4 py-3 rounded-lg bg-[#1E2856] border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
+            <div>
+              <Label htmlFor="password"  className="text-sm font-medium text-gray-500">Password</Label>
+              <div className="relative mt-2">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-12 rounded-lg pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
 
-          {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-300"
-          >
-            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
-          </button>
-        </form>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Checkbox id="remember-me" />
+                <Label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Remember me</Label>
+              </div>
+              <a href="#" className="text-sm text-gray-500 hover:text-gray-800">Forgot Password?</a>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#3F8CFF] hover:bg-[#3578E0] text-white font-bold py-3 px-4 rounded-full flex items-center justify-center h-12 text-base"
+            >
+              {loading ? 'Đang xử lý...' : (
+                <>
+                  Đăng nhập <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
