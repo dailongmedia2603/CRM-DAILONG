@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/context/AuthProvider';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -46,6 +47,7 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive
 };
 
 const InternsPage = () => {
+  const { session } = useAuth();
   const [tasks, setTasks] = useState<InternTask[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ const InternsPage = () => {
     setLoading(true);
     const [tasksRes, personnelRes] = await Promise.all([
       supabase.from("intern_tasks").select("*").order('created_at', { ascending: false }),
-      supabase.from("personnel").select("*").eq('role', 'Thực tập'),
+      supabase.from("personnel").select("*"),
     ]);
 
     if (tasksRes.error) {
@@ -185,15 +187,36 @@ const InternsPage = () => {
   };
 
   const handleSaveTask = async (taskData: any) => {
-    const dataToSave = { ...taskData, assigner_name: "Admin" }; // Mock assigner name
     if (activeTask && activeTask.id) {
-      const { error } = await supabase.from('intern_tasks').update(dataToSave).eq('id', activeTask.id);
-      if (error) showError("Lỗi khi cập nhật công việc.");
-      else showSuccess("Công việc đã được cập nhật!");
+      // Editing an existing task. Don't change the assigner.
+      const { error } = await supabase.from('intern_tasks').update(taskData).eq('id', activeTask.id);
+      if (error) {
+        showError("Lỗi khi cập nhật công việc.");
+      } else {
+        showSuccess("Công việc đã được cập nhật!");
+      }
     } else {
-      const { error } = await supabase.from('intern_tasks').insert([{ ...dataToSave, status: 'Chưa làm' }]);
-      if (error) showError("Lỗi khi giao việc mới.");
-      else showSuccess("Đã giao việc mới thành công!");
+      // Creating a new task. Set the assigner.
+      if (!session?.user) {
+        showError("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+        return;
+      }
+      
+      const currentUserInfo = personnel.find(p => p.id === session.user.id);
+      const assignerName = currentUserInfo?.name || session.user.email;
+
+      const dataToSave = { 
+        ...taskData, 
+        assigner_name: assignerName,
+        status: 'Chưa làm' 
+      };
+      const { error } = await supabase.from('intern_tasks').insert([dataToSave]);
+      if (error) {
+        showError("Lỗi khi giao việc mới.");
+        console.error(error);
+      } else {
+        showSuccess("Đã giao việc mới thành công!");
+      }
     }
     fetchData();
     setIsFormOpen(false);
