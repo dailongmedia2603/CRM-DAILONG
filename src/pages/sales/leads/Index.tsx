@@ -392,17 +392,29 @@ const LeadsPage = () => {
                         <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>
                         <TableCell className="text-right">
                           <TooltipProvider>
-                            <div className="flex justify-end space-x-1">
+                            <div className="flex justify-end gap-1">
                               <Tooltip>
-                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenDetails(lead)}><Eye className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetails(lead)}>
+                                    <Eye className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                </TooltipTrigger>
                                 <TooltipContent><p>Xem chi tiết</p></TooltipContent>
                               </Tooltip>
                               <Tooltip>
-                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(lead)}><PenLine className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(lead)}>
+                                    <PenLine className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                </TooltipTrigger>
                                 <TooltipContent><p>Sửa</p></TooltipContent>
                               </Tooltip>
                               <Tooltip>
-                                <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(lead)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(lead)}>
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
                                 <TooltipContent><p>Xóa</p></TooltipContent>
                               </Tooltip>
                             </div>

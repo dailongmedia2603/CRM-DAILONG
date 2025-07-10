@@ -381,12 +381,16 @@ const ClientsPage = () => {
                     <TableCell>{client.created_by}</TableCell>
                     <TableCell>{formatDate(client.creation_date)}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4" /></Link>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" asChild>
+                          <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4 text-blue-600" /></Link>
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(client)}><Pen className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(client)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(client)}>
+                          <Pen className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(client)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

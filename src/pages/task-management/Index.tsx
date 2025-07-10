@@ -276,9 +276,17 @@ const TasksManagementPage = () => {
                   <TableCell><Badge variant="outline" className={cn(getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
                   <TableCell>{task.status !== 'Hoàn thành' && (<Button size="sm" onClick={() => handleActionClick(task)} className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white')}>{task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openDialog('details', task)}><Eye className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => openDialog('form', task)}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => openDialog('delete', task)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => openDialog('details', task)}>
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => openDialog('form', task)}>
+                        <Edit className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => openDialog('delete', task)}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

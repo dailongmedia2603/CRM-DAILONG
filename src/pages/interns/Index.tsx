@@ -440,10 +440,16 @@ const InternsPage = () => {
                     })()}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-0">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDetailsDialog(task)}><Eye className="h-5 w-5" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(task)}><Edit className="h-5 w-5" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(task)}><Trash2 className="h-5 w-5 text-red-500" /></Button>
+                    <div className="flex items-center justify-end gap-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetailsDialog(task)}>
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(task)}>
+                        <Edit className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteDialog(task)}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -460,7 +466,7 @@ const InternsPage = () => {
             <Select
               value={`${pagination.pageSize}`}
               onValueChange={(value) => {
-                setPagination(prev => ({ ...prev, pageSize: Number(value), pageIndex: 0 }));
+                setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
               }}
             >
               <SelectTrigger className="h-8 w-[70px]">

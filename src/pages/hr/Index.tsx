@@ -11,12 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,7 +23,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Search, MoreHorizontal, Users, UserCheck, UserX } from "lucide-react";
+import { PlusCircle, Search, Users, UserCheck, UserX, Edit, Trash2 } from "lucide-react";
 import { Personnel, Position } from "@/types";
 import { PersonnelFormDialog } from "@/components/hr/PersonnelFormDialog";
 import { showSuccess, showError } from "@/utils/toast";
@@ -221,13 +215,18 @@ const HRPage = () => {
                       <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
                       <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <Can I="hr.edit"><DropdownMenuItem onClick={() => handleOpenEditDialog(p)}>Sửa</DropdownMenuItem></Can>
-                            <Can I="hr.delete"><DropdownMenuItem onClick={() => handleOpenDeleteAlert(p)} className="text-red-500">Xóa</DropdownMenuItem></Can>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center justify-end gap-1">
+                          <Can I="hr.edit">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(p)}>
+                              <Edit className="h-4 w-4 text-green-600" />
+                            </Button>
+                          </Can>
+                          <Can I="hr.delete">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(p)}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </Can>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

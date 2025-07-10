@@ -40,7 +40,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   PlusCircle,
   Search,
-  MoreHorizontal,
   Archive,
   Trash2,
   List,
@@ -56,6 +55,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Edit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
@@ -404,15 +404,17 @@ const ProjectsPage = () => {
                   </TableCell>
                   <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
                   <TableCell className="text-right px-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => handleOpenAcceptanceDialog(project)}>Hoàn thành</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenEditDialog(project)}>Sửa</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleOpenDeleteAlert(project)} className="text-red-500">Xóa</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center justify-end gap-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenAcceptanceDialog(project)}>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenEditDialog(project)}>
+                        <Edit className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(project)}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               )})}
