@@ -20,8 +20,10 @@ import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthProvider";
 
 const TasksManagementPage = () => {
+  const { session } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +40,14 @@ const TasksManagementPage = () => {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const currentUser = useMemo(() => {
-    if (personnel.length > 0) {
-      return { id: personnel[0].id, name: personnel[0].name };
+    if (session?.user && personnel.length > 0) {
+      const user = personnel.find(p => p.id === session.user.id);
+      if (user) {
+        return { id: user.id, name: user.name };
+      }
     }
     return { id: '', name: '' };
-  }, [personnel]);
+  }, [personnel, session]);
 
   const fetchData = async () => {
     setLoading(true);
