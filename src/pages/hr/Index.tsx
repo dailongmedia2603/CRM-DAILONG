@@ -33,6 +33,8 @@ import { PositionConfigTab } from '@/components/hr/PositionConfigTab';
 import { PermissionsTab } from '@/components/hr/PermissionsTab';
 import { supabase } from "@/integrations/supabase/client";
 import { Can } from "@/components/auth/Can";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PersonnelCard } from "@/components/hr/PersonnelCard";
 
 const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -61,6 +63,7 @@ const HRPage = () => {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchPersonnel = async () => {
     setLoading(true);
@@ -185,56 +188,64 @@ const HRPage = () => {
               </Can>
             </div>
 
-            <Card>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nhân sự</TableHead>
-                      <TableHead>Vị trí</TableHead>
-                      <TableHead>Cấp bậc</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Ngày tham gia</TableHead>
-                      <TableHead className="text-right">Hành động</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
-                    filteredPersonnel.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar><AvatarImage src={p.avatar} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
-                            <div>
-                              <div className="font-medium">{p.name}</div>
-                              <div className="text-sm text-muted-foreground">{p.email}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{p.position}</TableCell>
-                        <TableCell><Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge></TableCell>
-                        <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
-                        <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Can I="hr.edit">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(p)}>
-                                <Edit className="h-4 w-4 text-green-600" />
-                              </Button>
-                            </Can>
-                            <Can I="hr.delete">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(p)}>
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </Can>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {isMobile ? (
+              <div className="space-y-4">
+                {loading ? <p>Đang tải...</p> : filteredPersonnel.map(p => (
+                  <PersonnelCard key={p.id} personnel={p} onEdit={handleOpenEditDialog} onDelete={handleOpenDeleteAlert} />
+                ))}
               </div>
-            </Card>
+            ) : (
+              <Card>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nhân sự</TableHead>
+                        <TableHead>Vị trí</TableHead>
+                        <TableHead>Cấp bậc</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Ngày tham gia</TableHead>
+                        <TableHead className="text-right">Hành động</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
+                      filteredPersonnel.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar><AvatarImage src={p.avatar} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
+                              <div>
+                                <div className="font-medium">{p.name}</div>
+                                <div className="text-sm text-muted-foreground">{p.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{p.position}</TableCell>
+                          <TableCell><Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge></TableCell>
+                          <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
+                          <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Can I="hr.edit">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(p)}>
+                                  <Edit className="h-4 w-4 text-green-600" />
+                                </Button>
+                              </Can>
+                              <Can I="hr.delete">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(p)}>
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </Can>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            )}
           </TabsContent>
           <TabsContent value="config" className="mt-6">
             <PositionConfigTab positions={positions.map(p => p.name)} onPositionsChange={handlePositionsChange} />

@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/context/AuthProvider';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { InternTaskCard } from '@/components/interns/InternTaskCard';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -67,6 +69,7 @@ const InternsPage = () => {
   const [activeTask, setActiveTask] = useState<InternTask | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchData = async () => {
     setLoading(true);
@@ -383,105 +386,113 @@ const InternsPage = () => {
           </div>
         )}
 
-        <div className="rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 hover:bg-gray-50">
-                  <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
-                  <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
-                  <TableHead>CMT</TableHead>
-                  <TableHead>POST</TableHead>
-                  <TableHead>FILE</TableHead>
-                  <TableHead>DEADLINE</TableHead>
-                  <TableHead>NGƯỜI GIAO</TableHead>
-                  <TableHead>NGƯỜI NHẬN</TableHead>
-                  <TableHead>TRẠNG THÁI</TableHead>
-                  <TableHead>HÀNH ĐỘNG</TableHead>
-                  <TableHead>THAO TÁC</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
-                paginatedTasks.map(task => {
-                  const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
-                  const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
-                  const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
-                  const displayStatus = isOverdue ? 'Quá hạn' : task.status;
+        {isMobile ? (
+          <div className="space-y-4">
+            {loading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
+              <InternTaskCard key={task.id} task={task} onViewDetails={handleOpenDetailsDialog} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50 hover:bg-gray-50">
+                    <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
+                    <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
+                    <TableHead>CMT</TableHead>
+                    <TableHead>POST</TableHead>
+                    <TableHead>FILE</TableHead>
+                    <TableHead>DEADLINE</TableHead>
+                    <TableHead>NGƯỜI GIAO</TableHead>
+                    <TableHead>NGƯỜI NHẬN</TableHead>
+                    <TableHead>TRẠNG THÁI</TableHead>
+                    <TableHead>HÀNH ĐỘNG</TableHead>
+                    <TableHead>THAO TÁC</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
+                  paginatedTasks.map(task => {
+                    const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
+                    const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
+                    const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
+                    const displayStatus = isOverdue ? 'Quá hạn' : task.status;
 
-                  return (
-                  <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
-                    <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
-                    <TableCell>
-                      <div className="max-w-xs">
-                        <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
-                        <p className="text-sm text-muted-foreground truncate">{task.description}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
-                        <ExternalLink className="h-5 w-5" />
-                      </a>
-                    </TableCell>
-                    <TableCell className={cn(isOverdue && "text-red-600")}>
-                      {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      {isOverdue && (
-                        <div className="flex items-center font-bold mt-1 text-xs">
-                          <AlertCircleIcon className="h-3 w-3 mr-1" />
-                          <span>Trễ {overdueDays} ngày</span>
+                    return (
+                    <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
+                      <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
+                          <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{task.assigner_name}</TableCell>
-                    <TableCell>{task.intern_name}</TableCell>
-                    <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
-                    <TableCell>
-                      {(() => {
-                        if (task.status === 'Hoàn thành') return null;
-                        if (isOverdue && !task.report_reason) {
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      </TableCell>
+                      <TableCell className={cn(isOverdue && "text-red-600")}>
+                        {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {isOverdue && (
+                          <div className="flex items-center font-bold mt-1 text-xs">
+                            <AlertCircleIcon className="h-3 w-3 mr-1" />
+                            <span>Trễ {overdueDays} ngày</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>{task.assigner_name}</TableCell>
+                      <TableCell>{task.intern_name}</TableCell>
+                      <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
+                      <TableCell>
+                        {(() => {
+                          if (task.status === 'Hoàn thành') return null;
+                          if (isOverdue && !task.report_reason) {
+                            return (
+                              <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
+                                <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                              </Button>
+                            );
+                          }
+                          const isStarted = task.status === 'Đang làm';
                           return (
-                            <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
-                              <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                            <Button 
+                              size="sm" 
+                              className={cn(!isStarted ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                              onClick={() => handleUpdateStatus(task, !isStarted ? 'Đang làm' : 'Hoàn thành')}
+                            >
+                              {!isStarted ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
                             </Button>
                           );
-                        }
-                        const isStarted = task.status === 'Đang làm';
-                        return (
-                          <Button 
-                            size="sm" 
-                            className={cn(!isStarted ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
-                            onClick={() => handleUpdateStatus(task, !isStarted ? 'Đang làm' : 'Hoàn thành')}
-                          >
-                            {!isStarted ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetailsDialog(task)}>
+                            <Eye className="h-4 w-4 text-blue-600" />
                           </Button>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-0">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetailsDialog(task)}>
-                          <Eye className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(task)}>
-                          <Edit className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteDialog(task)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )})}
-              </TableBody>
-            </Table>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(task)}>
+                            <Edit className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteDialog(task)}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )})}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
             {selectedTasks.length} của {filteredTasks.length} dòng được chọn.

@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { format, startOfDay, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { TaskCard } from "@/components/task-management/TaskCard";
 
 const TasksManagementPage = () => {
   const { session } = useAuth();
@@ -38,6 +40,7 @@ const TasksManagementPage = () => {
 
   const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false, bulkDelete: false });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const isMobile = useIsMobile();
 
   const currentUser = useMemo(() => {
     if (session?.user && personnel.length > 0) {
@@ -264,40 +267,48 @@ const TasksManagementPage = () => {
           </div>
         </div>
 
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
-              paginatedTasks.map(task => (
-                <TableRow key={task.id}>
-                  <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
-                  <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
-                  <TableCell>{task.assigner?.name || 'N/A'}</TableCell>
-                  <TableCell>{task.assignee?.name || 'N/A'}</TableCell>
-                  <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy HH:mm")}</TableCell>
-                  <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
-                  <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('feedback', task)} className={cn({ "text-red-600 border-red-500 hover:bg-red-50 hover:text-red-700 font-bold": task.feedbackHistory.length > 0 })}><MessageSquare className="mr-2 h-4 w-4" />{task.feedbackHistory.length}</Button></TableCell>
-                  <TableCell><Badge variant="outline" className={cn(getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
-                  <TableCell>{task.status !== 'Hoàn thành' && (<Button size="sm" onClick={() => handleActionClick(task)} className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white')}>{task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => openDialog('details', task)}>
-                        <Eye className="h-4 w-4 text-blue-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => openDialog('form', task)}>
-                        <Edit className="h-4 w-4 text-green-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => openDialog('delete', task)}>
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        {isMobile ? (
+          <div className="space-y-4">
+            {loading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
+              <TaskCard key={task.id} task={task} onViewDetails={(t) => openDialog('details', t)} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
+                paginatedTasks.map(task => (
+                  <TableRow key={task.id}>
+                    <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
+                    <TableCell className="font-medium max-w-xs truncate">{task.name}</TableCell>
+                    <TableCell>{task.assigner?.name || 'N/A'}</TableCell>
+                    <TableCell>{task.assignee?.name || 'N/A'}</TableCell>
+                    <TableCell>{format(new Date(task.deadline), "dd/MM/yyyy HH:mm")}</TableCell>
+                    <TableCell><Badge variant="outline" className={cn(getPriorityBadge(task.priority))}>{task.priority}</Badge></TableCell>
+                    <TableCell><Button variant="outline" size="sm" onClick={() => openDialog('feedback', task)} className={cn({ "text-red-600 border-red-500 hover:bg-red-50 hover:text-red-700 font-bold": task.feedbackHistory.length > 0 })}><MessageSquare className="mr-2 h-4 w-4" />{task.feedbackHistory.length}</Button></TableCell>
+                    <TableCell><Badge variant="outline" className={cn(getStatusBadge(task.status))}>{task.status}</Badge></TableCell>
+                    <TableCell>{task.status !== 'Hoàn thành' && (<Button size="sm" onClick={() => handleActionClick(task)} className={cn(task.status === 'Chưa làm' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white')}>{task.status === 'Chưa làm' ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => openDialog('details', task)}>
+                          <Eye className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => openDialog('form', task)}>
+                          <Edit className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => openDialog('delete', task)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
             {selectedTasks.length} của {filteredTasks.length} dòng được chọn.

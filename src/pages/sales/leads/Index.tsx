@@ -86,6 +86,8 @@ import { cn } from "@/lib/utils";
 import { format, startOfDay, isEqual } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { LeadCard } from "@/components/sales/leads/LeadCard";
 
 const LeadsPage = () => {
   const { session } = useAuth();
@@ -116,6 +118,7 @@ const LeadsPage = () => {
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const isMobile = useIsMobile();
 
   const salesPersonsOnly = useMemo(() => 
     personnel.filter(p => p.position.toLowerCase() === 'sale'), 
@@ -379,132 +382,140 @@ const LeadsPage = () => {
           <div className="flex space-x-2">{selectedLeads.length > 0 && (<><Button variant="outline" onClick={() => handleBulkAction(archivedFilter === 'active' ? 'archive' : 'restore')}><Archive className="h-4 w-4 mr-2" />{archivedFilter === 'active' ? 'Lưu trữ' : 'Khôi phục'} ({selectedLeads.length})</Button><Button variant="destructive" onClick={() => handleBulkAction('delete')}><Trash2 className="h-4 w-4 mr-2" />Xóa ({selectedLeads.length})</Button></>)}</div>
         </div>
         
-        <Card>
-          <CardHeader className="pb-2"><CardTitle>Danh sách Lead</CardTitle></CardHeader>
-          <CardContent>
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={11} className="text-center h-24">Đang tải...</TableCell></TableRow> :
-                  paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={11} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
-                    paginatedLeads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={() => handleSelectLead(lead.id)} /></TableCell>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
-                        <TableCell>{lead.phone}</TableCell>
-                        <TableCell>{lead.product}</TableCell>
-                        <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.lead_history?.length || 0})</Button></TableCell>
-                        <TableCell>{lead.created_by_name || 'N/A'}</TableCell>
-                        <TableCell>{formatDateDisplay(lead.created_at)}</TableCell>
-                        <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
-                        <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800")}>{lead.status}</Badge></TableCell>
-                        <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>
-                        <TableCell className="text-right">
-                          <TooltipProvider>
-                            <div className="flex justify-end gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetails(lead)}>
-                                    <Eye className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Xem chi tiết</p></TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(lead)}>
-                                    <PenLine className="h-4 w-4 text-green-600" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Sửa</p></TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(lead)}>
-                                    <Trash2 className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Xóa</p></TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </TooltipProvider>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {selectedLeads.length} của {filteredLeads.length} dòng được chọn.
+        {isMobile ? (
+          <div className="space-y-4">
+            {loading ? <p>Đang tải...</p> : paginatedLeads.map(lead => (
+              <LeadCard key={lead.id} lead={lead} onViewDetails={handleOpenDetails} />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardHeader className="pb-2"><CardTitle>Danh sách Lead</CardTitle></CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {loading ? <TableRow><TableCell colSpan={11} className="text-center h-24">Đang tải...</TableCell></TableRow> :
+                    paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={11} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
+                      paginatedLeads.map((lead) => (
+                        <TableRow key={lead.id}>
+                          <TableCell><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={() => handleSelectLead(lead.id)} /></TableCell>
+                          <TableCell className="font-medium">{lead.name}</TableCell>
+                          <TableCell>{lead.phone}</TableCell>
+                          <TableCell>{lead.product}</TableCell>
+                          <TableCell><Button variant="outline" size="sm" onClick={() => handleOpenHistory(lead)}><History className="h-4 w-4 mr-1" />({lead.lead_history?.length || 0})</Button></TableCell>
+                          <TableCell>{lead.created_by_name || 'N/A'}</TableCell>
+                          <TableCell>{formatDateDisplay(lead.created_at)}</TableCell>
+                          <TableCell><Badge className={cn("capitalize", lead.potential === "tiềm năng" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")}>{lead.potential}</Badge></TableCell>
+                          <TableCell><Badge className={cn("capitalize", lead.status === "đang làm việc" ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800")}>{lead.status}</Badge></TableCell>
+                          <TableCell><Badge className={cn("capitalize", lead.result === "ký hợp đồng" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")}>{lead.result}</Badge></TableCell>
+                          <TableCell className="text-right">
+                            <TooltipProvider>
+                              <div className="flex justify-end gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetails(lead)}>
+                                      <Eye className="h-4 w-4 text-blue-600" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Xem chi tiết</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(lead)}>
+                                      <PenLine className="h-4 w-4 text-green-600" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Sửa</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(lead)}>
+                                      <Trash2 className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Xóa</p></TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TooltipProvider>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">Số dòng mỗi trang</p>
-                <Select
-                  value={`${pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {[20, 50, 100].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="0">Tất cả</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  {selectedLeads.length} của {filteredLeads.length} dòng được chọn.
+                </div>
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">Số dòng mỗi trang</p>
+                  <Select
+                    value={`${pagination.pageSize}`}
+                    onValueChange={(value) => {
+                      setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[20, 50, 100].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="0">Tất cả</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                  Trang {pagination.pageIndex + 1} của {pageCount}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+                    disabled={pagination.pageIndex === 0}
+                  >
+                    <span className="sr-only">Go to first page</span>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                    disabled={pagination.pageIndex === 0}
+                  >
+                    <span className="sr-only">Go to previous page</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                    disabled={pagination.pageIndex >= pageCount - 1}
+                  >
+                    <span className="sr-only">Go to next page</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+                    disabled={pagination.pageIndex >= pageCount - 1}
+                  >
+                    <span className="sr-only">Go to last page</span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                Trang {pagination.pageIndex + 1} của {pageCount}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-                  disabled={pagination.pageIndex === 0}
-                >
-                  <span className="sr-only">Go to first page</span>
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                  disabled={pagination.pageIndex === 0}
-                >
-                  <span className="sr-only">Go to previous page</span>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                  disabled={pagination.pageIndex >= pageCount - 1}
-                >
-                  <span className="sr-only">Go to next page</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-                  disabled={pagination.pageIndex >= pageCount - 1}
-                >
-                  <span className="sr-only">Go to last page</span>
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       {selectedLead && <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLead.name} leadId={selectedLead.id} history={selectedLead.lead_history} onAddHistory={handleAddHistory} />}
