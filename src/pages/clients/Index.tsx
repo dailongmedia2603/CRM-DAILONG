@@ -30,12 +30,12 @@ import {
   Eye,
   Pen,
   Trash2,
-  ExternalLink,
   Archive,
   RotateCcw,
   List,
 } from "lucide-react";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { ClientDetailsDialog } from "@/components/clients/ClientDetailsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +51,8 @@ import { showSuccess, showError } from "@/utils/toast";
 import { Client, Project } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ClientCard } from "@/components/clients/ClientCard";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -92,6 +94,10 @@ const ClientsPage = () => {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [clientForDetails, setClientForDetails] = useState<Client | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchData = async () => {
     setLoading(true);
@@ -102,14 +108,12 @@ const ClientsPage = () => {
 
     if (clientsRes.error) {
       showError("Lỗi khi tải dữ liệu khách hàng.");
-      console.error(clientsRes.error);
     } else {
       setClients(clientsRes.data as Client[]);
     }
 
     if (projectsRes.error) {
       showError("Lỗi khi tải dữ liệu dự án.");
-      console.error(projectsRes.error);
     } else {
       setProjects(projectsRes.data as Project[]);
     }
@@ -204,6 +208,11 @@ const ClientsPage = () => {
   const handleOpenDeleteAlert = (client: Client) => {
     setClientToDelete(client);
     setIsDeleteAlertOpen(true);
+  };
+  
+  const handleViewDetails = (client: Client) => {
+    setClientForDetails(client);
+    setIsDetailsOpen(true);
   };
 
   const handleSaveClient = async (clientToSave: Omit<Client, 'id' | 'profiles' | 'folders'>) => {
@@ -348,61 +357,78 @@ const ClientsPage = () => {
           </div>
         </div>
 
-        <Card>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]"><Checkbox checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
-                  <TableHead>Tên Client</TableHead>
-                  <TableHead>Người liên hệ</TableHead>
-                  <TableHead>Giá trị hợp đồng</TableHead>
-                  <TableHead>Ngành</TableHead>
-                  <TableHead>Người tạo</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Hành động</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
-                ) : (
-                  filteredClients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
-                      <TableCell>
-                        <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
-                          <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
-                            <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          {client.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{client.contact_person}</TableCell>
-                      <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
-                      <TableCell>{client.industry}</TableCell>
-                      <TableCell>{client.created_by}</TableCell>
-                      <TableCell>{formatDate(client.creation_date)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" asChild>
-                            <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4 text-blue-600" /></Link>
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(client)}>
-                            <Pen className="h-4 w-4 text-green-600" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(client)}>
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        {isMobile ? (
+          <div className="space-y-4">
+            {loading ? (
+              <p>Đang tải...</p>
+            ) : (
+              filteredClients.map((client) => (
+                <ClientCard
+                  key={client.id}
+                  client={client}
+                  contractValue={formatCurrency(clientContractValues.get(client.id) || 0)}
+                  onViewDetails={handleViewDetails}
+                />
+              ))
+            )}
           </div>
-        </Card>
+        ) : (
+          <Card>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px]"><Checkbox checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
+                    <TableHead>Tên Client</TableHead>
+                    <TableHead>Người liên hệ</TableHead>
+                    <TableHead>Giá trị hợp đồng</TableHead>
+                    <TableHead>Ngành</TableHead>
+                    <TableHead>Người tạo</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
+                  ) : (
+                    filteredClients.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
+                        <TableCell>
+                          <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
+                            <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
+                              <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            {client.name}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{client.contact_person}</TableCell>
+                        <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
+                        <TableCell>{client.industry}</TableCell>
+                        <TableCell>{client.created_by}</TableCell>
+                        <TableCell>{formatDate(client.creation_date)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" asChild>
+                              <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4 text-blue-600" /></Link>
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(client)}>
+                              <Pen className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(client)}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        )}
       </div>
 
       <ClientFormDialog
@@ -410,6 +436,11 @@ const ClientsPage = () => {
         onOpenChange={setIsFormOpen}
         onSave={handleSaveClient}
         client={clientToEdit}
+      />
+      <ClientDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        client={clientForDetails}
       />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>

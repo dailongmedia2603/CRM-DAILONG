@@ -23,7 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -56,6 +55,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Edit,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
@@ -66,7 +66,10 @@ import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfToday } from 'date-fns';
 import { useAuth } from "@/context/AuthProvider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ProjectCardMobile } from "@/components/projects/ProjectCardMobile";
+import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 
 const ProjectsPage = () => {
   const { session } = useAuth();
@@ -87,6 +90,10 @@ const ProjectsPage = () => {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  
+  const isMobile = useIsMobile();
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [projectForDetails, setProjectForDetails] = useState<Project | null>(null);
 
   const fetchData = async () => {
     if (!session) return;
@@ -200,6 +207,11 @@ const ProjectsPage = () => {
   const handleOpenAcceptanceDialog = (project: Project) => {
     setProjectToComplete(project);
     setIsAcceptanceOpen(true);
+  };
+  
+  const handleViewDetails = (project: Project) => {
+    setProjectForDetails(project);
+    setIsDetailsOpen(true);
   };
 
   const handleConfirmCompletion = async (link: string) => {
@@ -333,169 +345,178 @@ const ProjectsPage = () => {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Tên dự án</TableHead>
-                    <TableHead>Link</TableHead>
-                    <TableHead>Thời gian</TableHead>
-                    <TableHead>Nhân sự</TableHead>
-                    <TableHead>Giá trị HĐ</TableHead>
-                    <TableHead>Đã thanh toán</TableHead>
-                    <TableHead>Công nợ</TableHead>
-                    <TableHead>Tiến độ TT</TableHead>
-                    <TableHead>Nghiệm thu</TableHead>
-                    <TableHead>Tiến độ</TableHead>
-                    <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
-                  paginatedProjects.map(project => {
-                    const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
-                    const debt = project.contract_value - totalPaid;
-                    const isOverdue = project.status === 'overdue';
-                    const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
-
-                    return (
-                    <TableRow key={project.id} className="text-xs">
-                      <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
-                      <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
-                      <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
-                      <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
-                      <TableCell className={cn(isOverdue && "text-red-600")}>
-                        <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
-                        <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
-                        {isOverdue && (
-                          <div className="flex items-center font-bold mt-1">
-                            <AlertCircleIcon className="h-4 w-4 mr-1" />
-                            <span>Trễ {overdueDays} ngày</span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {(project.team || []).map((member, index) => (
-                            <div key={index}>{member.role}: {member.name}</div>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatCurrency(project.contract_value)}</TableCell>
-                      <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
-                      <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {(project.payments || []).map((payment, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <span>{formatCurrency(payment.amount)}</span>
-                              <CheckCircle className={cn("h-4 w-4 cursor-pointer", payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400")} onClick={() => handleTogglePaymentStatus(project.id, index)} />
-                            </div>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {project.acceptance_link ? (
-                          <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a>
-                        ) : (
-                          <span>N/A</span>
-                        )}
-                      </TableCell>
-                      <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
-                      <TableCell className="text-right px-2">
-                        <div className="flex items-center justify-end gap-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenAcceptanceDialog(project)}>
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenEditDialog(project)}>
-                            <Edit className="h-4 w-4 text-blue-600" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(project)}>
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
+        {isMobile ? (
+          <div className="space-y-4">
+            {loading ? <p>Đang tải...</p> : paginatedProjects.map(project => (
+              <ProjectCardMobile key={project.id} project={project} onViewDetails={handleViewDetails} />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[40px] px-2"><Checkbox checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Tên dự án</TableHead>
+                      <TableHead>Link</TableHead>
+                      <TableHead>Thời gian</TableHead>
+                      <TableHead>Nhân sự</TableHead>
+                      <TableHead>Giá trị HĐ</TableHead>
+                      <TableHead>Đã thanh toán</TableHead>
+                      <TableHead>Công nợ</TableHead>
+                      <TableHead>Tiến độ TT</TableHead>
+                      <TableHead>Nghiệm thu</TableHead>
+                      <TableHead>Tiến độ</TableHead>
+                      <TableHead className="text-right w-[80px] px-2">Thao tác</TableHead>
                     </TableRow>
-                  )})}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex items-center justify-end space-x-2 p-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {selectedProjects.length} của {filteredProjects.length} dòng được chọn.
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
+                    paginatedProjects.map(project => {
+                      const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+                      const debt = project.contract_value - totalPaid;
+                      const isOverdue = project.status === 'overdue';
+                      const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
+
+                      return (
+                      <TableRow key={project.id} className="text-xs">
+                        <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
+                        <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
+                        <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
+                        <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
+                        <TableCell className={cn(isOverdue && "text-red-600")}>
+                          <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
+                          <div><span className="font-bold">Kết thúc:</span> {formatDate(project.end_date)}</div>
+                          {isOverdue && (
+                            <div className="flex items-center font-bold mt-1">
+                              <AlertCircleIcon className="h-4 w-4 mr-1" />
+                              <span>Trễ {overdueDays} ngày</span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {(project.team || []).map((member, index) => (
+                              <div key={index}>{member.role}: {member.name}</div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatCurrency(project.contract_value)}</TableCell>
+                        <TableCell className="text-green-600 font-medium">{formatCurrency(totalPaid)}</TableCell>
+                        <TableCell className={cn(debt > 0 ? "text-red-600" : "text-green-600")}>{formatCurrency(debt)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {(project.payments || []).map((payment, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <span>{formatCurrency(payment.amount)}</span>
+                                <CheckCircle className={cn("h-4 w-4 cursor-pointer", payment.paid ? "text-green-500" : "text-gray-300 hover:text-gray-400")} onClick={() => handleTogglePaymentStatus(project.id, index)} />
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {project.acceptance_link ? (
+                            <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a>
+                          ) : (
+                            <span>N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell><Badge variant="outline" className={cn({"bg-cyan-100 text-cyan-800 border-cyan-200": project.status === "in-progress", "bg-green-100 text-green-800 border-green-200": project.status === "completed", "bg-amber-100 text-amber-800 border-amber-200": project.status === "planning", "bg-red-100 text-red-800 border-red-200": project.status === "overdue"})}>{statusTextMap[project.status]}</Badge></TableCell>
+                        <TableCell className="text-right px-2">
+                          <div className="flex items-center justify-end gap-0">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenAcceptanceDialog(project)}>
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenEditDialog(project)}>
+                              <Edit className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(project)}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )})}
+                  </TableBody>
+                </Table>
               </div>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">Số dòng mỗi trang</p>
-                <Select
-                  value={`${pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    setPagination(prev => ({ ...prev, pageSize: Number(value) }));
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {[20, 50, 100].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="0">Tất cả</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-end space-x-2 p-4">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  {selectedProjects.length} của {filteredProjects.length} dòng được chọn.
+                </div>
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">Số dòng mỗi trang</p>
+                  <Select
+                    value={`${pagination.pageSize}`}
+                    onValueChange={(value) => {
+                      setPagination(prev => ({ ...prev, pageSize: Number(value) }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[20, 50, 100].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="0">Tất cả</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                  Trang {pagination.pageIndex + 1} của {pageCount}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+                    disabled={pagination.pageIndex === 0}
+                  >
+                    <span className="sr-only">Go to first page</span>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                    disabled={pagination.pageIndex === 0}
+                  >
+                    <span className="sr-only">Go to previous page</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                    disabled={pagination.pageIndex >= pageCount - 1}
+                  >
+                    <span className="sr-only">Go to next page</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 lg:flex"
+                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
+                    disabled={pagination.pageIndex >= pageCount - 1}
+                  >
+                    <span className="sr-only">Go to last page</span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                Trang {pagination.pageIndex + 1} của {pageCount}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-                  disabled={pagination.pageIndex === 0}
-                >
-                  <span className="sr-only">Go to first page</span>
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                  disabled={pagination.pageIndex === 0}
-                >
-                  <span className="sr-only">Go to previous page</span>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                  disabled={pagination.pageIndex >= pageCount - 1}
-                >
-                  <span className="sr-only">Go to next page</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-                  disabled={pagination.pageIndex >= pageCount - 1}
-                >
-                  <span className="sr-only">Go to last page</span>
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
       <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
       <AcceptanceDialog open={isAcceptanceOpen} onOpenChange={setIsAcceptanceOpen} onConfirm={handleConfirmCompletion} />
+      <ProjectDetailsDialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen} project={projectForDetails} />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader>
