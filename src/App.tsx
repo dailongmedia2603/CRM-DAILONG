@@ -21,7 +21,13 @@ import LoginPage from "./pages/auth/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NoAccessPage from "./pages/NoAccess";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   return (
