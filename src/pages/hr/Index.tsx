@@ -169,7 +169,7 @@ const HRPage = () => {
             <Can I="permissions.view"><TabsTrigger value="permissions">Phân quyền</TabsTrigger></Can>
           </TabsList>
           <TabsContent value="list" className="mt-6 space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <HRStatsCard icon={Users} title="Tổng số Nhân sự" value={stats.total.toString()} subtitle="Tổng số nhân viên" iconBgColor="bg-blue-500" />
               <HRStatsCard icon={UserCheck} title="Đang hoạt động" value={stats.active.toString()} subtitle="Nhân viên đang làm việc" iconBgColor="bg-green-500" />
               <HRStatsCard icon={UserX} title="Ngừng hoạt động" value={stats.inactive.toString()} subtitle="Nhân viên đã nghỉ" iconBgColor="bg-gray-500" />

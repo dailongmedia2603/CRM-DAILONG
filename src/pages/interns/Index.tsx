@@ -329,7 +329,7 @@ const InternsPage = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" onClick={() => setStatusFilter('all')} isActive={statusFilter === 'all'} />
           <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" onClick={() => setStatusFilter('Đang làm')} isActive={statusFilter === 'Đang làm'} />
           <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" onClick={() => setStatusFilter('Hoàn thành')} isActive={statusFilter === 'Hoàn thành'} />

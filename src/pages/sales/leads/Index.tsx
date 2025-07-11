@@ -338,7 +338,7 @@ const LeadsPage = () => {
           <p className="text-muted-foreground">Quản lý và theo dõi các lead tiềm năng</p>
         </div>
         
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
           <LeadStatsCard title="Tổng Lead" value={stats.totalLeads.toString()} icon={Users} />
           <LeadStatsCard title="Giá trị hợp đồng" value={stats.contractValue.toString()} icon={FileCheck} variant="success" />
           <LeadStatsCard title="Lead tiềm năng" value={stats.potentialLeads.toString()} icon={Briefcase} variant="primary" />

@@ -35,12 +35,12 @@ export const ProjectStatsCard = ({
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
-              <Icon className="h-6 w-6 text-white" />
+            <div className={cn("p-2 md:p-3 rounded-lg mr-2 md:mr-4", iconBgColor)}>
+              <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{title}</p>
-              <p className="text-2xl font-bold">{value}</p>
+              <p className="text-xl md:text-2xl font-bold">{value}</p>
               <p className="text-xs text-muted-foreground">{description}</p>
             </div>
           </div>
