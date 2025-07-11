@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -41,8 +40,7 @@ interface MainLayoutProps {
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
-  const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -62,8 +60,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out border-r border-gray-200",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          isMobile ? "lg:translate-x-0" : ""
+          "lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
@@ -78,11 +76,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="text-xs text-gray-500">Professional Edition</div>
               </div>
             </div>
-            {isMobile && (
-              <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-gray-500 hover:text-gray-700">
-                <X className="h-5 w-5" />
-              </Button>
-            )}
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-gray-500 hover:text-gray-700">
+              <X className="h-5 w-5" />
+            </Button>
           </div>
 
           {/* Navigation */}
@@ -142,18 +138,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div 
         className={cn(
           "flex-1 flex flex-col transition-all duration-300 ease-in-out",
-          sidebarOpen ? "lg:ml-64" : "ml-0"
+          "lg:ml-64"
         )}
       >
         {/* Header */}
         <header className="bg-white shadow-sm z-10 border-b border-gray-200">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center space-x-4">
-              {!sidebarOpen && (
-                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-gray-500 hover:text-gray-700">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              )}
+              <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-gray-500 hover:text-gray-700">
+                <Menu className="h-5 w-5" />
+              </Button>
               
               {/* Search Bar */}
               <div className="relative hidden md:block">
@@ -235,7 +229,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {children}
         </main>
       </div>

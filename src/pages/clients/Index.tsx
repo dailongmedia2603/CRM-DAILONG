@@ -292,9 +292,9 @@ const ClientsPage = () => {
           <ClientStatsCard icon={FileText} title="Giá trị HĐ tháng" value={stats.valueThisMonth} subtitle="Tháng này" iconBgColor="bg-orange-500" />
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-            <div className="relative flex-grow w-full">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm client..."
@@ -304,7 +304,7 @@ const ClientsPage = () => {
               />
             </div>
             <Select value={creatorFilter} onValueChange={setCreatorFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Tất cả người tạo" />
               </SelectTrigger>
               <SelectContent>
@@ -314,32 +314,34 @@ const ClientsPage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowArchived(!showArchived)} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)} className="w-full md:w-auto">
               {showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
               {showArchived ? "Client hoạt động" : "Client lưu trữ"}
             </Button>
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-            {selectedClients.length > 0 && (
-              <>
-                {showArchived ? (
-                  <Button variant="outline" onClick={handleBulkRestore}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Khôi phục ({selectedClients.length})
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div className="flex items-center gap-2">
+              {selectedClients.length > 0 && (
+                <>
+                  {showArchived ? (
+                    <Button variant="outline" size="sm" onClick={handleBulkRestore}>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Khôi phục ({selectedClients.length})
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleBulkArchive}>
+                      <Archive className="mr-2 h-4 w-4" />
+                      Lưu trữ ({selectedClients.length})
+                    </Button>
+                  )}
+                  <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleteAlertOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Xóa ({selectedClients.length})
                   </Button>
-                ) : (
-                  <Button variant="outline" onClick={handleBulkArchive}>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Lưu trữ ({selectedClients.length})
-                  </Button>
-                )}
-                <Button variant="destructive" onClick={() => setIsBulkDeleteAlertOpen(true)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Xóa ({selectedClients.length})
-                </Button>
-              </>
-            )}
-            <Button onClick={handleOpenAddDialog} className="bg-blue-600 hover:bg-blue-700">
+                </>
+              )}
+            </div>
+            <Button onClick={handleOpenAddDialog} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
               <PlusCircle className="mr-2 h-4 w-4" />
               Thêm Client
             </Button>
