@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -129,7 +128,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <MadeWithDyad />
           </div>
         </div>
       </div>
