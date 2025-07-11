@@ -94,40 +94,40 @@ export const ClientFormDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Tên Client</Label>
-              <Input id="name" name="name" value={formData.name || ""} onChange={handleChange} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="name">Tên Client</Label>
+              <Input id="name" name="name" value={formData.name || ""} onChange={handleChange} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contact_person" className="text-right">Người liên hệ</Label>
-              <Input id="contact_person" name="contact_person" value={formData.contact_person || ""} onChange={handleChange} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="contact_person">Người liên hệ</Label>
+              <Input id="contact_person" name="contact_person" value={formData.contact_person || ""} onChange={handleChange} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">Email</Label>
-              <Input id="email" name="email" type="email" value={formData.email || ""} onChange={handleChange} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" value={formData.email || ""} onChange={handleChange} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="invoice_email" className="text-right">Mail hóa đơn</Label>
-              <Input id="invoice_email" name="invoice_email" type="email" value={formData.invoice_email || ""} onChange={handleChange} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="invoice_email">Mail hóa đơn</Label>
+              <Input id="invoice_email" name="invoice_email" type="email" value={formData.invoice_email || ""} onChange={handleChange} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="industry" className="text-right">Ngành</Label>
-              <Input id="industry" name="industry" value={formData.industry || ""} onChange={handleChange} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="industry">Ngành</Label>
+              <Input id="industry" name="industry" value={formData.industry || ""} onChange={handleChange} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="classification" className="text-right">Phân loại</Label>
+            <div className="space-y-2">
+              <Label htmlFor="classification">Phân loại</Label>
               <Select value={formData.classification} onValueChange={(value) => handleSelectChange("classification", value)}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn phân loại" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Chọn phân loại" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cá nhân">Cá nhân</SelectItem>
                   <SelectItem value="Doanh nghiệp">Doanh nghiệp</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="source" className="text-right">Nguồn</Label>
+            <div className="space-y-2">
+              <Label htmlFor="source">Nguồn</Label>
               <Select value={formData.source} onValueChange={(value) => handleSelectChange("source", value)}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn nguồn" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Chọn nguồn" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Facebook Ads">Facebook Ads</SelectItem>
                   <SelectItem value="TikTok">TikTok</SelectItem>

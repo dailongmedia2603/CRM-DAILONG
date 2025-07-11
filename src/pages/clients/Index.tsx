@@ -292,19 +292,19 @@ const ClientsPage = () => {
           <ClientStatsCard icon={FileText} title="Giá trị HĐ tháng" value={stats.valueThisMonth} subtitle="Tháng này" iconBgColor="bg-orange-500" />
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="relative">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+            <div className="relative flex-grow w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm client..."
-                className="pl-8 w-64"
+                className="pl-8 w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Select value={creatorFilter} onValueChange={setCreatorFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Tất cả người tạo" />
               </SelectTrigger>
               <SelectContent>
@@ -314,12 +314,12 @@ const ClientsPage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)} className="w-full sm:w-auto">
               {showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
               {showArchived ? "Client hoạt động" : "Client lưu trữ"}
             </Button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             {selectedClients.length > 0 && (
               <>
                 {showArchived ? (
@@ -347,57 +347,59 @@ const ClientsPage = () => {
         </div>
 
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]"><Checkbox checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
-                <TableHead>Tên Client</TableHead>
-                <TableHead>Người liên hệ</TableHead>
-                <TableHead>Giá trị hợp đồng</TableHead>
-                <TableHead>Ngành</TableHead>
-                <TableHead>Người tạo</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead>Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
-              ) : (
-                filteredClients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
-                    <TableCell>
-                      <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
-                        <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
-                          <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        {client.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{client.contact_person}</TableCell>
-                    <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
-                    <TableCell>{client.industry}</TableCell>
-                    <TableCell>{client.created_by}</TableCell>
-                    <TableCell>{formatDate(client.creation_date)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" asChild>
-                          <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4 text-blue-600" /></Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(client)}>
-                          <Pen className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(client)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]"><Checkbox checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} onCheckedChange={handleSelectAll} /></TableHead>
+                  <TableHead>Tên Client</TableHead>
+                  <TableHead>Người liên hệ</TableHead>
+                  <TableHead>Giá trị hợp đồng</TableHead>
+                  <TableHead>Ngành</TableHead>
+                  <TableHead>Người tạo</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
+                  <TableHead>Hành động</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
+                ) : (
+                  filteredClients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell><Checkbox checked={selectedClients.includes(client.id)} onCheckedChange={(checked) => handleSelectRow(client.id, !!checked)} /></TableCell>
+                      <TableCell>
+                        <Link to={`/clients/${client.id}`} className="flex items-center hover:underline">
+                          <Avatar className="h-8 w-8 mr-3 bg-blue-100 text-blue-600">
+                            <AvatarFallback>{client.name.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          {client.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{client.contact_person}</TableCell>
+                      <TableCell>{formatCurrency(clientContractValues.get(client.id) || 0)}</TableCell>
+                      <TableCell>{client.industry}</TableCell>
+                      <TableCell>{client.created_by}</TableCell>
+                      <TableCell>{formatDate(client.creation_date)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" asChild>
+                            <Link to={`/clients/${client.id}`}><Eye className="h-4 w-4 text-blue-600" /></Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(client)}>
+                            <Pen className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(client)}>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       </div>
 

@@ -155,35 +155,35 @@ export const ProjectFormDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="client" className="text-right">Client</Label>
+            <div className="space-y-2">
+              <Label htmlFor="client">Client</Label>
               <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn client" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Chọn client" /></SelectTrigger>
                 <SelectContent>{clients.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Tên dự án</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="name">Tên dự án</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="link" className="text-right">Link</Label>
-              <Input id="link" type="url" value={link} onChange={(e) => setLink(e.target.value)} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="link">Link</Label>
+              <Input id="link" type="url" value={link} onChange={(e) => setLink(e.target.value)} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contract_value" className="text-right">Giá trị HĐ</Label>
-              <Input id="contract_value" value={formatCurrency(contractValue)} onChange={(e) => setContractValue(e.target.value)} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="contract_value">Giá trị HĐ</Label>
+              <Input id="contract_value" value={formatCurrency(contractValue)} onChange={(e) => setContractValue(e.target.value)} />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Thời gian</Label>
-              <div className="col-span-3 grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <Label>Thời gian</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Thanh toán</Label>
-              <div className="col-span-3 space-y-2">
+            <div className="space-y-2">
+              <Label>Thanh toán</Label>
+              <div className="space-y-2">
                 {payments.map((payment, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Label htmlFor={`payment-${index}`} className="min-w-[50px]">Đợt {index + 1}</Label>
@@ -194,17 +194,17 @@ export const ProjectFormDialog = ({
                 <Button type="button" variant="outline" size="sm" onClick={handleAddPayment}><PlusCircle className="h-4 w-4 mr-2" />Thêm đợt</Button>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Nhân sự</Label>
-              <div className="col-span-3 space-y-2">
+            <div className="space-y-2">
+              <Label>Nhân sự</Label>
+              <div className="space-y-2">
                 {team.map((member, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
                     <Select value={member.role} onValueChange={(value) => handleTeamChange(index, 'role', value)}>
-                      <SelectTrigger className="w-[120px]"><SelectValue placeholder="Vai trò" /></SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-[120px]"><SelectValue placeholder="Vai trò" /></SelectTrigger>
                       <SelectContent><SelectItem value="Account">Account</SelectItem><SelectItem value="Content">Content</SelectItem><SelectItem value="Seeder">Seeder</SelectItem><SelectItem value="Sale">Sale</SelectItem></SelectContent>
                     </Select>
                     <Select value={member.id} onValueChange={(value) => handleTeamChange(index, 'id', value)}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Chọn nhân sự" /></SelectTrigger>
+                      <SelectTrigger className="flex-1 w-full"><SelectValue placeholder="Chọn nhân sự" /></SelectTrigger>
                       <SelectContent>{getPersonnelForRole(member.role).map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTeamMember(index)}><Trash2 className="h-4 w-4" /></Button>
@@ -213,10 +213,10 @@ export const ProjectFormDialog = ({
                 <Button type="button" variant="outline" size="sm" onClick={handleAddTeamMember}><PlusCircle className="h-4 w-4 mr-2" />Thêm nhân sự</Button>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">Tiến độ</Label>
+            <div className="space-y-2">
+              <Label htmlFor="status">Tiến độ</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="col-span-3"><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="planning">Pending</SelectItem>
                   <SelectItem value="in-progress">Đang chạy</SelectItem>

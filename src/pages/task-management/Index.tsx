@@ -225,9 +225,9 @@ const TasksManagementPage = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div><h1 className="text-2xl font-bold">Quản lý Công việc</h1><p className="text-muted-foreground">Quản lý công việc nội bộ của agency.</p></div>
-          <Popover><PopoverTrigger asChild><Button variant="outline"><CalendarIcon className="mr-2 h-4 w-4" />{dateFilter ? format(dateFilter, "dd/MM/yyyy") : "Chọn ngày"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} /></PopoverContent></Popover>
+          <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full sm:w-auto"><CalendarIcon className="mr-2 h-4 w-4" />{dateFilter ? format(dateFilter, "dd/MM/yyyy") : "Chọn ngày"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} /></PopoverContent></Popover>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -239,14 +239,14 @@ const TasksManagementPage = () => {
           <TaskStatsCard title="Ưu tiên Thấp" value={stats.low.toString()} subtitle="Làm sau" icon={ChevronDown} iconBgColor="bg-gray-500" onClick={() => handleStatClick('priority', 'Thấp')} isActive={priorityFilter === 'Thấp'} />
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="Chưa làm">Chưa làm</SelectItem><SelectItem value="Đang làm">Đang làm</SelectItem><SelectItem value="Hoàn thành">Hoàn thành</SelectItem></SelectContent></Select>
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}><SelectTrigger className="w-[150px]"><SelectValue placeholder="Ưu tiên" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả ưu tiên</SelectItem><SelectItem value="Cao">Cao</SelectItem><SelectItem value="Trung bình">Trung bình</SelectItem><SelectItem value="Thấp">Thấp</SelectItem></SelectContent></Select>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
+            <div className="relative flex-grow w-full"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="Chưa làm">Chưa làm</SelectItem><SelectItem value="Đang làm">Đang làm</SelectItem><SelectItem value="Hoàn thành">Hoàn thành</SelectItem></SelectContent></Select>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}><SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="Ưu tiên" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả ưu tiên</SelectItem><SelectItem value="Cao">Cao</SelectItem><SelectItem value="Trung bình">Trung bình</SelectItem><SelectItem value="Thấp">Thấp</SelectItem></SelectContent></Select>
             {selectedTasks.length > 0 && (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button variant="outline">Thao tác hàng loạt ({selectedTasks.length})</Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button variant="outline" className="w-full sm:w-auto">Thao tác ({selectedTasks.length})</Button></DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => handleBulkAction(showArchived ? 'restore' : 'archive')}>
                     {showArchived ? <RotateCcw className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
@@ -257,14 +257,14 @@ const TasksManagementPage = () => {
               </DropdownMenu>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Lưu trữ"}</Button>
-            <Button variant="outline" onClick={() => setShowCompleted(!showCompleted)}>{showCompleted ? <><ArrowLeft className="mr-2 h-4 w-4" />Trở về</> : <><List className="mr-2 h-4 w-4" />CV Hoàn thành</>}</Button>
-            <Button onClick={() => openDialog('form')} disabled={loading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm công việc</Button>
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Hoạt động" : "Lưu trữ"}</Button>
+            <Button variant="outline" onClick={() => setShowCompleted(!showCompleted)}>{showCompleted ? <><ArrowLeft className="mr-2 h-4 w-4" />Trở về</> : <><List className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>
+            <Button onClick={() => openDialog('form')} disabled={loading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm</Button>
           </div>
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
             <TableBody>

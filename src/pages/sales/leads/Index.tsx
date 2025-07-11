@@ -382,7 +382,7 @@ const LeadsPage = () => {
         <Card>
           <CardHeader className="pb-2"><CardTitle>Danh sách Lead</CardTitle></CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
                 <TableBody>

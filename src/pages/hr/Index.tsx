@@ -160,9 +160,9 @@ const HRPage = () => {
         </div>
 
         <Tabs defaultValue="list" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="list">Danh sách nhân sự</TabsTrigger>
-            <TabsTrigger value="config">Cấu hình vị trí</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
+            <TabsTrigger value="list">Danh sách</TabsTrigger>
+            <TabsTrigger value="config">Cấu hình</TabsTrigger>
             <Can I="permissions.view"><TabsTrigger value="permissions">Phân quyền</TabsTrigger></Can>
           </TabsList>
           <TabsContent value="list" className="mt-6 space-y-6">
@@ -172,13 +172,13 @@ const HRPage = () => {
               <HRStatsCard icon={UserX} title="Ngừng hoạt động" value={stats.inactive.toString()} subtitle="Nhân viên đã nghỉ" iconBgColor="bg-gray-500" />
             </div>
 
-            <div className="flex justify-between items-center">
-              <div className="relative w-full max-w-sm">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="relative w-full md:max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Tìm kiếm theo tên, email, vị trí..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
               <Can I="hr.create">
-                <Button onClick={handleOpenAddDialog}>
+                <Button onClick={handleOpenAddDialog} className="w-full md:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Thêm Nhân sự
                 </Button>
@@ -186,52 +186,54 @@ const HRPage = () => {
             </div>
 
             <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nhân sự</TableHead>
-                    <TableHead>Vị trí</TableHead>
-                    <TableHead>Cấp bậc</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Ngày tham gia</TableHead>
-                    <TableHead className="text-right">Hành động</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
-                  filteredPersonnel.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar><AvatarImage src={p.avatar} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
-                          <div>
-                            <div className="font-medium">{p.name}</div>
-                            <div className="text-sm text-muted-foreground">{p.email}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{p.position}</TableCell>
-                      <TableCell><Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge></TableCell>
-                      <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
-                      <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Can I="hr.edit">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(p)}>
-                              <Edit className="h-4 w-4 text-green-600" />
-                            </Button>
-                          </Can>
-                          <Can I="hr.delete">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(p)}>
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </Can>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nhân sự</TableHead>
+                      <TableHead>Vị trí</TableHead>
+                      <TableHead>Cấp bậc</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Ngày tham gia</TableHead>
+                      <TableHead className="text-right">Hành động</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
+                    filteredPersonnel.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar><AvatarImage src={p.avatar} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
+                            <div>
+                              <div className="font-medium">{p.name}</div>
+                              <div className="text-sm text-muted-foreground">{p.email}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{p.position}</TableCell>
+                        <TableCell><Badge variant="outline" className={cn("capitalize", getRoleBadge(p.role))}>{p.role}</Badge></TableCell>
+                        <TableCell><Badge variant={p.status === 'active' ? 'default' : 'secondary'} className={cn("capitalize", p.status === 'active' ? 'bg-green-500' : '')}>{p.status === 'active' ? 'Hoạt động' : 'Ngừng'}</Badge></TableCell>
+                        <TableCell>{new Date(p.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Can I="hr.edit">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(p)}>
+                                <Edit className="h-4 w-4 text-green-600" />
+                              </Button>
+                            </Can>
+                            <Can I="hr.delete">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteAlert(p)}>
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </Can>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </Card>
           </TabsContent>
           <TabsContent value="config" className="mt-6">

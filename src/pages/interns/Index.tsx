@@ -316,12 +316,12 @@ const InternsPage = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Giao việc thực tập sinh</h1>
             <p className="text-muted-foreground">Quản lý và theo dõi công việc được giao cho thực tập sinh</p>
           </div>
-          <Button className="bg-cyan-500 hover:bg-cyan-600 text-white" onClick={handleOpenAddDialog}>
+          <Button className="bg-cyan-500 hover:bg-cyan-600 text-white w-full sm:w-auto" onClick={handleOpenAddDialog}>
             <Plus className="mr-2 h-4 w-4" /> Giao việc mới
           </Button>
         </div>
@@ -333,13 +333,13 @@ const InternsPage = () => {
           <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" onClick={() => setStatusFilter('Quá hạn')} isActive={statusFilter === 'Quá hạn'} />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-          <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
+        <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
+          <div className="relative flex-1 w-full sm:w-auto"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+          <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
           
           <DropdownMenu open={isTimeFilterOpen} onOpenChange={setIsTimeFilterOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-[180px] justify-start">
+              <Button variant="outline" className="w-full sm:w-[180px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {getTimeFilterLabel()}
               </Button>
@@ -370,7 +370,7 @@ const InternsPage = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
         </div>
         
         {selectedTasks.length > 0 && (
@@ -384,101 +384,103 @@ const InternsPage = () => {
         )}
 
         <div className="rounded-lg border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
-                <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
-                <TableHead>CMT</TableHead>
-                <TableHead>POST</TableHead>
-                <TableHead>FILE</TableHead>
-                <TableHead>DEADLINE</TableHead>
-                <TableHead>NGƯỜI GIAO</TableHead>
-                <TableHead>NGƯỜI NHẬN</TableHead>
-                <TableHead>TRẠNG THÁI</TableHead>
-                <TableHead>HÀNH ĐỘNG</TableHead>
-                <TableHead>THAO TÁC</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
-              paginatedTasks.map(task => {
-                const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
-                const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
-                const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
-                const displayStatus = isOverdue ? 'Quá hạn' : task.status;
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                  <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead>
+                  <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
+                  <TableHead>CMT</TableHead>
+                  <TableHead>POST</TableHead>
+                  <TableHead>FILE</TableHead>
+                  <TableHead>DEADLINE</TableHead>
+                  <TableHead>NGƯỜI GIAO</TableHead>
+                  <TableHead>NGƯỜI NHẬN</TableHead>
+                  <TableHead>TRẠNG THÁI</TableHead>
+                  <TableHead>HÀNH ĐỘNG</TableHead>
+                  <TableHead>THAO TÁC</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
+                paginatedTasks.map(task => {
+                  const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
+                  const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
+                  const completedLate = task.status === 'Hoàn thành' && task.completed_at && (new Date(task.completed_at) > new Date(task.deadline));
+                  const displayStatus = isOverdue ? 'Quá hạn' : task.status;
 
-                return (
-                <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
-                  <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
-                  <TableCell>
-                    <div className="max-w-xs">
-                      <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
-                      <p className="text-sm text-muted-foreground truncate">{task.description}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
-                      <ExternalLink className="h-5 w-5" />
-                    </a>
-                  </TableCell>
-                  <TableCell className={cn(isOverdue && "text-red-600")}>
-                    {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    {isOverdue && (
-                      <div className="flex items-center font-bold mt-1 text-xs">
-                        <AlertCircleIcon className="h-3 w-3 mr-1" />
-                        <span>Trễ {overdueDays} ngày</span>
+                  return (
+                  <TableRow key={task.id} className={cn(completedLate && "bg-red-50")}>
+                    <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
+                    <TableCell>
+                      <div className="max-w-xs">
+                        <p className="font-medium truncate cursor-pointer hover:underline" onClick={() => handleOpenDetailsDialog(task)}>{task.title}</p>
+                        <p className="text-sm text-muted-foreground truncate">{task.description}</p>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{task.assigner_name}</TableCell>
-                  <TableCell>{task.intern_name}</TableCell>
-                  <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
-                  <TableCell>
-                    {(() => {
-                      if (task.status === 'Hoàn thành') return null;
-                      if (isOverdue && !task.report_reason) {
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">{task.comment_count}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">
+                        <ExternalLink className="h-5 w-5" />
+                      </a>
+                    </TableCell>
+                    <TableCell className={cn(isOverdue && "text-red-600")}>
+                      {new Date(task.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {isOverdue && (
+                        <div className="flex items-center font-bold mt-1 text-xs">
+                          <AlertCircleIcon className="h-3 w-3 mr-1" />
+                          <span>Trễ {overdueDays} ngày</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{task.assigner_name}</TableCell>
+                    <TableCell>{task.intern_name}</TableCell>
+                    <TableCell><Badge className={cn("capitalize", getStatusBadgeStyle(task.status, isOverdue))}>{displayStatus}</Badge></TableCell>
+                    <TableCell>
+                      {(() => {
+                        if (task.status === 'Hoàn thành') return null;
+                        if (isOverdue && !task.report_reason) {
+                          return (
+                            <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
+                              <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                            </Button>
+                          );
+                        }
+                        const isStarted = task.status === 'Đang làm';
                         return (
-                          <Button size="sm" variant="destructive" onClick={() => handleOpenReportDialog(task)}>
-                            <FileWarning className="mr-2 h-4 w-4" /> Báo cáo
+                          <Button 
+                            size="sm" 
+                            className={cn(!isStarted ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
+                            onClick={() => handleUpdateStatus(task, !isStarted ? 'Đang làm' : 'Hoàn thành')}
+                          >
+                            {!isStarted ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
                           </Button>
                         );
-                      }
-                      const isStarted = task.status === 'Đang làm';
-                      return (
-                        <Button 
-                          size="sm" 
-                          className={cn(!isStarted ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600')}
-                          onClick={() => handleUpdateStatus(task, !isStarted ? 'Đang làm' : 'Hoàn thành')}
-                        >
-                          {!isStarted ? <><Play className="mr-2 h-4 w-4" />Bắt đầu</> : <><CheckCircle className="mr-2 h-4 w-4" />Hoàn thành</>}
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetailsDialog(task)}>
+                          <Eye className="h-4 w-4 text-blue-600" />
                         </Button>
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => handleOpenDetailsDialog(task)}>
-                        <Eye className="h-4 w-4 text-blue-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(task)}>
-                        <Edit className="h-4 w-4 text-green-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteDialog(task)}>
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )})}
-            </TableBody>
-          </Table>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100" onClick={() => handleOpenEditDialog(task)}>
+                          <Edit className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100" onClick={() => handleOpenDeleteDialog(task)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )})}
+              </TableBody>
+            </Table>
+          </div>
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
