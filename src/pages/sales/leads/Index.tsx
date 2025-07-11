@@ -122,6 +122,16 @@ const LeadsPage = () => {
     [personnel]
   );
 
+  const currentUserInfo = useMemo(() => {
+    if (session?.user && personnel.length > 0) {
+        const user = personnel.find(p => p.id === session.user.id);
+        if (user) {
+            return { id: user.id, name: user.name, isSale: user.position.toLowerCase() === 'sale' };
+        }
+    }
+    return { id: '', name: '', isSale: false };
+  }, [personnel, session]);
+
   const fetchData = async () => {
     if (!session) return;
     setLoading(true);
@@ -435,7 +445,7 @@ const LeadsPage = () => {
                 <Select
                   value={`${pagination.pageSize}`}
                   onValueChange={(value) => {
-                    setPagination(prev => ({ ...prev, pageSize: Number(value) }));
+                    setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
                   }}
                 >
                   <SelectTrigger className="h-8 w-[70px]">
@@ -499,7 +509,7 @@ const LeadsPage = () => {
       
       {selectedLead && <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLead.name} leadId={selectedLead.id} history={selectedLead.lead_history} onAddHistory={handleAddHistory} />}
       {selectedLead && <LeadDetailsDialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen} lead={selectedLead} />}
-      <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} />
+      <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} currentUser={currentUserInfo} />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>

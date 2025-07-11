@@ -25,6 +25,7 @@ interface LeadFormDialogProps {
   onSave: (leadData: any) => void;
   salesPersons: Personnel[];
   lead?: any;
+  currentUser: { id: string; name: string; isSale: boolean };
 }
 
 export const LeadFormDialog = ({
@@ -33,6 +34,7 @@ export const LeadFormDialog = ({
   onSave,
   salesPersons,
   lead,
+  currentUser,
 }: LeadFormDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -67,14 +69,14 @@ export const LeadFormDialog = ({
         name: "",
         phone: "",
         product: "",
-        created_by_id: "",
-        created_by_name: "",
+        created_by_id: currentUser.isSale ? currentUser.id : "",
+        created_by_name: currentUser.isSale ? currentUser.name : "",
         potential: "chưa xác định",
         status: "đang làm việc",
         result: "chưa quyết định",
       });
     }
-  }, [lead, open]);
+  }, [lead, open, currentUser]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

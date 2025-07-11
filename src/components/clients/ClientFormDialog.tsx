@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Client } from "@/types";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientFormDialogProps {
   open: boolean;
@@ -33,18 +35,37 @@ export const ClientFormDialog = ({
   client,
 }: ClientFormDialogProps) => {
   const [formData, setFormData] = useState<Partial<Client>>({});
+  const { session } = useAuth();
 
   useEffect(() => {
-    if (client) {
-      setFormData(client);
-    } else {
-      setFormData({ 
-        status: "active",
-        creation_date: new Date().toISOString(),
-        created_by: "Admin" // Giả định người dùng hiện tại
-      });
+    const fetchCurrentUserName = async () => {
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from('personnel')
+          .select('name')
+          .eq('id', session.user.id)
+          .single();
+        if (!error && data) {
+          return data.name;
+        }
+      }
+      return "Admin"; // Fallback
+    };
+
+    if (open) {
+      if (client) {
+        setFormData(client);
+      } else {
+        fetchCurrentUserName().then(name => {
+          setFormData({ 
+            status: "active",
+            creation_date: new Date().toISOString(),
+            created_by: name
+          });
+        });
+      }
     }
-  }, [client, open]);
+  }, [client, open, session]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
