@@ -115,7 +115,7 @@ export const AbilityProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AbilityContext.Provider value={{ permissions, can, loading }}>
-      {!loading && children}
+      {children}
     </AbilityContext.Provider>
   );
 };
