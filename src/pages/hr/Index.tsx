@@ -82,6 +82,17 @@ const HRPage = () => {
   useEffect(() => {
     fetchPersonnel();
     fetchPositions();
+    const channel = supabase.channel('public:personnel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'personnel' }, payload => {
+        console.log('Change received!', payload)
+        fetchPersonnel();
+        fetchPositions();
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, []);
 
   const handlePositionsChange = async (newPositions: string[]) => {

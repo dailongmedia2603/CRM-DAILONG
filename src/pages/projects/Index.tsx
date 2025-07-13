@@ -144,8 +144,16 @@ const ProjectsPage = () => {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchData();
+    fetchData();
+    const channel = supabase.channel('public:projects')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => {
+        console.log('Change received!', payload)
+        fetchData();
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
   }, [session]);
 

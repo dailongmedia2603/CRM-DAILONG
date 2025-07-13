@@ -123,6 +123,17 @@ const ClientsPage = () => {
 
   useEffect(() => {
     fetchData();
+
+    const channel = supabase.channel('public:clients')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => {
+        console.log('Change received!', payload)
+        fetchData();
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, []);
 
   const clientContractValues = useMemo(() => {

@@ -177,6 +177,16 @@ const LeadsPage = () => {
   useEffect(() => {
     if (session) {
       fetchData();
+      const channel = supabase.channel('public:leads')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, payload => {
+          console.log('Change received!', payload)
+          fetchData();
+        })
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     }
   }, [session]);
 
