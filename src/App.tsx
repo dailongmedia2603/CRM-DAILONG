@@ -24,7 +24,7 @@ import NoAccessPage from "./pages/NoAccess";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: false, // Giữ nguyên cài đặt này
     },
   },
 });
