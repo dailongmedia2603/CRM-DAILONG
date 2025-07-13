@@ -95,16 +95,6 @@ const InternsPage = () => {
 
   useEffect(() => {
     fetchData();
-    const channel = supabase.channel('public:intern_tasks')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'intern_tasks' }, payload => {
-        console.log('Change received!', payload)
-        fetchData();
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
   }, []);
 
   useEffect(() => {

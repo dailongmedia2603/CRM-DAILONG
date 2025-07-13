@@ -82,16 +82,6 @@ const TasksManagementPage = () => {
 
   useEffect(() => {
     fetchData();
-    const channel = supabase.channel('public:tasks')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
-        console.log('Change received!', payload)
-        fetchData();
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
   }, []);
 
   const filteredTasks = useMemo(() => {

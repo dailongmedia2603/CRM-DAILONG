@@ -22,8 +22,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // We only want to update the session on explicit sign-in or sign-out events.
+      // This prevents re-renders on token refreshes, which happen on window focus.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setSession(session);
+      }
     });
 
     return () => subscription.unsubscribe();
