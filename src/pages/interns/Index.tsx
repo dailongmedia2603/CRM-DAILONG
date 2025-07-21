@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, startOfToday, startOfWeek, subDays, differenceInDays, endOfDay, addDays, isEqual, format } from 'date-fns';
 import { DateRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
