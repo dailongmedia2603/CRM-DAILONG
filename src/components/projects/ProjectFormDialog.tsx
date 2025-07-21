@@ -196,11 +196,8 @@ export const ProjectFormDialog = ({
                           <CommandItem
                             key={client.id}
                             value={client.name}
-                            onSelect={(currentValue) => {
-                              const selectedClient = clients.find(c => c.name.toLowerCase() === currentValue);
-                              if (selectedClient) {
-                                setClientId(selectedClient.id);
-                              }
+                            onSelect={() => {
+                              setClientId(client.id);
                               setComboboxOpen(false);
                             }}
                           >
