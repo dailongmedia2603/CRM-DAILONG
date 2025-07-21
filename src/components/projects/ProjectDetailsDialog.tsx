@@ -2,7 +2,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from "@/components/ui/badge";
 import { Project } from "@/types";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { User, Calendar, Link as LinkIcon, DollarSign, CheckCircle } from "lucide-react";
 
 interface ProjectDetailsDialogProps {

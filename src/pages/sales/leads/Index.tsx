@@ -68,8 +68,6 @@ import {
   X,
   FileCheck,
   Archive,
-  RotateCcw,
-  Calendar as CalendarIcon,
   ChevronDown,
   ChevronsLeft,
   ChevronRight,
@@ -81,7 +79,7 @@ import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
 import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
 import { LeadDetailsDialog } from "@/components/sales/leads/LeadDetailsDialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { Lead, LeadHistory, Personnel } from "@/types";
+import { Lead, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, isEqual } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,10 +95,8 @@ const LeadsPage = () => {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
-  const [potentialFilter, setPotentialFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [resultFilter, setResultFilter] = useState("all");
-  const [archivedFilter, setArchivedFilter] = useState("active");
+  const [archivedFilter] = useState("active");
   const [followUpFilter, setFollowUpFilter] = useState("all");
   const [specificDateFilter, setSpecificDateFilter] = useState<Date | undefined>();
 

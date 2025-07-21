@@ -55,13 +55,12 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Edit,
-  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { AcceptanceDialog } from "@/components/projects/AcceptanceDialog";
-import { Client, Project, Personnel } from "@/types";
+import { Client, Project } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, startOfToday } from 'date-fns';

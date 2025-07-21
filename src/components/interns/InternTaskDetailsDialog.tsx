@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { InternTask } from "@/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { User, Calendar, Link as LinkIcon, FileText, Hash, BarChart, MessageSquare, CheckSquare, AlertTriangle, Play, Check, FileWarning } from "lucide-react";
+import { User, Calendar, Link as LinkIcon, FileText, Hash, AlertTriangle, Play, Check, FileWarning } from "lucide-react";
 
 interface InternTaskDetailsDialogProps {
   open: boolean;

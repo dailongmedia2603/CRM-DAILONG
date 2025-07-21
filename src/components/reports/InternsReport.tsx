@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,7 +11,6 @@ import { Link } from "react-router-dom";
 import { useInternsReport } from "@/hooks/useInternsReport";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { vi } from 'date-fns/locale';
-import { DateRange } from "react-day-picker";
 import { MessageSquare, ClipboardList, Clock, AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatsCard } from "@/components/dashboard/StatsCard";
