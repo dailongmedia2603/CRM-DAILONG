@@ -18,9 +18,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Client, Personnel } from "@/types";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Payment {
   amount: number;
@@ -58,6 +72,7 @@ export const ProjectFormDialog = ({
   const [endDate, setEndDate] = useState("");
   const [payments, setPayments] = useState<Payment[]>([{ amount: 0, paid: false }]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   useEffect(() => {
     const fetchPersonnel = async () => {
@@ -157,10 +172,52 @@ export const ProjectFormDialog = ({
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div className="space-y-2">
               <Label htmlFor="client">Client</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Chọn client" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}</SelectContent>
-              </Select>
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between"
+                  >
+                    {clientId
+                      ? clients.find((client) => client.id === clientId)?.name
+                      : "Chọn client..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Tìm kiếm client..." />
+                    <CommandList>
+                      <CommandEmpty>Không tìm thấy client.</CommandEmpty>
+                      <CommandGroup>
+                        {clients.map((client) => (
+                          <CommandItem
+                            key={client.id}
+                            value={client.name}
+                            onSelect={(currentValue) => {
+                              const selectedClient = clients.find(c => c.name.toLowerCase() === currentValue);
+                              if (selectedClient) {
+                                setClientId(selectedClient.id);
+                              }
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                clientId === client.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {client.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Tên dự án</Label>
