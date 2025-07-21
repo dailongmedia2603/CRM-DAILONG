@@ -21,10 +21,12 @@ import LoginPage from "./pages/auth/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NoAccessPage from "./pages/NoAccess";
 
+// Tạo một QueryClient và tắt tính năng refetchOnWindowFocus
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // Giữ nguyên cài đặt này
+      refetchOnWindowFocus: false, // Tắt tính năng tự động tải lại khi focus vào cửa sổ
+      retry: false, // Cũng có thể tắt tự động thử lại để tránh các lần fetch không mong muốn
     },
   },
 });
