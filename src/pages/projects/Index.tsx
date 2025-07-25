@@ -60,21 +60,18 @@ import { cn } from "@/lib/utils";
 import { ProjectStatsCard } from "@/components/projects/ProjectStatsCard";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { AcceptanceDialog } from "@/components/projects/AcceptanceDialog";
-import { Client, Project } from "@/types";
+import { Project } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
-import { differenceInDays, startOfToday } from 'date-fns';
-import { useAuth } from "@/context/AuthProvider";
+import { differenceInDays } from 'date-fns';
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProjectCardMobile } from "@/components/projects/ProjectCardMobile";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
+import { useProjects } from "@/hooks/useProjects";
 
 const ProjectsPage = () => {
-  const { session } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, clients, isLoading, invalidateProjects } = useProjects();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [showArchived, setShowArchived] = useState(false);
@@ -93,60 +90,6 @@ const ProjectsPage = () => {
   const isMobile = useIsMobile();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [projectForDetails, setProjectForDetails] = useState<Project | null>(null);
-
-  const fetchData = async () => {
-    if (!session) return;
-    setLoading(true);
-
-    const { data: userPersonnel, error: userError } = await supabase
-      .from('personnel')
-      .select('role, id')
-      .eq('id', session.user.id)
-      .single();
-
-    if (userError) {
-      showError("Không thể tải thông tin người dùng.");
-      setLoading(false);
-      return;
-    }
-
-    let projectsQuery = supabase
-      .from("projects")
-      .select("*")
-      .order('created_at', { ascending: false });
-
-    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
-      projectsQuery = projectsQuery.filter('team', 'cs', `[{"id":"${session.user.id}"}]`);
-    }
-
-    const [projectsRes, clientsRes] = await Promise.all([
-      projectsQuery,
-      supabase.from("clients").select("id, company_name, name"),
-    ]);
-
-    if (projectsRes.error) showError("Lỗi khi tải dữ liệu dự án.");
-    else {
-      const updatedProjects = projectsRes.data.map(p => {
-        const endDate = p.end_date ? new Date(p.end_date) : null;
-        if (endDate && endDate < startOfToday() && p.status !== 'completed') {
-          return { ...p, status: 'overdue' };
-        }
-        return p;
-      });
-      setProjects(updatedProjects as Project[]);
-    }
-
-    if (clientsRes.error) showError("Lỗi khi tải dữ liệu khách hàng.");
-    else setClients(clientsRes.data as Client[]);
-    
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
 
   const statusTextMap: { [key: string]: string } = {
     planning: "Pending",
@@ -223,7 +166,7 @@ const ProjectsPage = () => {
     if (error) showError("Lỗi khi hoàn thành dự án.");
     else showSuccess("Dự án đã được hoàn thành!");
     
-    fetchData();
+    invalidateProjects();
     setIsAcceptanceOpen(false);
     setProjectToComplete(null);
   };
@@ -243,7 +186,7 @@ const ProjectsPage = () => {
       if (error) showError("Lỗi khi thêm dự án mới.");
       else showSuccess("Dự án mới đã được thêm!");
     }
-    fetchData();
+    invalidateProjects();
     setIsFormOpen(false);
   };
 
@@ -252,7 +195,7 @@ const ProjectsPage = () => {
     const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
     if (error) showError("Lỗi khi xóa dự án.");
     else showSuccess("Dự án đã được xóa.");
-    fetchData();
+    invalidateProjects();
     setIsDeleteAlertOpen(false);
     setProjectToDelete(null);
   };
@@ -264,7 +207,7 @@ const ProjectsPage = () => {
     newPayments[paymentIndex].paid = !newPayments[paymentIndex].paid;
     const { error } = await supabase.from('projects').update({ payments: newPayments }).eq('id', projectId);
     if (error) showError("Lỗi khi cập nhật thanh toán.");
-    else fetchData();
+    else invalidateProjects();
   };
 
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
@@ -275,7 +218,7 @@ const ProjectsPage = () => {
     if (error) showError("Lỗi khi lưu trữ dự án.");
     else {
       showSuccess(`${selectedProjects.length} dự án đã được lưu trữ.`);
-      fetchData();
+      invalidateProjects();
       setSelectedProjects([]);
     }
   };
@@ -285,7 +228,7 @@ const ProjectsPage = () => {
     if (error) showError("Lỗi khi khôi phục dự án.");
     else {
       showSuccess(`${selectedProjects.length} dự án đã được khôi phục.`);
-      fetchData();
+      invalidateProjects();
       setSelectedProjects([]);
     }
   };
@@ -295,7 +238,7 @@ const ProjectsPage = () => {
     if (error) showError("Lỗi khi xóa dự án.");
     else {
       showSuccess(`${selectedProjects.length} dự án đã được xóa vĩnh viễn.`);
-      fetchData();
+      invalidateProjects();
       setSelectedProjects([]);
     }
     setIsBulkDeleteAlertOpen(false);
@@ -346,7 +289,7 @@ const ProjectsPage = () => {
 
         {isMobile ? (
           <div className="space-y-4">
-            {loading ? <p>Đang tải...</p> : paginatedProjects.map(project => (
+            {isLoading ? <p>Đang tải...</p> : paginatedProjects.map(project => (
               <ProjectCardMobile key={project.id} project={project} onViewDetails={handleViewDetails} />
             ))}
           </div>
@@ -373,12 +316,12 @@ const ProjectsPage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
+                    {isLoading ? <TableRow><TableCell colSpan={13} className="text-center">Đang tải...</TableCell></TableRow> :
                     paginatedProjects.map(project => {
                       const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
                       const debt = project.contract_value - totalPaid;
                       const isOverdue = project.status === 'overdue';
-                      const overdueDays = isOverdue && project.end_date ? differenceInDays(startOfToday(), new Date(project.end_date)) : 0;
+                      const overdueDays = isOverdue && project.end_date ? differenceInDays(new Date(), new Date(project.end_date)) : 0;
 
                       return (
                       <TableRow key={project.id} className="text-xs">
