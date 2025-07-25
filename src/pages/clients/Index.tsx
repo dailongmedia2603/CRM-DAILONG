@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -48,11 +48,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client, Project } from "@/types";
+import { Client } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ClientCard } from "@/components/clients/ClientCard";
+import { useClients } from "@/hooks/useClients";
+import usePersistentState from "@/hooks/usePersistentState";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -80,50 +82,23 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 };
 
 const ClientsPage = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { clients, projects, isLoading, invalidateClients } = useClients();
   const [searchTerm, setSearchTerm] = useState("");
   const [creatorFilter, setCreatorFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = usePersistentState('clientFormOpen', false);
+  const [clientToEdit, setClientToEdit] = usePersistentState<Client | null>('clientToEdit', null);
+  
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [clientForDetails, setClientForDetails] = useState<Client | null>(null);
   const isMobile = useIsMobile();
-
-  const fetchData = async () => {
-    setLoading(true);
-    const [clientsRes, projectsRes] = await Promise.all([
-      supabase.from("clients").select("*"),
-      supabase.from("projects").select("client_id, contract_value")
-    ]);
-
-    if (clientsRes.error) {
-      showError("Lỗi khi tải dữ liệu khách hàng.");
-    } else {
-      setClients(clientsRes.data as Client[]);
-    }
-
-    if (projectsRes.error) {
-      showError("Lỗi khi tải dữ liệu dự án.");
-    } else {
-      setProjects(projectsRes.data as Project[]);
-    }
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const clientContractValues = useMemo(() => {
     const valueMap = new Map<string, number>();
@@ -204,11 +179,6 @@ const ClientsPage = () => {
     setClientToEdit(client);
     setIsFormOpen(true);
   };
-
-  const handleOpenDeleteAlert = (client: Client) => {
-    setClientToDelete(client);
-    setIsDeleteAlertOpen(true);
-  };
   
   const handleViewDetails = (client: Client) => {
     setClientForDetails(client);
@@ -225,8 +195,13 @@ const ClientsPage = () => {
       if (error) showError("Lỗi khi thêm client mới.");
       else showSuccess("Client mới đã được thêm!");
     }
-    fetchData();
+    invalidateClients();
     setIsFormOpen(false);
+  };
+
+  const handleOpenDeleteAlert = (client: Client) => {
+    setClientToDelete(client);
+    setIsDeleteAlertOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -234,7 +209,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
     if (error) showError("Lỗi khi xóa client.");
     else showSuccess("Client đã được xóa.");
-    fetchData();
+    invalidateClients();
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
   };
@@ -243,7 +218,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: true }).in('id', selectedClients);
     if (error) showError("Lỗi khi lưu trữ clients.");
     else showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
-    fetchData();
+    invalidateClients();
     setSelectedClients([]);
   };
 
@@ -251,7 +226,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: false }).in('id', selectedClients);
     if (error) showError("Lỗi khi khôi phục clients.");
     else showSuccess(`${selectedClients.length} client đã được khôi phục.`);
-    fetchData();
+    invalidateClients();
     setSelectedClients([]);
   };
 
@@ -259,7 +234,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().in('id', selectedClients);
     if (error) showError("Lỗi khi xóa clients.");
     else showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
-    fetchData();
+    invalidateClients();
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
   };
@@ -359,7 +334,7 @@ const ClientsPage = () => {
 
         {isMobile ? (
           <div className="space-y-4">
-            {loading ? (
+            {isLoading ? (
               <p>Đang tải...</p>
             ) : (
               filteredClients.map((client) => (
@@ -389,7 +364,7 @@ const ClientsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {isLoading ? (
                     <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
                   ) : (
                     filteredClients.map((client) => (

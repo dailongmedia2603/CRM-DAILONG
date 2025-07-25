@@ -17,9 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Client } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import usePersistentState from "@/hooks/usePersistentState";
 
 interface ClientFormDialogProps {
   open: boolean;
@@ -34,7 +35,7 @@ export const ClientFormDialog = ({
   onSave,
   client,
 }: ClientFormDialogProps) => {
-  const [formData, setFormData] = useState<Partial<Client>>({});
+  const [formData, setFormData] = usePersistentState<Partial<Client>>('clientFormData', {});
   const { session } = useAuth();
 
   useEffect(() => {
@@ -53,34 +54,42 @@ export const ClientFormDialog = ({
     };
 
     if (open) {
-      if (client) {
-        setFormData(client);
-      } else {
-        fetchCurrentUserName().then(name => {
-          setFormData({ 
-            status: "active",
-            creation_date: new Date().toISOString(),
-            created_by: name
+      // Check if there's already data in localStorage from the hook
+      const hasPersistedData = Object.keys(formData).length > 0;
+
+      if (!hasPersistedData) {
+        if (client) {
+          setFormData(client);
+        } else {
+          fetchCurrentUserName().then(name => {
+            const initialData: Partial<Client> = { 
+              status: "active",
+              creation_date: new Date().toISOString(),
+              created_by: name
+            };
+            setFormData(initialData);
           });
-        });
+        }
       }
+    } else {
+      // Clear form data when dialog is closed
+      setFormData({});
     }
   }, [client, open, session]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { id, profiles, folders, ...dataToSave } = formData;
     onSave(dataToSave);
-    onOpenChange(false);
   };
 
   return (
