@@ -18,18 +18,32 @@ interface FolderFormDialogProps {
   folder?: ProfileFolder | null;
 }
 
+const FORM_DATA_KEY = 'folderFormData';
+
 export const FolderFormDialog = ({ open, onOpenChange, onSave, folder }: FolderFormDialogProps) => {
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (folder) setName(folder.name);
-    else setName("");
+    if (open) {
+      const savedName = sessionStorage.getItem(FORM_DATA_KEY);
+      if (savedName) {
+        setName(savedName);
+      } else {
+        const initialName = folder ? folder.name : "";
+        setName(initialName);
+        sessionStorage.setItem(FORM_DATA_KEY, initialName);
+      }
+    }
   }, [folder, open]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    sessionStorage.setItem(FORM_DATA_KEY, e.target.value);
+  };
 
   const handleSubmit = () => {
     if (name.trim()) {
       onSave(name.trim());
-      onOpenChange(false);
     }
   };
 
@@ -44,7 +58,7 @@ export const FolderFormDialog = ({ open, onOpenChange, onSave, folder }: FolderF
           <Input
             id="folder-name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={handleNameChange}
             placeholder="VD: Hợp đồng, Thanh toán..."
           />
         </div>

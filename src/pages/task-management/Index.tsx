@@ -18,17 +18,16 @@ import { TaskDetailsDialog } from "@/components/task-management/TaskDetailsDialo
 import { Task, Feedback, Personnel } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
-import { format, startOfDay, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TaskCard } from "@/components/task-management/TaskCard";
+import { useTasks } from "@/hooks/useTasks";
 
 const TasksManagementPage = () => {
   const { session } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tasks, personnel, isLoading, invalidateTasks } = useTasks();
   const [dateFilter, setDateFilter] = useState<Date | undefined>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -39,8 +38,18 @@ const TasksManagementPage = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const [dialogs, setDialogs] = useState({ form: false, feedback: false, details: false, delete: false, bulkDelete: false });
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(() => {
+    const saved = sessionStorage.getItem('activeTask');
+    return saved ? JSON.parse(saved) : null;
+  });
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const formOpen = sessionStorage.getItem('taskFormOpen') === 'true';
+    if (formOpen) {
+      setDialogs(prev => ({ ...prev, form: true }));
+    }
+  }, []);
 
   const currentUser = useMemo(() => {
     if (session?.user && personnel.length > 0) {
@@ -51,38 +60,6 @@ const TasksManagementPage = () => {
     }
     return { id: '', name: '' };
   }, [personnel, session]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("tasks").select("*, assigner:personnel!tasks_assigner_id_fkey(*), assignee:personnel!tasks_assignee_id_fkey(*), feedback(*)").order('created_at', { ascending: false }),
-      supabase.from("personnel").select("*"),
-    ]);
-
-    if (tasksRes.error) {
-      showError("Lỗi khi tải dữ liệu công việc.");
-      console.error(tasksRes.error);
-    } else {
-      const tasksWithFeedback = tasksRes.data.map(task => ({
-        ...task,
-        feedbackHistory: task.feedback || [],
-      }));
-      setTasks(tasksWithFeedback as any[]);
-    }
-
-    if (personnelRes.error) {
-      showError("Lỗi khi tải dữ liệu nhân sự.");
-      console.error(personnelRes.error);
-    } else {
-      setPersonnel(personnelRes.data as Personnel[]);
-    }
-    
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const filteredTasks = useMemo(() => {
     let filtered = tasks.filter(task => task.archived === showArchived);
@@ -132,11 +109,28 @@ const TasksManagementPage = () => {
     }
   };
 
+  const closeDialog = (name: keyof typeof dialogs) => setDialogs(prev => ({ ...prev, [name]: false }));
+
+  const handleSetFormOpen = (open: boolean) => {
+    setDialogs(prev => ({ ...prev, form: open }));
+    if (open) {
+      sessionStorage.setItem('taskFormOpen', 'true');
+    } else {
+      sessionStorage.removeItem('taskFormOpen');
+      sessionStorage.removeItem('activeTask');
+      sessionStorage.removeItem('taskFormData');
+    }
+  };
+
   const openDialog = (name: keyof typeof dialogs, task?: Task) => {
     setActiveTask(task || null);
-    setDialogs(prev => ({ ...prev, [name]: true }));
+    if (name === 'form') {
+      sessionStorage.setItem('activeTask', JSON.stringify(task || null));
+      handleSetFormOpen(true);
+    } else {
+      setDialogs(prev => ({ ...prev, [name]: true }));
+    }
   };
-  const closeDialog = (name: keyof typeof dialogs) => setDialogs(prev => ({ ...prev, [name]: false }));
 
   const handleSaveTask = async (data: any) => {
     const { id, ...taskData } = data;
@@ -161,15 +155,15 @@ const TasksManagementPage = () => {
         showSuccess("Thêm công việc mới thành công!");
       }
     }
-    fetchData();
-    closeDialog('form');
+    invalidateTasks();
+    handleSetFormOpen(false);
   };
 
   const handleDelete = async (task: Task) => {
     const { error } = await supabase.from('tasks').delete().eq('id', task.id);
     if (error) showError("Lỗi khi xóa công việc.");
     else showSuccess("Đã xóa công việc.");
-    fetchData();
+    invalidateTasks();
     closeDialog('delete');
   };
 
@@ -183,7 +177,7 @@ const TasksManagementPage = () => {
     if (error) showError(`Lỗi khi ${archiveValue ? 'lưu trữ' : 'khôi phục'} công việc.`);
     else {
       showSuccess(`Đã ${archiveValue ? 'lưu trữ' : 'khôi phục'} ${selectedTasks.length} công việc.`);
-      fetchData();
+      invalidateTasks();
       setSelectedTasks([]);
     }
   };
@@ -192,7 +186,7 @@ const TasksManagementPage = () => {
     const { error } = await supabase.from('tasks').delete().in('id', selectedTasks);
     if (error) showError("Lỗi khi xóa hàng loạt.");
     else showSuccess(`Đã xóa ${selectedTasks.length} công việc.`);
-    fetchData();
+    invalidateTasks();
     setSelectedTasks([]);
     closeDialog('bulkDelete');
   };
@@ -202,7 +196,7 @@ const TasksManagementPage = () => {
     const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', task.id);
     if (error) showError("Lỗi khi cập nhật trạng thái.");
     else showSuccess(`Đã ${newStatus === 'Đang làm' ? 'bắt đầu' : 'hoàn thành'} công việc.`);
-    fetchData();
+    invalidateTasks();
   };
 
   const handleAddFeedback = async (message: string) => {
@@ -210,7 +204,7 @@ const TasksManagementPage = () => {
     const newFeedback = { task_id: activeTask.id, user_id: currentUser.id, user_name: currentUser.name, message };
     const { error } = await supabase.from('feedback').insert([newFeedback]);
     if (error) showError("Lỗi khi gửi feedback.");
-    else fetchData();
+    else invalidateTasks();
   };
 
   const getPriorityBadge = (priority: Task['priority']) => {
@@ -263,13 +257,13 @@ const TasksManagementPage = () => {
           <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Hoạt động" : "Lưu trữ"}</Button>
             <Button variant="outline" onClick={() => setShowCompleted(!showCompleted)}>{showCompleted ? <><ArrowLeft className="mr-2 h-4 w-4" />Trở về</> : <><List className="mr-2 h-4 w-4" />Hoàn thành</>}</Button>
-            <Button onClick={() => openDialog('form')} disabled={loading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm</Button>
+            <Button onClick={() => openDialog('form')} disabled={isLoading || !currentUser.id}><PlusCircle className="mr-2 h-4 w-4" />Thêm</Button>
           </div>
         </div>
 
         {isMobile ? (
           <div className="space-y-4">
-            {loading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
+            {isLoading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
               <TaskCard key={task.id} task={task} onViewDetails={(t) => openDialog('details', t)} />
             ))}
           </div>
@@ -278,7 +272,7 @@ const TasksManagementPage = () => {
             <Table>
               <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectedTasks.length > 0 && selectedTasks.length === filteredTasks.length} onCheckedChange={(checked) => setSelectedTasks(checked ? filteredTasks.map(t => t.id) : [])} /></TableHead><TableHead>Tên công việc</TableHead><TableHead>Người giao</TableHead><TableHead>Người nhận</TableHead><TableHead>Deadline</TableHead><TableHead>Ưu tiên</TableHead><TableHead>Feedback</TableHead><TableHead>Trạng thái</TableHead><TableHead>Action</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
               <TableBody>
-                {loading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
+                {isLoading ? <TableRow><TableCell colSpan={10} className="text-center">Đang tải...</TableCell></TableRow> :
                 paginatedTasks.map(task => (
                   <TableRow key={task.id}>
                     <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(checked) => setSelectedTasks(checked ? [...selectedTasks, task.id] : selectedTasks.filter(id => id !== task.id))} /></TableCell>
@@ -318,7 +312,7 @@ const TasksManagementPage = () => {
             <Select
               value={`${pagination.pageSize}`}
               onValueChange={(value) => {
-                setPagination(prev => ({ ...prev, pageSize: Number(value), pageIndex: 0 }));
+                setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
               }}
             >
               <SelectTrigger className="h-8 w-[70px]">
@@ -378,7 +372,7 @@ const TasksManagementPage = () => {
         </div>
       </div>
 
-      <TaskFormDialog open={dialogs.form} onOpenChange={() => closeDialog('form')} onSave={handleSaveTask} task={activeTask} personnel={personnel} currentUser={currentUser} />
+      <TaskFormDialog open={dialogs.form} onOpenChange={handleSetFormOpen} onSave={handleSaveTask} task={activeTask} personnel={personnel} currentUser={currentUser} />
       {activeTask && <FeedbackDialog open={dialogs.feedback} onOpenChange={() => closeDialog('feedback')} taskName={activeTask.name} history={activeTask.feedbackHistory} onAddFeedback={handleAddFeedback} currentUser={currentUser} />}
       {activeTask && <TaskDetailsDialog open={dialogs.details} onOpenChange={() => closeDialog('details')} task={activeTask} />}
       {activeTask && <AlertDialog open={dialogs.delete} onOpenChange={() => closeDialog('delete')}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này sẽ xóa vĩnh viễn công việc "{activeTask.name}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(activeTask)}>Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}

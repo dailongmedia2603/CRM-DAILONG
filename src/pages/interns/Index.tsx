@@ -25,6 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal
 import { useAuth } from '@/context/AuthProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InternTaskCard } from '@/components/interns/InternTaskCard';
+import { useInternTasks } from '@/hooks/useInternTasks';
 
 const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: number, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -50,9 +51,7 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive
 
 const InternsPage = () => {
   const { session } = useAuth();
-  const [tasks, setTasks] = useState<InternTask[]>([]);
-  const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { tasks, personnel, isLoading, invalidateTasks } = useInternTasks();
   const [searchTerm, setSearchTerm] = useState('');
   const [internFilter, setInternFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -63,39 +62,16 @@ const InternsPage = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(() => sessionStorage.getItem('internTaskFormOpen') === 'true');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [activeTask, setActiveTask] = useState<InternTask | null>(null);
+  const [activeTask, setActiveTask] = useState<InternTask | null>(() => {
+    const saved = sessionStorage.getItem('activeInternTask');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<InternTask | null>(null);
   const isMobile = useIsMobile();
-
-  const fetchData = async () => {
-    setLoading(true);
-    const [tasksRes, personnelRes] = await Promise.all([
-      supabase.from("intern_tasks").select("*").order('created_at', { ascending: false }),
-      supabase.from("personnel").select("*"),
-    ]);
-
-    if (tasksRes.error) {
-      showError("Lỗi khi tải dữ liệu công việc.");
-    } else {
-      setTasks(tasksRes.data as InternTask[]);
-    }
-
-    if (personnelRes.error) {
-      showError("Lỗi khi tải dữ liệu thực tập sinh.");
-    } else {
-      setPersonnel(personnelRes.data as Personnel[]);
-    }
-    
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   useEffect(() => {
     const today = new Date();
@@ -164,14 +140,27 @@ const InternsPage = () => {
     overdue: filteredTasks.filter(t => new Date(t.deadline) < new Date() && t.status !== 'Hoàn thành').length,
   }), [filteredTasks]);
 
+  const handleSetFormOpen = (open: boolean) => {
+    setIsFormOpen(open);
+    if (open) {
+      sessionStorage.setItem('internTaskFormOpen', 'true');
+    } else {
+      sessionStorage.removeItem('internTaskFormOpen');
+      sessionStorage.removeItem('activeInternTask');
+      sessionStorage.removeItem('internTaskFormData');
+    }
+  };
+
   const handleOpenAddDialog = () => {
     setActiveTask(null);
-    setIsFormOpen(true);
+    sessionStorage.removeItem('activeInternTask');
+    handleSetFormOpen(true);
   };
 
   const handleOpenEditDialog = (task: InternTask) => {
     setActiveTask(task);
-    setIsFormOpen(true);
+    sessionStorage.setItem('activeInternTask', JSON.stringify(task));
+    handleSetFormOpen(true);
   };
 
   const handleOpenDetailsDialog = (task: InternTask) => {
@@ -191,15 +180,10 @@ const InternsPage = () => {
 
   const handleSaveTask = async (taskData: any) => {
     if (activeTask && activeTask.id) {
-      // Editing an existing task. Don't change the assigner.
       const { error } = await supabase.from('intern_tasks').update(taskData).eq('id', activeTask.id);
-      if (error) {
-        showError("Lỗi khi cập nhật công việc.");
-      } else {
-        showSuccess("Công việc đã được cập nhật!");
-      }
+      if (error) showError("Lỗi khi cập nhật công việc.");
+      else showSuccess("Công việc đã được cập nhật!");
     } else {
-      // Creating a new task. Set the assigner.
       if (!session?.user) {
         showError("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
         return;
@@ -221,8 +205,8 @@ const InternsPage = () => {
         showSuccess("Đã giao việc mới thành công!");
       }
     }
-    fetchData();
-    setIsFormOpen(false);
+    invalidateTasks();
+    handleSetFormOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
@@ -230,7 +214,7 @@ const InternsPage = () => {
     const { error } = await supabase.from('intern_tasks').delete().eq('id', taskToDelete.id);
     if (error) showError("Lỗi khi xóa công việc.");
     else showSuccess("Đã xóa công việc.");
-    fetchData();
+    invalidateTasks();
     setIsDeleteAlertOpen(false);
     setTaskToDelete(null);
   };
@@ -247,7 +231,7 @@ const InternsPage = () => {
     if (error) showError("Lỗi khi cập nhật trạng thái.");
     else {
       showSuccess("Đã cập nhật trạng thái công việc.");
-      fetchData();
+      invalidateTasks();
     }
   };
 
@@ -263,7 +247,7 @@ const InternsPage = () => {
       showError("Lỗi khi gửi báo cáo.");
     } else {
       showSuccess("Đã gửi báo cáo thành công.");
-      fetchData();
+      invalidateTasks();
     }
   };
 
@@ -278,7 +262,7 @@ const InternsPage = () => {
       if (error) showError(`Lỗi khi ${action === 'archive' ? 'lưu trữ' : 'khôi phục'} công việc.`);
       else showSuccess(`Đã ${action === 'archive' ? 'lưu trữ' : 'khôi phục'} ${selectedTasks.length} công việc.`);
     }
-    fetchData();
+    invalidateTasks();
     setSelectedTasks([]);
   };
 
@@ -388,7 +372,7 @@ const InternsPage = () => {
 
         {isMobile ? (
           <div className="space-y-4">
-            {loading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
+            {isLoading ? <p>Đang tải...</p> : paginatedTasks.map(task => (
               <InternTaskCard key={task.id} task={task} onViewDetails={handleOpenDetailsDialog} />
             ))}
           </div>
@@ -412,7 +396,7 @@ const InternsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
+                  {isLoading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
                   paginatedTasks.map(task => {
                     const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                     const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
@@ -563,7 +547,7 @@ const InternsPage = () => {
       </div>
       <InternTaskFormDialog
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={handleSetFormOpen}
         onSave={handleSaveTask}
         task={activeTask}
         interns={interns}

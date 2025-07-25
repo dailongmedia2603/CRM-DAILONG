@@ -28,6 +28,8 @@ interface LeadFormDialogProps {
   currentUser: { id: string; name: string; isSale: boolean };
 }
 
+const FORM_DATA_KEY = 'leadFormData';
+
 export const LeadFormDialog = ({
   open,
   onOpenChange,
@@ -53,48 +55,62 @@ export const LeadFormDialog = ({
   );
 
   useEffect(() => {
-    if (lead) {
-      setFormData({
-        name: lead.name || "",
-        phone: lead.phone || "",
-        product: lead.product || "",
-        created_by_id: lead.created_by_id || "",
-        created_by_name: lead.created_by_name || "",
-        potential: lead.potential || "chưa xác định",
-        status: lead.status || "đang làm việc",
-        result: lead.result || "chưa quyết định",
-      });
-    } else {
-      setFormData({
-        name: "",
-        phone: "",
-        product: "",
-        created_by_id: currentUser.isSale ? currentUser.id : "",
-        created_by_name: currentUser.isSale ? currentUser.name : "",
-        potential: "chưa xác định",
-        status: "đang làm việc",
-        result: "chưa quyết định",
-      });
+    if (open) {
+      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
+      if (savedData) {
+        setFormData(JSON.parse(savedData));
+      } else if (lead) {
+        const initialData = {
+          name: lead.name || "",
+          phone: lead.phone || "",
+          product: lead.product || "",
+          created_by_id: lead.created_by_id || "",
+          created_by_name: lead.created_by_name || "",
+          potential: lead.potential || "chưa xác định",
+          status: lead.status || "đang làm việc",
+          result: lead.result || "chưa quyết định",
+        };
+        setFormData(initialData);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
+      } else {
+        const initialData = {
+          name: "",
+          phone: "",
+          product: "",
+          created_by_id: currentUser.isSale ? currentUser.id : "",
+          created_by_name: currentUser.isSale ? currentUser.name : "",
+          potential: "chưa xác định",
+          status: "đang làm việc",
+          result: "chưa quyết định",
+        };
+        setFormData(initialData);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
+      }
     }
   }, [lead, open, currentUser]);
 
+  const updateFormData = (newData: Partial<typeof formData>) => {
+    const updatedData = { ...formData, ...newData };
+    setFormData(updatedData);
+    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(updatedData));
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    updateFormData({ [name]: value });
   };
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === "created_by_id") {
       const selectedPerson = salesOnly.find((person) => person.id === value);
       if (selectedPerson) {
-        setFormData((prev) => ({ 
-          ...prev, 
+        updateFormData({ 
           created_by_id: selectedPerson.id,
           created_by_name: selectedPerson.name 
-        }));
+        });
       }
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      updateFormData({ [name]: value });
     }
   };
 

@@ -88,12 +88,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LeadCard } from "@/components/sales/leads/LeadCard";
+import { useLeads } from "@/hooks/useLeads";
 
 const LeadsPage = () => {
   const { session } = useAuth();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { leads, personnel, isLoading, invalidateLeads } = useLeads();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [salesFilter, setSalesFilter] = useState("all");
@@ -111,8 +110,11 @@ const LeadsPage = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [leadToEdit, setLeadToEdit] = useState<Lead | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(() => sessionStorage.getItem('leadFormOpen') === 'true');
+  const [leadToEdit, setLeadToEdit] = useState<Lead | null>(() => {
+    const saved = sessionStorage.getItem('leadToEdit');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
@@ -134,51 +136,6 @@ const LeadsPage = () => {
     }
     return { id: '', name: '', isSale: false };
   }, [personnel, session]);
-
-  const fetchData = async () => {
-    if (!session) return;
-    setLoading(true);
-
-    const { data: userPersonnel, error: userError } = await supabase
-      .from('personnel')
-      .select('role, id')
-      .eq('id', session.user.id)
-      .single();
-
-    if (userError) {
-      showError("Không thể tải thông tin người dùng.");
-      setLoading(false);
-      return;
-    }
-
-    let leadsQuery = supabase
-      .from("leads")
-      .select("*, lead_history(*)")
-      .order('created_at', { ascending: false });
-
-    if (userPersonnel.role === 'Nhân viên' || userPersonnel.role === 'Thực tập') {
-      leadsQuery = leadsQuery.eq('created_by_id', session.user.id);
-    }
-
-    const [leadsRes, personnelRes] = await Promise.all([
-        leadsQuery,
-        supabase.from("personnel").select("*")
-    ]);
-
-    if(leadsRes.error) showError("Lỗi khi tải dữ liệu leads.");
-    else setLeads(leadsRes.data as any[]);
-
-    if(personnelRes.error) showError("Lỗi khi tải dữ liệu nhân viên.");
-    else setPersonnel(personnelRes.data as Personnel[]);
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session]);
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -259,7 +216,7 @@ const LeadsPage = () => {
         else showSuccess(`Đã ${archiveStatus ? 'lưu trữ' : 'khôi phục'} ${selectedLeads.length} lead.`);
     }
     
-    fetchData();
+    invalidateLeads();
     setSelectedLeads([]);
     setSelectAll(false);
   };
@@ -282,12 +239,33 @@ const LeadsPage = () => {
     }
     else {
         showSuccess("Đã thêm lịch sử chăm sóc.");
-        fetchData();
+        invalidateLeads();
     }
   };
 
-  const handleOpenAddDialog = () => { setLeadToEdit(null); setFormDialogOpen(true); };
-  const handleOpenEditDialog = (lead: Lead) => { setLeadToEdit(lead); setFormDialogOpen(true); };
+  const handleSetFormOpen = (open: boolean) => {
+    setFormDialogOpen(open);
+    if (open) {
+      sessionStorage.setItem('leadFormOpen', 'true');
+    } else {
+      sessionStorage.removeItem('leadFormOpen');
+      sessionStorage.removeItem('leadToEdit');
+      sessionStorage.removeItem('leadFormData');
+    }
+  };
+
+  const handleOpenAddDialog = () => {
+    setLeadToEdit(null);
+    sessionStorage.removeItem('leadToEdit');
+    handleSetFormOpen(true);
+  };
+
+  const handleOpenEditDialog = (lead: Lead) => {
+    setLeadToEdit(lead);
+    sessionStorage.setItem('leadToEdit', JSON.stringify(lead));
+    handleSetFormOpen(true);
+  };
+
   const handleOpenDeleteAlert = (lead: Lead) => { setLeadToDelete(lead); setDeleteAlertOpen(true); };
 
   const handleDeleteConfirm = async () => {
@@ -295,7 +273,7 @@ const LeadsPage = () => {
     const { error } = await supabase.from('leads').delete().eq('id', leadToDelete.id);
     if (error) showError("Lỗi khi xóa lead.");
     else showSuccess("Đã xóa lead thành công.");
-    fetchData();
+    invalidateLeads();
     setDeleteAlertOpen(false);
     setLeadToDelete(null);
   };
@@ -310,8 +288,8 @@ const LeadsPage = () => {
       if (error) showError("Lỗi khi thêm lead mới.");
       else showSuccess("Đã thêm lead mới thành công.");
     }
-    fetchData();
-    setFormDialogOpen(false);
+    invalidateLeads();
+    handleSetFormOpen(false);
     setLeadToEdit(null);
   };
 
@@ -384,7 +362,7 @@ const LeadsPage = () => {
         
         {isMobile ? (
           <div className="space-y-4">
-            {loading ? <p>Đang tải...</p> : paginatedLeads.map(lead => (
+            {isLoading ? <p>Đang tải...</p> : paginatedLeads.map(lead => (
               <LeadCard key={lead.id} lead={lead} onViewDetails={handleOpenDetails} />
             ))}
           </div>
@@ -396,7 +374,7 @@ const LeadsPage = () => {
                 <Table>
                   <TableHeader><TableRow><TableHead className="w-12"><Checkbox checked={selectAll} onCheckedChange={handleSelectAll} /></TableHead><TableHead>Tên Lead</TableHead><TableHead>SĐT</TableHead><TableHead>Sản phẩm</TableHead><TableHead>Lịch sử</TableHead><TableHead>Sale</TableHead><TableHead>Ngày tạo</TableHead><TableHead>Tiềm năng</TableHead><TableHead>Trạng thái</TableHead><TableHead>Kết quả</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {loading ? <TableRow><TableCell colSpan={11} className="text-center h-24">Đang tải...</TableCell></TableRow> :
+                    {isLoading ? <TableRow><TableCell colSpan={11} className="text-center h-24">Đang tải...</TableCell></TableRow> :
                     paginatedLeads.length === 0 ? (<TableRow><TableCell colSpan={11} className="text-center h-24">Không tìm thấy lead nào</TableCell></TableRow>) : (
                       paginatedLeads.map((lead) => (
                         <TableRow key={lead.id}>
@@ -520,7 +498,7 @@ const LeadsPage = () => {
       
       {selectedLead && <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLead.name} leadId={selectedLead.id} history={selectedLead.lead_history} onAddHistory={handleAddHistory} />}
       {selectedLead && <LeadDetailsDialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen} lead={selectedLead} />}
-      <LeadFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} currentUser={currentUserInfo} />
+      <LeadFormDialog open={formDialogOpen} onOpenChange={handleSetFormOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} currentUser={currentUserInfo} />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>

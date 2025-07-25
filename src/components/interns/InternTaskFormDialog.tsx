@@ -20,6 +20,8 @@ interface InternTaskFormDialogProps {
   interns: Personnel[];
 }
 
+const FORM_DATA_KEY = 'internTaskFormData';
+
 export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns }: InternTaskFormDialogProps) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -33,38 +35,54 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
   const [deadline, setDeadline] = useState<Date | undefined>();
 
   useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description,
-        work_link: task.work_link,
-        intern_name: task.intern_name,
-        priority: task.priority,
-        comment_count: task.comment_count,
-        post_count: task.post_count,
-      });
-      setDeadline(task.deadline ? new Date(task.deadline) : undefined);
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        work_link: '',
-        intern_name: '',
-        priority: 'Bình thường',
-        comment_count: 0,
-        post_count: 0,
-      });
-      setDeadline(undefined);
+    if (open) {
+      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData.formData);
+        setDeadline(parsedData.deadline ? new Date(parsedData.deadline) : undefined);
+      } else if (task) {
+        const initialData = {
+          title: task.title,
+          description: task.description || '',
+          work_link: task.work_link || '',
+          intern_name: task.intern_name,
+          priority: task.priority,
+          comment_count: task.comment_count || 0,
+          post_count: task.post_count || 0,
+        };
+        setFormData(initialData);
+        setDeadline(task.deadline ? new Date(task.deadline) : undefined);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: initialData, deadline: task.deadline }));
+      } else {
+        const initialData = {
+          title: '', description: '', work_link: '', intern_name: '',
+          priority: 'Bình thường' as InternTask['priority'],
+          comment_count: 0, post_count: 0,
+        };
+        setFormData(initialData);
+        setDeadline(undefined);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: initialData, deadline: undefined }));
+      }
     }
   }, [task, open]);
 
+  const updateStateAndSession = (newFormData: Partial<typeof formData>, newDeadline?: Date) => {
+    const updatedFormData = { ...formData, ...newFormData };
+    const updatedDeadline = newDeadline !== undefined ? newDeadline : deadline;
+    setFormData(updatedFormData);
+    if (newDeadline !== undefined) setDeadline(newDeadline);
+    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: updatedFormData, deadline: updatedDeadline?.toISOString() }));
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const finalValue = (name === 'comment_count' || name === 'post_count') ? parseInt(value, 10) || 0 : value;
+    updateStateAndSession({ [name]: finalValue });
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    updateStateAndSession({ [name]: value });
   };
 
   const handleDateTimeChange = (newDatePart?: Date, newTimePart?: {hour?: string, minute?: string}) => {
@@ -76,14 +94,10 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       newDeadline.setDate(newDatePart.getDate());
     }
 
-    if (newTimePart?.hour) {
-      newDeadline.setHours(parseInt(newTimePart.hour, 10));
-    }
-    if (newTimePart?.minute) {
-      newDeadline.setMinutes(parseInt(newTimePart.minute, 10));
-    }
+    if (newTimePart?.hour) newDeadline.setHours(parseInt(newTimePart.hour, 10));
+    if (newTimePart?.minute) newDeadline.setMinutes(parseInt(newTimePart.minute, 10));
     
-    setDeadline(newDeadline);
+    updateStateAndSession({}, newDeadline);
   };
 
   const handleSubmit = () => {
@@ -96,7 +110,6 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
       ...formData,
       deadline: deadline.toISOString(),
     });
-    onOpenChange(false);
   };
 
   return (

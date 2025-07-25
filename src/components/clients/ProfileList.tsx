@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,9 +18,12 @@ interface ProfileListProps {
 
 export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
-  const [isFolderFormOpen, setIsFolderFormOpen] = useState(false);
+  const [isFolderFormOpen, setIsFolderFormOpen] = useState(() => sessionStorage.getItem('folderFormOpen') === 'true');
   const [profileToEdit, setProfileToEdit] = useState<Profile | null>(null);
-  const [folderToEdit, setFolderToEdit] = useState<ProfileFolder | null>(null);
+  const [folderToEdit, setFolderToEdit] = useState<ProfileFolder | null>(() => {
+    const saved = sessionStorage.getItem('folderToEdit');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [defaultFolderId, setDefaultFolderId] = useState<string | null>(null);
 
   const { folders, profilesByFolder, uncategorizedProfiles } = useMemo(() => {
@@ -48,9 +51,25 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
     setIsProfileFormOpen(true);
   };
 
+  const handleSetFolderFormOpen = (open: boolean) => {
+    setIsFolderFormOpen(open);
+    if (open) {
+      sessionStorage.setItem('folderFormOpen', 'true');
+    } else {
+      sessionStorage.removeItem('folderFormOpen');
+      sessionStorage.removeItem('folderToEdit');
+      sessionStorage.removeItem('folderFormData');
+    }
+  };
+
   const handleOpenFolderForm = (folder?: ProfileFolder) => {
     setFolderToEdit(folder || null);
-    setIsFolderFormOpen(true);
+    if (folder) {
+      sessionStorage.setItem('folderToEdit', JSON.stringify(folder));
+    } else {
+      sessionStorage.removeItem('folderToEdit');
+    }
+    handleSetFolderFormOpen(true);
   };
 
   const handleSaveFolder = async (name: string) => {
@@ -64,6 +83,7 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
       else showSuccess("Đã tạo thư mục mới!");
     }
     onUpdateClient();
+    handleSetFolderFormOpen(false);
   };
 
   const handleDeleteFolder = async (folderId: string) => {
@@ -181,7 +201,7 @@ export const ProfileList = ({ client, onUpdateClient }: ProfileListProps) => {
       />
       <FolderFormDialog
         open={isFolderFormOpen}
-        onOpenChange={setIsFolderFormOpen}
+        onOpenChange={handleSetFolderFormOpen}
         onSave={handleSaveFolder}
         folder={folderToEdit}
       />

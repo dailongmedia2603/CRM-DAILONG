@@ -21,88 +21,104 @@ interface TaskFormDialogProps {
   currentUser: { id: string; name: string };
 }
 
+const FORM_DATA_KEY = 'taskFormData';
+
 export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, currentUser }: TaskFormDialogProps) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [links, setLinks] = useState<string[]>(['']);
-  const [assigneeId, setAssigneeId] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    links: [''],
+    assigneeId: '',
+    priority: 'Trung bình' as Task['priority'],
+  });
   const [deadline, setDeadline] = useState<Date | undefined>();
-  const [priority, setPriority] = useState<'Cao' | 'Trung bình' | 'Thấp'>('Trung bình');
 
   useEffect(() => {
-    if (task) {
-      setName(task.name);
-      setDescription(task.description || '');
-      setLinks(task.links && task.links.length > 0 ? task.links : ['']);
-      setAssigneeId(task.assignee.id);
-      setDeadline(task.deadline ? new Date(task.deadline) : undefined);
-      setPriority(task.priority);
-    } else {
-      setName('');
-      setDescription('');
-      setLinks(['']);
-      setAssigneeId('');
-      setDeadline(undefined);
-      setPriority('Trung bình');
+    if (open) {
+      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setFormData(parsed.formData);
+        setDeadline(parsed.deadline ? new Date(parsed.deadline) : undefined);
+      } else if (task) {
+        const initialData = {
+          name: task.name,
+          description: task.description || '',
+          links: task.links && task.links.length > 0 ? task.links : [''],
+          assigneeId: task.assignee.id,
+          priority: task.priority,
+        };
+        setFormData(initialData);
+        setDeadline(task.deadline ? new Date(task.deadline) : undefined);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: initialData, deadline: task.deadline }));
+      } else {
+        const initialData = {
+          name: '', description: '', links: [''], assigneeId: '',
+          priority: 'Trung bình' as Task['priority'],
+        };
+        setFormData(initialData);
+        setDeadline(undefined);
+        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: initialData, deadline: undefined }));
+      }
     }
   }, [task, open]);
 
-  const handleLinkChange = (index: number, value: string) => {
-    const newLinks = [...links];
-    newLinks[index] = value;
-    setLinks(newLinks);
+  const updateStateAndSession = (newFormData: Partial<typeof formData>, newDeadline?: Date) => {
+    const updatedFormData = { ...formData, ...newFormData };
+    const updatedDeadline = newDeadline !== undefined ? newDeadline : deadline;
+    setFormData(updatedFormData);
+    if (newDeadline !== undefined) setDeadline(newDeadline);
+    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify({ formData: updatedFormData, deadline: updatedDeadline?.toISOString() }));
   };
 
-  const addLinkInput = () => setLinks([...links, '']);
+  const handleLinkChange = (index: number, value: string) => {
+    const newLinks = [...formData.links];
+    newLinks[index] = value;
+    updateStateAndSession({ links: newLinks });
+  };
+
+  const addLinkInput = () => updateStateAndSession({ links: [...formData.links, ''] });
   const removeLinkInput = (index: number) => {
-    if (links.length > 1) {
-      setLinks(links.filter((_, i) => i !== index));
+    if (formData.links.length > 1) {
+      updateStateAndSession({ links: formData.links.filter((_, i) => i !== index) });
     } else {
-      setLinks(['']);
+      updateStateAndSession({ links: [''] });
     }
   };
 
   const handleDateTimeChange = (newDatePart?: Date, newTimePart?: {hour?: string, minute?: string}) => {
     const newDeadline = deadline ? new Date(deadline) : new Date();
-    
     if (newDatePart) {
       newDeadline.setFullYear(newDatePart.getFullYear());
       newDeadline.setMonth(newDatePart.getMonth());
       newDeadline.setDate(newDatePart.getDate());
     }
-
-    if (newTimePart?.hour) {
-      newDeadline.setHours(parseInt(newTimePart.hour, 10));
-    }
-    if (newTimePart?.minute) {
-      newDeadline.setMinutes(parseInt(newTimePart.minute, 10));
-    }
-    
-    setDeadline(newDeadline);
+    if (newTimePart?.hour) newDeadline.setHours(parseInt(newTimePart.hour, 10));
+    if (newTimePart?.minute) newDeadline.setMinutes(parseInt(newTimePart.minute, 10));
+    updateStateAndSession({}, newDeadline);
   };
 
   const handleSubmit = () => {
-    if (!name || !assigneeId || !deadline) {
+    if (!formData.name || !formData.assigneeId || !deadline) {
       showError("Vui lòng điền đầy đủ các trường bắt buộc: Tên công việc, Người nhận, Deadline.");
       return;
     }
     
     const dataToSave: any = {
-      name,
-      description,
-      links: links.filter(link => link.trim() !== ''),
-      assignee_id: assigneeId,
+      name: formData.name,
+      description: formData.description,
+      links: formData.links.filter(link => link.trim() !== ''),
+      assignee_id: formData.assigneeId,
       deadline: deadline.toISOString(),
-      priority,
+      priority: formData.priority,
     };
 
-    if (!task) { // This is a new task
+    if (!task) {
       dataToSave.assigner_id = currentUser.id;
       dataToSave.status = 'Chưa làm';
     }
 
     onSave(dataToSave);
-    onOpenChange(false);
   };
 
   return (
@@ -115,21 +131,21 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
         <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
           <div className="space-y-2">
             <Label htmlFor="name">Tên công việc <span className="text-red-500">*</span></Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="name" value={formData.name} onChange={(e) => updateStateAndSession({ name: e.target.value })} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Mô tả</Label>
-            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={5} placeholder="Tích hợp trình soạn thảo văn bản nâng cao tại đây..." />
+            <Textarea id="description" value={formData.description} onChange={(e) => updateStateAndSession({ description: e.target.value })} rows={5} placeholder="Tích hợp trình soạn thảo văn bản nâng cao tại đây..." />
           </div>
           <div className="space-y-2">
             <Label>Link tài liệu</Label>
-            {links.map((link, index) => (
+            {formData.links.map((link, index) => (
               <div key={index} className="flex items-center gap-2">
                 <Input value={link} onChange={(e) => handleLinkChange(index, e.target.value)} placeholder="https://..." />
-                <Button variant="ghost" size="icon" onClick={() => removeLinkInput(index)}><Trash2 className="h-4 w-4" /></Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeLinkInput(index)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             ))}
-            <Button variant="outline" size="sm" onClick={addLinkInput}><PlusCircle className="mr-2 h-4 w-4" />Thêm link</Button>
+            <Button type="button" variant="outline" size="sm" onClick={addLinkInput}><PlusCircle className="mr-2 h-4 w-4" />Thêm link</Button>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -138,7 +154,7 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
             </div>
             <div className="space-y-2">
               <Label htmlFor="assignee">Người nhận <span className="text-red-500">*</span></Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <Select value={formData.assigneeId} onValueChange={(value) => updateStateAndSession({ assigneeId: value })}>
                 <SelectTrigger><SelectValue placeholder="Chọn người nhận" /></SelectTrigger>
                 <SelectContent>
                   {personnel.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -199,7 +215,7 @@ export const TaskFormDialog = ({ open, onOpenChange, onSave, task, personnel, cu
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority">Ưu tiên</Label>
-              <Select value={priority} onValueChange={(v: any) => setPriority(v)}>
+              <Select value={formData.priority} onValueChange={(v: any) => updateStateAndSession({ priority: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cao">Cao</SelectItem>
