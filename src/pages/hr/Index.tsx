@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Search, Users, UserCheck, UserX, Edit, Trash2 } from "lucide-react";
-import { Personnel, Position } from "@/types";
+import { Personnel } from "@/types";
 import { PersonnelFormDialog } from "@/components/hr/PersonnelFormDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Can } from "@/components/auth/Can";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PersonnelCard } from "@/components/hr/PersonnelCard";
+import { usePersonnel } from "@/hooks/usePersonnel";
+import usePersistentState from "@/hooks/usePersistentState";
 
 const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string }) => {
   const Icon = icon;
@@ -55,34 +57,13 @@ const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: Reac
 };
 
 const HRPage = () => {
-  const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { personnel, positions, isLoading, invalidatePersonnel, invalidatePositions } = usePersonnel();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = usePersistentState('personnelFormOpen', false);
+  const [personnelToEdit, setPersonnelToEdit] = usePersistentState<Personnel | null>('personnelToEdit', null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-  const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel | null>(null);
   const isMobile = useIsMobile();
-
-  const fetchPersonnel = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from("personnel").select("*");
-    if (error) showError("Lỗi khi tải dữ liệu nhân sự.");
-    else setPersonnel(data as Personnel[]);
-    setLoading(false);
-  };
-
-  const fetchPositions = async () => {
-    const { data, error } = await supabase.from("positions").select("*");
-    if (error) showError("Lỗi khi tải dữ liệu vị trí.");
-    else setPositions(data as Position[]);
-  };
-
-  useEffect(() => {
-    fetchPersonnel();
-    fetchPositions();
-  }, []);
 
   const handlePositionsChange = async (newPositions: string[]) => {
     const { error: deleteError } = await supabase.from('positions').delete().neq('name', 'dummy_value_to_delete_all');
@@ -95,7 +76,7 @@ const HRPage = () => {
       showError("Lỗi khi lưu vị trí mới.");
       return;
     }
-    fetchPositions();
+    invalidatePositions();
   };
 
   const filteredPersonnel = useMemo(() =>
@@ -137,7 +118,7 @@ const HRPage = () => {
       showError("Lỗi khi xóa nhân sự: " + (error?.message || data.error));
     } else {
       showSuccess("Đã xóa nhân sự thành công.");
-      fetchPersonnel();
+      invalidatePersonnel();
     }
     
     setIsDeleteAlertOpen(false);
@@ -190,7 +171,7 @@ const HRPage = () => {
 
             {isMobile ? (
               <div className="space-y-4">
-                {loading ? <p>Đang tải...</p> : filteredPersonnel.map(p => (
+                {isLoading ? <p>Đang tải...</p> : filteredPersonnel.map(p => (
                   <PersonnelCard key={p.id} personnel={p} onEdit={handleOpenEditDialog} onDelete={handleOpenDeleteAlert} />
                 ))}
               </div>
@@ -209,7 +190,7 @@ const HRPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
+                      {isLoading ? <TableRow><TableCell colSpan={6} className="text-center">Đang tải...</TableCell></TableRow> :
                       filteredPersonnel.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell>
@@ -261,7 +242,7 @@ const HRPage = () => {
       <PersonnelFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSave={fetchPersonnel}
+        onSave={invalidatePersonnel}
         personnel={personnelToEdit}
         positions={positions}
       />

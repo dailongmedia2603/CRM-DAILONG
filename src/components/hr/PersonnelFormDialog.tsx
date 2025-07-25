@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 import { Personnel, Position } from "@/types";
 import { showSuccess, showError } from "@/utils/toast";
 import { supabase } from "@/integrations/supabase/client";
+import usePersistentState from "@/hooks/usePersistentState";
 
 interface PersonnelFormDialogProps {
   open: boolean;
@@ -36,7 +37,7 @@ export const PersonnelFormDialog = ({
   personnel,
   positions,
 }: PersonnelFormDialogProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = usePersistentState('personnelFormData', {
     name: "",
     email: "",
     position_id: "",
@@ -44,39 +45,38 @@ export const PersonnelFormDialog = ({
     status: "active" as Personnel['status'],
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = usePersistentState('personnelFormIsLoading', false);
 
   const isEditing = !!personnel;
 
   useEffect(() => {
-    if (personnel) {
-      setFormData({
-        name: personnel.name,
-        email: personnel.email,
-        position_id: personnel.position_id || "",
-        role: personnel.role,
-        status: personnel.status,
-        password: "",
-      });
+    if (open) {
+      const hasPersistedData = Object.keys(formData).some(key => formData[key as keyof typeof formData] !== "");
+
+      if (!hasPersistedData && personnel) {
+        setFormData({
+          name: personnel.name,
+          email: personnel.email,
+          position_id: personnel.position_id || "",
+          role: personnel.role,
+          status: personnel.status,
+          password: "",
+        });
+      }
     } else {
       setFormData({
-        name: "",
-        email: "",
-        position_id: "",
-        role: "Nhân viên",
-        status: "active",
-        password: "",
+        name: "", email: "", position_id: "", role: "Nhân viên", status: "active", password: "",
       });
     }
   }, [personnel, open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,6 +107,7 @@ export const PersonnelFormDialog = ({
       } else {
         showSuccess("Cập nhật thông tin thành công!");
         onSave();
+        onOpenChange(false);
       }
     } else {
       if (!formData.password) {
@@ -120,8 +121,8 @@ export const PersonnelFormDialog = ({
           email: formData.email, 
           password: formData.password,
           name: formData.name,
-          position: selectedPosition.name, // Pass the name
-          position_id: formData.position_id, // Pass the ID
+          position: selectedPosition.name,
+          position_id: formData.position_id,
           role: formData.role,
           status: formData.status,
         },
@@ -132,11 +133,11 @@ export const PersonnelFormDialog = ({
       } else {
         showSuccess("Thêm nhân sự mới thành công!");
         onSave();
+        onOpenChange(false);
       }
     }
 
     setIsLoading(false);
-    onOpenChange(false);
   };
 
   return (
