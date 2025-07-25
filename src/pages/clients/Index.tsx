@@ -89,10 +89,13 @@ const ClientsPage = () => {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(() => sessionStorage.getItem('clientFormOpen') === 'true');
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(() => {
+    const savedClient = sessionStorage.getItem('clientToEdit');
+    return savedClient ? JSON.parse(savedClient) : null;
+  });
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -195,19 +198,27 @@ const ClientsPage = () => {
     };
   }, [clients, clientContractValues]);
 
+  const handleSetFormOpen = (open: boolean) => {
+    setIsFormOpen(open);
+    if (open) {
+      sessionStorage.setItem('clientFormOpen', 'true');
+    } else {
+      sessionStorage.removeItem('clientFormOpen');
+      sessionStorage.removeItem('clientToEdit');
+      sessionStorage.removeItem('clientFormData');
+    }
+  };
+
   const handleOpenAddDialog = () => {
     setClientToEdit(null);
-    setIsFormOpen(true);
+    sessionStorage.removeItem('clientToEdit');
+    handleSetFormOpen(true);
   };
 
   const handleOpenEditDialog = (client: Client) => {
     setClientToEdit(client);
-    setIsFormOpen(true);
-  };
-
-  const handleOpenDeleteAlert = (client: Client) => {
-    setClientToDelete(client);
-    setIsDeleteAlertOpen(true);
+    sessionStorage.setItem('clientToEdit', JSON.stringify(client));
+    handleSetFormOpen(true);
   };
   
   const handleViewDetails = (client: Client) => {
@@ -226,7 +237,12 @@ const ClientsPage = () => {
       else showSuccess("Client mới đã được thêm!");
     }
     fetchData();
-    setIsFormOpen(false);
+    handleSetFormOpen(false);
+  };
+
+  const handleOpenDeleteAlert = (client: Client) => {
+    setClientToDelete(client);
+    setIsDeleteAlertOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -433,7 +449,7 @@ const ClientsPage = () => {
 
       <ClientFormDialog
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={handleSetFormOpen}
         onSave={handleSaveClient}
         client={clientToEdit}
       />
