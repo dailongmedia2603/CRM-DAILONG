@@ -28,8 +28,6 @@ interface ClientFormDialogProps {
   client?: Client | null;
 }
 
-const FORM_DATA_KEY = 'clientFormData';
-
 export const ClientFormDialog = ({
   open,
   onOpenChange,
@@ -55,20 +53,15 @@ export const ClientFormDialog = ({
     };
 
     if (open) {
-      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
-      if (savedData) {
-        setFormData(JSON.parse(savedData));
-      } else if (client) {
+      if (client) {
         setFormData(client);
       } else {
         fetchCurrentUserName().then(name => {
-          const initialData: Partial<Client> = { 
+          setFormData({ 
             status: "active",
             creation_date: new Date().toISOString(),
             created_by: name
-          };
-          setFormData(initialData);
-          sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
+          });
         });
       }
     }
@@ -76,21 +69,18 @@ export const ClientFormDialog = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const newFormData = { ...formData, [name]: value };
-    setFormData(newFormData);
-    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(newFormData));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    const newFormData = { ...formData, [name]: value };
-    setFormData(newFormData);
-    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(newFormData));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { id, profiles, folders, ...dataToSave } = formData;
     onSave(dataToSave);
+    onOpenChange(false);
   };
 
   return (

@@ -18,23 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Client, Personnel } from "@/types";
-import { PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
-import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface Payment {
   amount: number;
@@ -47,18 +33,6 @@ interface TeamMember {
   name: string;
 }
 
-interface ProjectFormData {
-  clientId: string;
-  name: string;
-  link: string;
-  contractValue: string;
-  status: string;
-  startDate: string;
-  endDate: string;
-  payments: Payment[];
-  team: TeamMember[];
-}
-
 interface ProjectFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -66,8 +40,6 @@ interface ProjectFormDialogProps {
   project?: any;
   clients: Client[];
 }
-
-const FORM_DATA_KEY = 'projectFormData';
 
 export const ProjectFormDialog = ({
   open,
@@ -77,18 +49,15 @@ export const ProjectFormDialog = ({
   clients,
 }: ProjectFormDialogProps) => {
   const [personnelList, setPersonnelList] = useState<Personnel[]>([]);
-  const [formData, setFormData] = useState<ProjectFormData>({
-    clientId: "",
-    name: "",
-    link: "",
-    contractValue: "",
-    status: "in-progress",
-    startDate: "",
-    endDate: "",
-    payments: [{ amount: 0, paid: false }],
-    team: [],
-  });
-  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [name, setName] = useState("");
+  const [link, setLink] = useState("");
+  const [contractValue, setContractValue] = useState("");
+  const [status, setStatus] = useState("in-progress");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [payments, setPayments] = useState<Payment[]>([{ amount: 0, paid: false }]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
 
   useEffect(() => {
     const fetchPersonnel = async () => {
@@ -99,72 +68,56 @@ export const ProjectFormDialog = ({
     fetchPersonnel();
   }, []);
 
-  const clearSessionData = () => {
-    sessionStorage.removeItem(FORM_DATA_KEY);
-  };
-
   useEffect(() => {
-    if (open) {
-      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
-      if (savedData) {
-        setFormData(JSON.parse(savedData));
-      } else if (project) {
-        const initialData = {
-          clientId: project.client_id || "",
-          name: project.name || "",
-          link: project.link || "",
-          contractValue: project.contract_value?.toString() || "",
-          status: project.status || "in-progress",
-          startDate: project.start_date ? new Date(project.start_date).toISOString().split('T')[0] : "",
-          endDate: project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : "",
-          payments: project.payments || [{ amount: 0, paid: false }],
-          team: project.team || [],
-        };
-        setFormData(initialData);
-        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
-      } else {
-        const initialData = {
-          clientId: "", name: "", link: "", contractValue: "", status: "in-progress",
-          startDate: "", endDate: "", payments: [{ amount: 0, paid: false }], team: [],
-        };
-        setFormData(initialData);
-        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
-      }
+    if (project) {
+      setClientId(project.client_id || "");
+      setName(project.name || "");
+      setLink(project.link || "");
+      setContractValue(project.contract_value?.toString() || "");
+      setStatus(project.status || "in-progress");
+      setStartDate(project.start_date ? new Date(project.start_date).toISOString().split('T')[0] : "");
+      setEndDate(project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : "");
+      setPayments(project.payments || [{ amount: 0, paid: false }]);
+      setTeam(project.team || []);
     } else {
-      clearSessionData();
+      // Reset for new project
+      setClientId("");
+      setName("");
+      setLink("");
+      setContractValue("");
+      setStatus("in-progress");
+      setStartDate("");
+      setEndDate("");
+      setPayments([{ amount: 0, paid: false }]);
+      setTeam([]);
     }
   }, [project, open]);
 
-  const updateFormData = (newData: Partial<ProjectFormData>) => {
-    const updatedData = { ...formData, ...newData };
-    setFormData(updatedData);
-    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(updatedData));
-  };
-
-  const handleAddPayment = () => updateFormData({ payments: [...formData.payments, { amount: 0, paid: false }] });
-  const handleRemovePayment = (index: number) => updateFormData({ payments: formData.payments.filter((_, i) => i !== index) });
+  const handleAddPayment = () => setPayments([...payments, { amount: 0, paid: false }]);
+  const handleRemovePayment = (index: number) => setPayments(payments.filter((_, i) => i !== index));
   const handlePaymentChange = (index: number, value: string) => {
     const numericValue = Number(value.replace(/[^0-9]/g, ""));
-    const newPayments = [...formData.payments];
+    const newPayments = [...payments];
     newPayments[index] = { ...newPayments[index], amount: numericValue };
-    updateFormData({ payments: newPayments });
+    setPayments(newPayments);
   };
 
-  const handleAddTeamMember = () => updateFormData({ team: [...formData.team, { role: '', id: '', name: '' }] });
-  const handleRemoveTeamMember = (index: number) => updateFormData({ team: formData.team.filter((_, i) => i !== index) });
+  const handleAddTeamMember = () => setTeam([...team, { role: '', id: '', name: '' }]);
+  const handleRemoveTeamMember = (index: number) => setTeam(team.filter((_, i) => i !== index));
   const handleTeamChange = (index: number, field: 'role' | 'id', value: string) => {
-    const newTeam = [...formData.team];
+    const newTeam = [...team];
     if (field === 'role') {
-      newTeam[index] = { ...newTeam[index], role: value, id: '', name: '' };
+      newTeam[index] = { ...newTeam[index], role: value, id: '', name: '' }; // Reset person when role changes
     } else if (field === 'id') {
       const selectedPerson = personnelList.find(p => p.id === value);
       newTeam[index] = { ...newTeam[index], id: value, name: selectedPerson?.name || '' };
     }
-    updateFormData({ team: newTeam });
+    setTeam(newTeam);
   };
 
   const getPersonnelForRole = (role: string) => {
     if (!role) return personnelList;
+    // This is a simple mapping. A more complex app might have a dedicated 'roles' table.
     return personnelList.filter(p => p.position.toLowerCase().includes(role.toLowerCase()));
   };
 
@@ -176,18 +129,18 @@ export const ProjectFormDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedClient = clients.find(c => c.id === formData.clientId);
+    const selectedClient = clients.find(c => c.id === clientId);
     const dataToSave = {
-      client_id: formData.clientId,
+      client_id: clientId,
       client_name: selectedClient?.name,
-      name: formData.name,
-      link: formData.link,
-      contract_value: Number(formData.contractValue.replace(/\./g, '')),
-      status: formData.status,
-      start_date: formData.startDate,
-      end_date: formData.endDate,
-      payments: formData.payments,
-      team: formData.team,
+      name,
+      link,
+      contract_value: Number(contractValue.replace(/\./g, '')),
+      status,
+      start_date: startDate,
+      end_date: endDate,
+      payments,
+      team,
     };
     onSave(dataToSave);
     onOpenChange(false);
@@ -204,58 +157,38 @@ export const ProjectFormDialog = ({
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div className="space-y-2">
               <Label htmlFor="client">Client</Label>
-              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full justify-between">
-                    {formData.clientId ? clients.find((c) => c.id === formData.clientId)?.name : "Chọn client..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Tìm kiếm client..." />
-                    <CommandList>
-                      <CommandEmpty>Không tìm thấy client.</CommandEmpty>
-                      <CommandGroup>
-                        {clients.map((client) => (
-                          <CommandItem key={client.id} value={client.name} onSelect={() => { updateFormData({ clientId: client.id }); setComboboxOpen(false); }}>
-                            <Check className={cn("mr-2 h-4 w-4", formData.clientId === client.id ? "opacity-100" : "opacity-0")} />
-                            {client.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger><SelectValue placeholder="Chọn client" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}</SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Tên dự án</Label>
-              <Input id="name" value={formData.name} onChange={(e) => updateFormData({ name: e.target.value })} />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="link">Link</Label>
-              <Input id="link" type="url" value={formData.link} onChange={(e) => updateFormData({ link: e.target.value })} />
+              <Input id="link" type="url" value={link} onChange={(e) => setLink(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contract_value">Giá trị HĐ</Label>
-              <Input id="contract_value" value={formatCurrency(formData.contractValue)} onChange={(e) => updateFormData({ contractValue: e.target.value })} />
+              <Input id="contract_value" value={formatCurrency(contractValue)} onChange={(e) => setContractValue(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Thời gian</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Input type="date" value={formData.startDate} onChange={(e) => updateFormData({ startDate: e.target.value })} />
-                <Input type="date" value={formData.endDate} onChange={(e) => updateFormData({ endDate: e.target.value })} />
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Thanh toán</Label>
               <div className="space-y-2">
-                {formData.payments.map((payment, index) => (
+                {payments.map((payment, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <Label htmlFor={`payment-${index}`} className="min-w-[50px]">Đợt {index + 1}</Label>
                     <Input id={`payment-${index}`} value={formatCurrency(payment.amount)} onChange={(e) => handlePaymentChange(index, e.target.value)} className="flex-1" placeholder="Nhập số tiền" />
-                    {formData.payments.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePayment(index)}><Trash2 className="h-4 w-4" /></Button>)}
+                    {payments.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => handleRemovePayment(index)}><Trash2 className="h-4 w-4" /></Button>)}
                   </div>
                 ))}
                 <Button type="button" variant="outline" size="sm" onClick={handleAddPayment}><PlusCircle className="h-4 w-4 mr-2" />Thêm đợt</Button>
@@ -264,7 +197,7 @@ export const ProjectFormDialog = ({
             <div className="space-y-2">
               <Label>Nhân sự</Label>
               <div className="space-y-2">
-                {formData.team.map((member, index) => (
+                {team.map((member, index) => (
                   <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
                     <Select value={member.role} onValueChange={(value) => handleTeamChange(index, 'role', value)}>
                       <SelectTrigger className="w-full sm:w-[120px]"><SelectValue placeholder="Vai trò" /></SelectTrigger>
@@ -282,7 +215,7 @@ export const ProjectFormDialog = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Tiến độ</Label>
-              <Select value={formData.status} onValueChange={(value) => updateFormData({ status: value })}>
+              <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger><SelectValue placeholder="Chọn trạng thái" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="planning">Pending</SelectItem>

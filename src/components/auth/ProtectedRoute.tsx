@@ -22,12 +22,12 @@ const ProtectedRoute = () => {
 
   useEffect(() => {
     if (authLoading || abilityLoading) {
-      return; // Chờ cho đến khi tất cả dữ liệu được tải xong
+      return; // Wait until everything is loaded
     }
 
     if (session) {
-      // Logic này chạy khi người dùng đã đăng nhập và tất cả dữ liệu đã được tải.
-      // Nó kiểm tra xem người dùng có đang ở trang gốc không và có nên chuyển hướng họ không.
+      // This logic runs when the user is logged in and all data is loaded.
+      // It checks if the user is on the root page and if they should be redirected.
       if (location.pathname === '/') {
         const canAccessDashboard = can('dashboard.view');
         if (!canAccessDashboard) {
@@ -35,7 +35,7 @@ const ProtectedRoute = () => {
           if (defaultRoute && defaultRoute !== '/') {
             navigate(defaultRoute, { replace: true });
           } else if (!defaultRoute) {
-            // Trường hợp này có nghĩa là người dùng không có quyền nào cả.
+            // This case means the user has no permissions at all.
             navigate('/no-access', { replace: true });
           }
         }
@@ -44,11 +44,11 @@ const ProtectedRoute = () => {
   }, [authLoading, abilityLoading, session, location.pathname, can, navigate]);
 
   if (authLoading || abilityLoading) {
-    return <div className="flex h-screen items-center justify-center">Đang tải...</div>;
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   if (!session) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

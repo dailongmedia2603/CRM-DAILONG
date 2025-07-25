@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -48,12 +48,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
-import { Client } from "@/types";
+import { Client, Project } from "@/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ClientCard } from "@/components/clients/ClientCard";
-import { useClients } from "@/hooks/useClients";
 
 const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, subtitle: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
@@ -81,25 +80,50 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 };
 
 const ClientsPage = () => {
-  const { clients, projects, isLoading, invalidateClients } = useClients();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [creatorFilter, setCreatorFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
 
-  const [isFormOpen, setIsFormOpen] = useState(() => sessionStorage.getItem('clientFormOpen') === 'true');
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(() => {
-    const savedClient = sessionStorage.getItem('clientToEdit');
-    return savedClient ? JSON.parse(savedClient) : null;
-  });
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [clientForDetails, setClientForDetails] = useState<Client | null>(null);
   const isMobile = useIsMobile();
+
+  const fetchData = async () => {
+    setLoading(true);
+    const [clientsRes, projectsRes] = await Promise.all([
+      supabase.from("clients").select("*"),
+      supabase.from("projects").select("client_id, contract_value")
+    ]);
+
+    if (clientsRes.error) {
+      showError("Lỗi khi tải dữ liệu khách hàng.");
+    } else {
+      setClients(clientsRes.data as Client[]);
+    }
+
+    if (projectsRes.error) {
+      showError("Lỗi khi tải dữ liệu dự án.");
+    } else {
+      setProjects(projectsRes.data as Project[]);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const clientContractValues = useMemo(() => {
     const valueMap = new Map<string, number>();
@@ -171,27 +195,19 @@ const ClientsPage = () => {
     };
   }, [clients, clientContractValues]);
 
-  const handleSetFormOpen = (open: boolean) => {
-    setIsFormOpen(open);
-    if (open) {
-      sessionStorage.setItem('clientFormOpen', 'true');
-    } else {
-      sessionStorage.removeItem('clientFormOpen');
-      sessionStorage.removeItem('clientToEdit');
-      sessionStorage.removeItem('clientFormData');
-    }
-  };
-
   const handleOpenAddDialog = () => {
     setClientToEdit(null);
-    sessionStorage.removeItem('clientToEdit');
-    handleSetFormOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleOpenEditDialog = (client: Client) => {
     setClientToEdit(client);
-    sessionStorage.setItem('clientToEdit', JSON.stringify(client));
-    handleSetFormOpen(true);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDeleteAlert = (client: Client) => {
+    setClientToDelete(client);
+    setIsDeleteAlertOpen(true);
   };
   
   const handleViewDetails = (client: Client) => {
@@ -209,13 +225,8 @@ const ClientsPage = () => {
       if (error) showError("Lỗi khi thêm client mới.");
       else showSuccess("Client mới đã được thêm!");
     }
-    invalidateClients();
-    handleSetFormOpen(false);
-  };
-
-  const handleOpenDeleteAlert = (client: Client) => {
-    setClientToDelete(client);
-    setIsDeleteAlertOpen(true);
+    fetchData();
+    setIsFormOpen(false);
   };
 
   const handleDeleteConfirm = async () => {
@@ -223,7 +234,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().eq('id', clientToDelete.id);
     if (error) showError("Lỗi khi xóa client.");
     else showSuccess("Client đã được xóa.");
-    invalidateClients();
+    fetchData();
     setIsDeleteAlertOpen(false);
     setClientToDelete(null);
   };
@@ -232,7 +243,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: true }).in('id', selectedClients);
     if (error) showError("Lỗi khi lưu trữ clients.");
     else showSuccess(`${selectedClients.length} client đã được lưu trữ.`);
-    invalidateClients();
+    fetchData();
     setSelectedClients([]);
   };
 
@@ -240,7 +251,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').update({ archived: false }).in('id', selectedClients);
     if (error) showError("Lỗi khi khôi phục clients.");
     else showSuccess(`${selectedClients.length} client đã được khôi phục.`);
-    invalidateClients();
+    fetchData();
     setSelectedClients([]);
   };
 
@@ -248,7 +259,7 @@ const ClientsPage = () => {
     const { error } = await supabase.from('clients').delete().in('id', selectedClients);
     if (error) showError("Lỗi khi xóa clients.");
     else showSuccess(`${selectedClients.length} client đã được xóa vĩnh viễn.`);
-    invalidateClients();
+    fetchData();
     setSelectedClients([]);
     setIsBulkDeleteAlertOpen(false);
   };
@@ -348,7 +359,7 @@ const ClientsPage = () => {
 
         {isMobile ? (
           <div className="space-y-4">
-            {isLoading ? (
+            {loading ? (
               <p>Đang tải...</p>
             ) : (
               filteredClients.map((client) => (
@@ -378,7 +389,7 @@ const ClientsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
+                  {loading ? (
                     <TableRow><TableCell colSpan={8} className="text-center">Đang tải...</TableCell></TableRow>
                   ) : (
                     filteredClients.map((client) => (
@@ -422,7 +433,7 @@ const ClientsPage = () => {
 
       <ClientFormDialog
         open={isFormOpen}
-        onOpenChange={handleSetFormOpen}
+        onOpenChange={setIsFormOpen}
         onSave={handleSaveClient}
         client={clientToEdit}
       />

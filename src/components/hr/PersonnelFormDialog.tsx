@@ -29,8 +29,6 @@ interface PersonnelFormDialogProps {
   positions: Position[];
 }
 
-const FORM_DATA_KEY = 'personnelFormData';
-
 export const PersonnelFormDialog = ({
   open,
   onOpenChange,
@@ -50,56 +48,35 @@ export const PersonnelFormDialog = ({
 
   const isEditing = !!personnel;
 
-  const clearSessionData = () => {
-    sessionStorage.removeItem(FORM_DATA_KEY);
-  };
-
   useEffect(() => {
-    if (open) {
-      const savedData = sessionStorage.getItem(FORM_DATA_KEY);
-      if (savedData) {
-        setFormData(JSON.parse(savedData));
-      } else if (personnel) {
-        const initialData = {
-          name: personnel.name,
-          email: personnel.email,
-          position_id: personnel.position_id || "",
-          role: personnel.role,
-          status: personnel.status,
-          password: "",
-        };
-        setFormData(initialData);
-        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
-      } else {
-        const initialData = {
-          name: "",
-          email: "",
-          position_id: "",
-          role: "Nhân viên" as Personnel['role'],
-          status: "active" as Personnel['status'],
-          password: "",
-        };
-        setFormData(initialData);
-        sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(initialData));
-      }
+    if (personnel) {
+      setFormData({
+        name: personnel.name,
+        email: personnel.email,
+        position_id: personnel.position_id || "",
+        role: personnel.role,
+        status: personnel.status,
+        password: "",
+      });
     } else {
-      clearSessionData();
+      setFormData({
+        name: "",
+        email: "",
+        position_id: "",
+        role: "Nhân viên",
+        status: "active",
+        password: "",
+      });
     }
   }, [personnel, open]);
 
-  const updateFormData = (newData: Partial<typeof formData>) => {
-    const updatedData = { ...formData, ...newData };
-    setFormData(updatedData);
-    sessionStorage.setItem(FORM_DATA_KEY, JSON.stringify(updatedData));
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    updateFormData({ [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: keyof typeof formData, value: string) => {
-    updateFormData({ [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +107,6 @@ export const PersonnelFormDialog = ({
       } else {
         showSuccess("Cập nhật thông tin thành công!");
         onSave();
-        onOpenChange(false);
       }
     } else {
       if (!formData.password) {
@@ -144,8 +120,8 @@ export const PersonnelFormDialog = ({
           email: formData.email, 
           password: formData.password,
           name: formData.name,
-          position: selectedPosition.name,
-          position_id: formData.position_id,
+          position: selectedPosition.name, // Pass the name
+          position_id: formData.position_id, // Pass the ID
           role: formData.role,
           status: formData.status,
         },
@@ -156,11 +132,11 @@ export const PersonnelFormDialog = ({
       } else {
         showSuccess("Thêm nhân sự mới thành công!");
         onSave();
-        onOpenChange(false);
       }
     }
 
     setIsLoading(false);
+    onOpenChange(false);
   };
 
   return (

@@ -4,10 +4,10 @@ import ChartCard from "@/components/dashboard/ChartCard";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import TasksList from "@/components/dashboard/TasksList";
 import RecentActivity from "@/components/dashboard/RecentActivity";
-import { Users, DollarSign, Briefcase, CheckCircle, Calendar, TrendingUp, Bell, Plus } from "lucide-react";
+import { Users, DollarSign, Briefcase, CheckCircle, Calendar, TrendingUp, Bell, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
