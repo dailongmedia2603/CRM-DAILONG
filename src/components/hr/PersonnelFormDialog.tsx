@@ -51,9 +51,7 @@ export const PersonnelFormDialog = ({
 
   useEffect(() => {
     if (open) {
-      const hasPersistedData = Object.keys(formData).some(key => formData[key as keyof typeof formData] !== "");
-
-      if (!hasPersistedData && personnel) {
+      if (personnel) { // Edit mode
         setFormData({
           name: personnel.name,
           email: personnel.email,
@@ -62,11 +60,14 @@ export const PersonnelFormDialog = ({
           status: personnel.status,
           password: "",
         });
+      } else { // Add mode
+        // If form data has an email, it's likely stale from an edit. Clear it.
+        if (formData.email) {
+          setFormData({
+            name: "", email: "", position_id: "", role: "Nhân viên", status: "active", password: "",
+          });
+        }
       }
-    } else {
-      setFormData({
-        name: "", email: "", position_id: "", role: "Nhân viên", status: "active", password: "",
-      });
     }
   }, [personnel, open]);
 

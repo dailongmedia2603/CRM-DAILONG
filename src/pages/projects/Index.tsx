@@ -133,6 +133,13 @@ const ProjectsPage = () => {
     };
   }, [projects]);
 
+  const handleFormOpenChange = (open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setProjectToEdit(null);
+    }
+  };
+
   const handleOpenAddDialog = () => {
     setProjectToEdit(null);
     setIsFormOpen(true);
@@ -458,7 +465,7 @@ const ProjectsPage = () => {
           </Card>
         )}
       </div>
-      <ProjectFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
+      <ProjectFormDialog open={isFormOpen} onOpenChange={handleFormOpenChange} onSave={handleSaveProject} project={projectToEdit} clients={clients} />
       <AcceptanceDialog open={isAcceptanceOpen} onOpenChange={setIsAcceptanceOpen} onConfirm={handleConfirmCompletion} />
       <ProjectDetailsDialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen} project={projectForDetails} />
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>

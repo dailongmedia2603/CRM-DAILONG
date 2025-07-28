@@ -92,6 +92,13 @@ const HRPage = () => {
     inactive: personnel.filter(p => p.status === 'inactive').length,
   }), [personnel]);
 
+  const handleFormOpenChange = (open: boolean) => {
+    setIsFormOpen(open);
+    if (!open) {
+      setPersonnelToEdit(null);
+    }
+  };
+
   const handleOpenAddDialog = () => {
     setPersonnelToEdit(null);
     setIsFormOpen(true);
@@ -241,7 +248,7 @@ const HRPage = () => {
 
       <PersonnelFormDialog
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={handleFormOpenChange}
         onSave={invalidatePersonnel}
         personnel={personnelToEdit}
         positions={positions}

@@ -93,9 +93,7 @@ export const ProjectFormDialog = ({
 
   useEffect(() => {
     if (open) {
-      const hasPersistedData = Object.keys(formData).some(key => formData[key as keyof ProjectFormData] !== "" && (Array.isArray(formData[key as keyof ProjectFormData]) ? (formData[key as keyof ProjectFormData] as any[]).length > 0 : true));
-
-      if (!hasPersistedData && project) {
+      if (project) { // Edit mode: always populate from the project prop
         setFormData({
           clientId: project.client_id || "",
           name: project.name || "",
@@ -107,12 +105,20 @@ export const ProjectFormDialog = ({
           payments: project.payments || [{ amount: 0, paid: false }],
           team: project.team || [],
         });
+      } else { // Add mode: check if stale data from an edit needs clearing
+        const hasDataFromEdit = formData.clientId || formData.name;
+        if (hasDataFromEdit) {
+          // This data is likely from a previous edit session, clear it for "add new"
+          // unless it's just the default empty state from the hook.
+          // A better check might be needed if default state changes.
+          if (formData.clientId) { // Good indicator of edit data
+            setFormData({
+              clientId: "", name: "", link: "", contractValue: "", status: "in-progress",
+              startDate: "", endDate: "", payments: [{ amount: 0, paid: false }], team: [],
+            });
+          }
+        }
       }
-    } else {
-      setFormData({
-        clientId: "", name: "", link: "", contractValue: "", status: "in-progress",
-        startDate: "", endDate: "", payments: [{ amount: 0, paid: false }], team: [],
-      });
     }
   }, [project, open]);
 
