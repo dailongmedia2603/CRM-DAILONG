@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,8 @@ import {
   Settings,
   LogOut,
   User,
-  ChevronDown
+  ChevronDown,
+  Wrench
 } from "lucide-react";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,54 @@ import { useAuth } from "@/context/AuthProvider";
 interface MainLayoutProps {
   children: React.ReactNode;
 }
+
+// Navigation Item Component (Upgraded)
+const NavItem = ({ 
+  icon, 
+  href, 
+  label, 
+  active = false,
+  external = false
+}: { 
+  icon?: React.ReactNode; 
+  href: string; 
+  label: string; 
+  active?: boolean;
+  external?: boolean;
+}) => {
+  const content = (
+    <div className="flex items-center">
+      {icon}
+      <span>{label}</span>
+    </div>
+  );
+
+  const className = cn(
+    "flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150",
+    active 
+      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
+      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+  );
+
+  if (external) {
+    return (
+      <a 
+        href={href} 
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link to={href} className={className}>
+      {content}
+    </Link>
+  );
+};
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -87,6 +136,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Can I="projects.view"><NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Dự án" active={pathname.startsWith("/projects")} /></Can>
             <Can I="leads.view"><NavItem icon={<DollarSign className="mr-3 h-5 w-5" />} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} /></Can>
             <Can I="intern_tasks.view"><NavItem icon={<GraduationCap className="mr-3 h-5 w-5" />} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} /></Can>
+            <NavItem icon={<Wrench className="mr-3 h-5 w-5" />} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} />
             <Can I="tasks.view"><NavItem icon={<FolderKanban className="mr-3 h-5 w-5" />} href="/task-management" label="Quản lý công việc" active={pathname.startsWith("/task-management")} /></Can>
             <Can I="reports.view"><NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} /></Can>
             <Can I="hr.view"><NavItem icon={<UserCog className="mr-3 h-5 w-5" />} href="/hr" label="Nhân sự" active={pathname.startsWith("/hr")} /></Can>
@@ -232,36 +282,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
     </div>
-  );
-};
-
-// Navigation Item Component
-const NavItem = ({ 
-  icon, 
-  href, 
-  label, 
-  active = false
-}: { 
-  icon?: React.ReactNode; 
-  href: string; 
-  label: string; 
-  active?: boolean;
-}) => {
-  return (
-    <a 
-      href={href} 
-      className={cn(
-        "flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150",
-        active 
-          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
-          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-      )}
-    >
-      <div className="flex items-center">
-        {icon}
-        <span>{label}</span>
-      </div>
-    </a>
   );
 };
 
