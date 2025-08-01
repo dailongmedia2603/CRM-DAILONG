@@ -67,11 +67,25 @@ export const ProjectDetailsDialog = ({ open, onOpenChange, project }: ProjectDet
           </div>
           <div className="space-y-2 border-t pt-4">
             <h4 className="font-semibold">Tiến độ thanh toán</h4>
-            <div className="flex flex-col gap-1">
+            <div className="space-y-3">
               {(project.payments || []).map((payment, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm">
-                  <span>Đợt {index + 1}: {formatCurrency(payment.amount)}</span>
-                  <CheckCircle className={cn("h-4 w-4", payment.paid ? "text-green-500" : "text-gray-300")} />
+                <div key={index} className="p-3 rounded-lg border bg-gray-50 text-sm">
+                  <div className="flex items-center justify-between font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>Đợt {index + 1}: {formatCurrency(payment.amount)}</span>
+                      <CheckCircle className={cn("h-4 w-4", payment.paid ? "text-green-500" : "text-gray-300")} />
+                    </div>
+                  </div>
+                  {payment.personnel && payment.personnel.length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      <strong>Nhân sự:</strong> {payment.personnel.map(p => p.name).join(', ')}
+                    </div>
+                  )}
+                  {payment.note && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      <strong>Ghi chú:</strong> {payment.note}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
