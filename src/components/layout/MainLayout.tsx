@@ -34,6 +34,7 @@ import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Can } from "@/components/auth/Can";
 import { useAuth } from "@/context/AuthProvider";
+import { useAbility } from "@/context/AbilityProvider";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -92,6 +93,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { can } = useAbility();
+
+  const canViewReports = can('reports.sales.view') || can('reports.projects.view') || can('reports.interns.view') || can('reports.clients.view');
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -138,7 +142,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Can I="intern_tasks.view"><NavItem icon={<GraduationCap className="mr-3 h-5 w-5" />} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} /></Can>
             <NavItem icon={<Wrench className="mr-3 h-5 w-5" />} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} />
             <Can I="tasks.view"><NavItem icon={<FolderKanban className="mr-3 h-5 w-5" />} href="/task-management" label="Quản lý công việc" active={pathname.startsWith("/task-management")} /></Can>
-            <Can I="reports.view"><NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} /></Can>
+            {canViewReports && <NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} />}
             <Can I="hr.view"><NavItem icon={<UserCog className="mr-3 h-5 w-5" />} href="/hr" label="Nhân sự" active={pathname.startsWith("/hr")} /></Can>
           </nav>
 
