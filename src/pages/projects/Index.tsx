@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,8 @@ import { useProjects } from "@/hooks/useProjects";
 import usePersistentState from "@/hooks/usePersistentState";
 
 const ProjectsPage = () => {
-  const { projects, clients, isLoading, invalidateProjects } = useProjects();
+  const { projects: projectsFromHook, clients, isLoading, invalidateProjects } = useProjects();
+  const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [showArchived, setShowArchived] = useState(false);
@@ -92,6 +93,10 @@ const ProjectsPage = () => {
   const isMobile = useIsMobile();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [projectForDetails, setProjectForDetails] = useState<Project | null>(null);
+
+  useEffect(() => {
+    setProjects(projectsFromHook);
+  }, [projectsFromHook]);
 
   const statusTextMap: { [key: string]: string } = {
     planning: "Pending",
@@ -210,13 +215,35 @@ const ProjectsPage = () => {
   };
 
   const handleTogglePaymentStatus = async (projectId: string, paymentIndex: number) => {
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return;
-    const newPayments = [...project.payments];
-    newPayments[paymentIndex].paid = !newPayments[paymentIndex].paid;
-    const { error } = await supabase.from('projects').update({ payments: newPayments }).eq('id', projectId);
-    if (error) showError("Lỗi khi cập nhật thanh toán.");
-    else invalidateProjects();
+    const originalProjects = [...projects];
+
+    const updatedProjects = projects.map(p => {
+      if (p.id === projectId) {
+        const newPayments = [...p.payments];
+        newPayments[paymentIndex] = {
+          ...newPayments[paymentIndex],
+          paid: !newPayments[paymentIndex].paid,
+        };
+        return { ...p, payments: newPayments };
+      }
+      return p;
+    });
+    setProjects(updatedProjects);
+
+    const projectToUpdate = updatedProjects.find(p => p.id === projectId);
+    if (!projectToUpdate) return;
+
+    const { error } = await supabase
+      .from('projects')
+      .update({ payments: projectToUpdate.payments })
+      .eq('id', projectId);
+
+    if (error) {
+      showError("Lỗi khi cập nhật thanh toán.");
+      setProjects(originalProjects);
+    } else {
+      invalidateProjects();
+    }
   };
 
   const handleSelectAll = (checked: boolean) => setSelectedProjects(checked ? filteredProjects.map((p) => p.id) : []);
