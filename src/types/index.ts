@@ -41,6 +41,9 @@ export interface Client {
 export interface Payment {
   amount: number;
   paid: boolean;
+  note?: string;
+  personnel_id?: string;
+  personnel_name?: string;
 }
 
 export interface Project {
