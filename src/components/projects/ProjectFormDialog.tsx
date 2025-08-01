@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Client, Personnel, Payment } from "@/types";
-import { PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { PlusCircle, Trash2, Check, ChevronsUpDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import usePersistentState from "@/hooks/usePersistentState";
+import { Badge } from "@/components/ui/badge";
 
 interface TeamMember {
   role: string;
@@ -73,9 +74,15 @@ export const ProjectFormDialog = ({
   const [personnelList, setPersonnelList] = useState<Personnel[]>([]);
   const [formData, setFormData] = usePersistentState<ProjectFormData>('projectFormData', {
     clientId: "", name: "", link: "", contractValue: "", status: "in-progress",
-    startDate: "", endDate: "", payments: [{ amount: 0, paid: false, note: '', personnel_id: '' }], team: [],
+    startDate: "", endDate: "", payments: [{ amount: 0, paid: false, note: '', personnel: [] }], team: [],
   });
   const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [paymentPersonnelOpen, setPaymentPersonnelOpen] = useState<number | null>(null);
+
+  const paymentPersonnelList = useMemo(() => {
+    const roles = ['account', 'seeder', 'content'];
+    return personnelList.filter(p => roles.includes(p.position.toLowerCase()));
+  }, [personnelList]);
 
   useEffect(() => {
     const fetchPersonnel = async () => {
@@ -97,7 +104,7 @@ export const ProjectFormDialog = ({
           status: project.status || "in-progress",
           startDate: project.start_date ? new Date(project.start_date).toISOString().split('T')[0] : "",
           endDate: project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : "",
-          payments: project.payments && project.payments.length > 0 ? project.payments : [{ amount: 0, paid: false, note: '', personnel_id: '' }],
+          payments: project.payments && project.payments.length > 0 ? project.payments.map((p: any) => ({...p, personnel: p.personnel || []})) : [{ amount: 0, paid: false, note: '', personnel: [] }],
           team: project.team || [],
         });
       } else { // Add mode: check if stale data from an edit needs clearing
@@ -106,7 +113,7 @@ export const ProjectFormDialog = ({
           if (formData.clientId) { 
             setFormData({
               clientId: "", name: "", link: "", contractValue: "", status: "in-progress",
-              startDate: "", endDate: "", payments: [{ amount: 0, paid: false, note: '', personnel_id: '' }], team: [],
+              startDate: "", endDate: "", payments: [{ amount: 0, paid: false, note: '', personnel: [] }], team: [],
             });
           }
         }
@@ -114,25 +121,38 @@ export const ProjectFormDialog = ({
     }
   }, [project, open]);
 
-  const handleAddPayment = () => setFormData(prev => ({ ...prev, payments: [...prev.payments, { amount: 0, paid: false, note: '', personnel_id: '' }] }));
+  const handleAddPayment = () => setFormData(prev => ({ ...prev, payments: [...prev.payments, { amount: 0, paid: false, note: '', personnel: [] }] }));
   const handleRemovePayment = (index: number) => setFormData(prev => ({ ...prev, payments: prev.payments.filter((_, i) => i !== index) }));
   
-  const handlePaymentFieldChange = (index: number, field: keyof Payment, value: string | number) => {
+  const handlePaymentFieldChange = (index: number, field: 'amount' | 'note', value: string | number) => {
     const newPayments = [...formData.payments];
     let currentPayment = { ...newPayments[index] };
 
     if (field === 'amount') {
         const numericValue = Number(String(value).replace(/[^0-9]/g, ""));
         currentPayment.amount = numericValue;
-    } else if (field === 'personnel_id') {
-        const selectedPerson = personnelList.find(p => p.id === value);
-        currentPayment.personnel_id = value as string;
-        currentPayment.personnel_name = selectedPerson?.name || '';
     } else if (field === 'note') {
         currentPayment.note = value as string;
     }
     
     newPayments[index] = currentPayment;
+    setFormData(prev => ({ ...prev, payments: newPayments }));
+  };
+
+  const handlePaymentPersonnelChange = (paymentIndex: number, person: { id: string; name: string }) => {
+    const newPayments = [...formData.payments];
+    const currentPayment = { ...newPayments[paymentIndex] };
+    const currentPersonnel = currentPayment.personnel || [];
+    
+    const isSelected = currentPersonnel.some(p => p.id === person.id);
+    
+    if (isSelected) {
+        currentPayment.personnel = currentPersonnel.filter(p => p.id !== person.id);
+    } else {
+        currentPayment.personnel = [...currentPersonnel, person];
+    }
+    
+    newPayments[paymentIndex] = currentPayment;
     setFormData(prev => ({ ...prev, payments: newPayments }));
   };
 
@@ -250,12 +270,40 @@ export const ProjectFormDialog = ({
                       </div>
                       <div className="space-y-1">
                         <Label htmlFor={`payment-personnel-${index}`} className="text-xs">Nhân sự phụ trách</Label>
-                        <Select value={payment.personnel_id || ''} onValueChange={(value) => handlePaymentFieldChange(index, 'personnel_id', value)}>
-                          <SelectTrigger><SelectValue placeholder="Chọn nhân sự" /></SelectTrigger>
-                          <SelectContent>
-                            {personnelList.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={paymentPersonnelOpen === index} onOpenChange={(isOpen) => setPaymentPersonnelOpen(isOpen ? index : null)}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start font-normal h-auto min-h-10">
+                              <div className="flex gap-1 flex-wrap">
+                                {payment.personnel && payment.personnel.length > 0 ? (
+                                  payment.personnel.map(p => (
+                                    <Badge key={p.id} variant="secondary">{p.name}</Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-muted-foreground">Chọn nhân sự...</span>
+                                )}
+                              </div>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Tìm nhân sự..." />
+                              <CommandList>
+                                <CommandEmpty>Không tìm thấy.</CommandEmpty>
+                                <CommandGroup>
+                                  {paymentPersonnelList.map(person => (
+                                    <CommandItem
+                                      key={person.id}
+                                      onSelect={() => handlePaymentPersonnelChange(index, { id: person.id, name: person.name })}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", payment.personnel?.some(p => p.id === person.id) ? "opacity-100" : "opacity-0")} />
+                                      {person.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="space-y-1">

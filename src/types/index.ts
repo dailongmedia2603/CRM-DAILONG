@@ -42,8 +42,7 @@ export interface Payment {
   amount: number;
   paid: boolean;
   note?: string;
-  personnel_id?: string;
-  personnel_name?: string;
+  personnel?: { id: string; name: string }[];
 }
 
 export interface Project {
