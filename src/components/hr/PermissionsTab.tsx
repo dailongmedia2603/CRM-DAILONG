@@ -19,6 +19,7 @@ const translationMap: { [key: string]: string } = {
   permissions: "Phân quyền",
   projects: "Dự án",
   reports: "Báo cáo & Phân tích",
+  tasks: "Công việc",
 
   // Actions
   create: "Tạo mới",
@@ -26,6 +27,12 @@ const translationMap: { [key: string]: string } = {
   edit: "Chỉnh sửa",
   view: "Xem",
   manage: "Quản lý",
+
+  // Report specific views
+  "sales.view": "Báo cáo Sale",
+  "projects.view": "Báo cáo Dự án",
+  "interns.view": "Báo cáo TTS",
+  "clients.view": "Báo cáo Clients",
 };
 
 const translate = (key: string) => translationMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
@@ -222,7 +229,9 @@ export const PermissionsTab = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="grid grid-cols-2 gap-4">
-                    {perms.map(perm => (
+                    {perms.map(perm => {
+                      const actionKey = perm.name.substring(perm.name.indexOf('.') + 1);
+                      return (
                       <div key={perm.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`perm-${perm.id}`}
@@ -233,10 +242,11 @@ export const PermissionsTab = () => {
                           htmlFor={`perm-${perm.id}`}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          {translate(perm.name.split('.')[1])}
+                          {translate(actionKey)}
                         </Label>
                       </div>
-                    ))}
+                      );
+                    })}
                   </CardContent>
                 </Card>
               );
