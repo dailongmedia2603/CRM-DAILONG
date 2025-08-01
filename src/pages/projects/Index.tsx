@@ -336,7 +336,7 @@ const ProjectsPage = () => {
                       <TableRow key={project.id} className="text-xs">
                         <TableCell className="px-2"><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => handleSelectRow(project.id, !!checked)} /></TableCell>
                         <TableCell><Link to={`/clients/${project.client_id}`} target="_blank" className="hover:underline">{project.client_name}</Link></TableCell>
-                        <TableCell className="font-medium"><Link to={`/projects/${project.id}`} className="hover:underline">{project.name}</Link></TableCell>
+                        <TableCell className="font-medium"><button onClick={() => handleViewDetails(project)} className="hover:underline text-left">{project.name}</button></TableCell>
                         <TableCell><a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline"><ExternalLink className="h-4 w-4" /></a></TableCell>
                         <TableCell className={cn(isOverdue && "text-red-600")}>
                           <div><span className="font-bold">Bắt đầu:</span> {formatDate(project.start_date)}</div>
