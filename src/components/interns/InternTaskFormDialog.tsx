@@ -31,6 +31,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
     priority: 'Bình thường' as InternTask['priority'],
     comment_count: 0,
     post_count: 0,
+    post_scan_count: 0,
   });
   const [deadline, setDeadline] = useState<Date | undefined>();
 
@@ -50,6 +51,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
           priority: task.priority,
           comment_count: task.comment_count || 0,
           post_count: task.post_count || 0,
+          post_scan_count: task.post_scan_count || 0,
         };
         setFormData(initialData);
         setDeadline(task.deadline ? new Date(task.deadline) : undefined);
@@ -58,7 +60,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
         const initialData = {
           title: '', description: '', work_link: '', intern_name: '',
           priority: 'Bình thường' as InternTask['priority'],
-          comment_count: 0, post_count: 0,
+          comment_count: 0, post_count: 0, post_scan_count: 0,
         };
         setFormData(initialData);
         setDeadline(undefined);
@@ -77,7 +79,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    const finalValue = (name === 'comment_count' || name === 'post_count') ? parseInt(value, 10) || 0 : value;
+    const finalValue = (name === 'comment_count' || name === 'post_count' || name === 'post_scan_count') ? parseInt(value, 10) || 0 : value;
     updateStateAndSession({ [name]: finalValue });
   };
 
@@ -203,7 +205,7 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="comment_count">Số lượng Comment</Label>
               <Input id="comment_count" name="comment_count" type="number" value={formData.comment_count} onChange={handleChange} />
@@ -211,6 +213,10 @@ export const InternTaskFormDialog = ({ open, onOpenChange, onSave, task, interns
             <div className="space-y-2">
               <Label htmlFor="post_count">Số lượng Post</Label>
               <Input id="post_count" name="post_count" type="number" value={formData.post_count} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="post_scan_count">Số lượng post scan</Label>
+              <Input id="post_scan_count" name="post_scan_count" type="number" value={formData.post_scan_count} onChange={handleChange} />
             </div>
           </div>
         </div>

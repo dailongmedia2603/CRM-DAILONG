@@ -386,6 +386,7 @@ const InternsPage = () => {
                     <TableHead className="w-[25%]">CÔNG VIỆC</TableHead>
                     <TableHead>CMT</TableHead>
                     <TableHead>POST</TableHead>
+                    <TableHead>POST SCAN</TableHead>
                     <TableHead>FILE</TableHead>
                     <TableHead>DEADLINE</TableHead>
                     <TableHead>NGƯỜI GIAO</TableHead>
@@ -396,7 +397,7 @@ const InternsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? <TableRow><TableCell colSpan={11} className="text-center">Đang tải...</TableCell></TableRow> :
+                  {isLoading ? <TableRow><TableCell colSpan={12} className="text-center">Đang tải...</TableCell></TableRow> :
                   paginatedTasks.map(task => {
                     const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Hoàn thành';
                     const overdueDays = isOverdue ? differenceInDays(new Date(), new Date(task.deadline)) : 0;
@@ -417,6 +418,9 @@ const InternsPage = () => {
                       </TableCell>
                       <TableCell>
                         <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700">{task.post_count}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center font-bold text-purple-700">{task.post_scan_count || 0}</div>
                       </TableCell>
                       <TableCell className="text-center">
                         <a href={task.work_link} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:text-blue-800 inline-block">

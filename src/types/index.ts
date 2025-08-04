@@ -116,6 +116,7 @@ export interface InternTask {
   post_status: 'Đang làm' | 'Chờ xử lý' | 'Hoàn thành';
   comment_count: number;
   post_count: number;
+  post_scan_count?: number;
   work_link: string;
   status: 'Chưa làm' | 'Đang làm' | 'Hoàn thành' | 'Quá hạn';
   started_at?: string;
