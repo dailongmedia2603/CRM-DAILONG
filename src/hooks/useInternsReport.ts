@@ -38,6 +38,7 @@ export const useInternsReport = () => {
     const stats = {
       totalAssignedComments: 0,
       totalAssignedPosts: 0,
+      totalAssignedPostScans: 0,
       overdueTasksCount: 0,
       unreportedOverdueTasks: [] as InternTask[],
     };
@@ -56,6 +57,7 @@ export const useInternsReport = () => {
     filteredTasks.forEach(task => {
       stats.totalAssignedComments += task.comment_count || 0;
       stats.totalAssignedPosts += task.post_count || 0;
+      stats.totalAssignedPostScans += task.post_scan_count || 0;
 
       if (task.completed_at && new Date(task.completed_at) > new Date(task.deadline)) {
         stats.overdueTasksCount++;

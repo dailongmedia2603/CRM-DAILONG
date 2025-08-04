@@ -13,7 +13,7 @@ import { useInternsReport } from "@/hooks/useInternsReport";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { vi } from 'date-fns/locale';
 import { DateRange } from "react-day-picker";
-import { MessageSquare, ClipboardList, Clock, AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
+import { MessageSquare, ClipboardList, Clock, AlertTriangle, Calendar as CalendarIcon, ScanSearch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 
@@ -33,7 +33,8 @@ export const InternsReport = () => {
     return (
       <div className="space-y-6">
         <Skeleton className="h-32 w-full" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <Skeleton className="h-28" />
           <Skeleton className="h-28" />
           <Skeleton className="h-28" />
           <Skeleton className="h-28" />
@@ -75,7 +76,7 @@ export const InternsReport = () => {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <StatsCard 
           title="Comment được giao" 
           value={reportData.totalAssignedComments} 
@@ -89,6 +90,13 @@ export const InternsReport = () => {
           description="Tổng số post trong các task" 
           icon={ClipboardList}
           className="bg-green-50 border-green-200"
+        />
+        <StatsCard 
+          title="Post Scan được giao" 
+          value={reportData.totalAssignedPostScans} 
+          description="Tổng số post scan trong các task" 
+          icon={ScanSearch}
+          className="bg-purple-50 border-purple-200"
         />
         <StatsCard 
           title="Công việc quá hạn" 
