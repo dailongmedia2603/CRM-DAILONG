@@ -70,8 +70,10 @@ import { ProjectCardMobile } from "@/components/projects/ProjectCardMobile";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { useProjects } from "@/hooks/useProjects";
 import usePersistentState from "@/hooks/usePersistentState";
+import { useAuth } from "@/context/AuthProvider";
 
 const ProjectsPage = () => {
+  const { session } = useAuth();
   const { projects: projectsFromHook, clients, isLoading, invalidateProjects } = useProjects();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -186,19 +188,33 @@ const ProjectsPage = () => {
   };
 
   const handleSaveProject = async (projectData: any) => {
-    const saveData = {
+    const saveData: any = {
       ...projectData,
       contract_value: Number(projectData.contract_value || 0),
     };
 
     if (projectToEdit) {
       const { error } = await supabase.from('projects').update(saveData).eq('id', projectToEdit.id);
-      if (error) showError("Lỗi khi cập nhật dự án.");
-      else showSuccess("Dự án đã được cập nhật!");
+      if (error) {
+        showError("Lỗi khi cập nhật dự án.");
+        console.error("Update project error:", error);
+      } else {
+        showSuccess("Dự án đã được cập nhật!");
+      }
     } else {
+      if (!session?.user) {
+        showError("Bạn phải đăng nhập để tạo dự án.");
+        return;
+      }
+      saveData.created_by = session.user.id;
+
       const { error } = await supabase.from('projects').insert([saveData]);
-      if (error) showError("Lỗi khi thêm dự án mới.");
-      else showSuccess("Dự án mới đã được thêm!");
+      if (error) {
+        showError("Lỗi khi thêm dự án mới.");
+        console.error("Insert project error:", error);
+      } else {
+        showSuccess("Dự án mới đã được thêm!");
+      }
     }
     invalidateProjects();
     setIsFormOpen(false);
