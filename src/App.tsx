@@ -16,6 +16,7 @@ import TasksManagementPage from "./pages/task-management/Index";
 import InternsPage from "./pages/interns/Index";
 import HRPage from "./pages/hr/Index";
 import ReportsPage from "./pages/reports/Index";
+import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/auth/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -52,6 +53,7 @@ const App = () => {
                   <Route path="/interns" element={<InternsPage />} />
                   <Route path="/hr" element={<HRPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />

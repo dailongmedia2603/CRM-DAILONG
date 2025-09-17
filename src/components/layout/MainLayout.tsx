@@ -147,6 +147,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
           {/* User Profile Section */}
           <div className="p-4 border-t border-gray-100">
+            <Can I="permissions.view">
+              <div className="mb-2">
+                <NavItem icon={<Settings className="mr-3 h-5 w-5" />} href="/settings" label="Cài đặt" active={pathname.startsWith("/settings")} />
+              </div>
+            </Can>
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="/api/placeholder/40/40" alt="Admin User" />
