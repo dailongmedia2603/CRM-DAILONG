@@ -40,6 +40,7 @@ serve(async (req) => {
     const response = await fetch(zaloApiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}), // Add an empty JSON body for explicitness
     });
 
     const responseData = await response.json();

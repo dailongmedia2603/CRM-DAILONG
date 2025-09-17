@@ -52,7 +52,9 @@ export const ZaloBotSettings = () => {
     const { data, error } = await supabase.functions.invoke('test-zalo-connection');
 
     if (error) {
-      setTestStatus({ type: 'error', message: error.message });
+      // Attempt to parse the detailed error message from the function's response
+      const errorMessage = error.context?.error || error.message || 'Đã xảy ra lỗi không xác định.';
+      setTestStatus({ type: 'error', message: errorMessage });
     } else if (data.error) {
       setTestStatus({ type: 'error', message: data.error });
     } else {
