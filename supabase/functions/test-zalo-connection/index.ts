@@ -9,24 +9,37 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log("Function invoked with method:", req.method);
+
   if (req.method === 'OPTIONS') {
+    console.log("Handling OPTIONS request.");
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log("Initializing Supabase admin client.");
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Fetch the Zalo Bot Token from the database
+    console.log("Fetching Zalo Bot Token from settings.");
     const { data: settingsData, error: dbError } = await supabaseAdmin
       .from('settings')
       .select('value')
       .eq('key', 'zalo_bot_token')
       .single()
 
-    if (dbError || !settingsData?.value) {
+    if (dbError) {
+      console.error("Database error fetching token:", dbError);
+      return new Response(JSON.stringify({ error: `Lỗi cơ sở dữ liệu: ${dbError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
+    }
+
+    if (!settingsData?.value) {
+      console.warn("Zalo Bot Token not found in settings.");
       return new Response(JSON.stringify({ error: 'Zalo Bot Token chưa được cấu hình trong cài đặt.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -34,19 +47,21 @@ serve(async (req) => {
     }
 
     const botToken = settingsData.value;
+    console.log("Token found. Preparing to call Zalo API.");
     const zaloApiUrl = `https://bot-api.zapps.me/bot${botToken}/getMe`;
 
-    // 2. Make the API call to Zalo
     const response = await fetch(zaloApiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}), // Add an empty JSON body for explicitness
+      body: JSON.stringify({}),
     });
-
+    
+    console.log("Zalo API response status:", response.status);
     const responseData = await response.json();
+    console.log("Zalo API response data:", responseData);
 
-    // 3. Return the result to the client
     if (responseData.ok) {
+      console.log("Zalo connection successful.");
       return new Response(JSON.stringify({ 
         success: true, 
         message: `Kết nối thành công! Bot: ${responseData.result.account_name}` 
@@ -55,8 +70,9 @@ serve(async (req) => {
         status: 200,
       });
     } else {
+      console.warn("Zalo connection failed:", responseData);
       return new Response(JSON.stringify({ 
-        error: `Kết nối thất bại: ${responseData.description || 'Lỗi không xác định.'}` 
+        error: `Kết nối thất bại: ${responseData.description || 'Lỗi không xác định từ Zalo.'}` 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -64,7 +80,8 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Caught an unexpected error:", error);
+    return new Response(JSON.stringify({ error: `Lỗi máy chủ nội bộ: ${error.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })
