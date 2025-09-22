@@ -6,13 +6,20 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
-import { Terminal, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, Send } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 
 export const ZaloBotSettings = () => {
   const [token, setToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<{ type: 'success' | 'error' | 'idle'; message: string }>({ type: 'idle', message: '' });
+
+  // State mới để gửi tin nhắn
+  const [chatId, setChatId] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -52,7 +59,6 @@ export const ZaloBotSettings = () => {
     const { data, error } = await supabase.functions.invoke('test-zalo-connection');
 
     if (error) {
-      // Attempt to parse the detailed error message from the function's response
       const errorMessage = error.context?.error || error.message || 'Đã xảy ra lỗi không xác định.';
       setTestStatus({ type: 'error', message: errorMessage });
     } else if (data.error) {
@@ -61,6 +67,27 @@ export const ZaloBotSettings = () => {
       setTestStatus({ type: 'success', message: data.message });
     }
     setIsTesting(false);
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatId || !messageText) {
+      showError('Vui lòng nhập Chat ID và nội dung tin nhắn.');
+      return;
+    }
+    setIsSending(true);
+    const { data, error } = await supabase.functions.invoke('send-zalo-message', {
+      body: { chatId, messageText },
+    });
+
+    if (error) {
+      showError(`Lỗi: ${error.message}`);
+    } else if (data.error) {
+      showError(`Lỗi gửi tin nhắn: ${data.error}`);
+    } else {
+      showSuccess('Đã gửi tin nhắn thành công!');
+      setMessageText('');
+    }
+    setIsSending(false);
   };
 
   return (
@@ -100,6 +127,44 @@ export const ZaloBotSettings = () => {
           <Button variant="outline" onClick={handleTestConnection} disabled={isLoading || isTesting}>
             {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isTesting ? 'Đang kiểm tra...' : 'Kiểm tra kết nối'}
+          </Button>
+        </div>
+
+        <Separator />
+
+        <div>
+          <h3 className="text-lg font-medium">Gửi tin nhắn thử nghiệm</h3>
+          <p className="text-sm text-muted-foreground">
+            Gửi một tin nhắn đến một Chat ID cụ thể để kiểm tra chức năng gửi tin.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="chat-id">Chat ID</Label>
+            <Input
+              id="chat-id"
+              value={chatId}
+              onChange={(e) => setChatId(e.target.value)}
+              placeholder="Nhập Chat ID của người nhận"
+              disabled={isSending}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="message-text">Nội dung tin nhắn</Label>
+            <Textarea
+              id="message-text"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Nhập nội dung tin nhắn..."
+              rows={4}
+              disabled={isSending}
+            />
+          </div>
+          <Button onClick={handleSendMessage} disabled={isSending || !token}>
+            {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Send className="mr-2 h-4 w-4" />
+            {isSending ? 'Đang gửi...' : 'Gửi tin nhắn'}
           </Button>
         </div>
       </CardContent>
