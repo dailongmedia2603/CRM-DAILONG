@@ -45,6 +45,17 @@ export interface Payment {
   personnel?: { id: string; name: string }[];
 }
 
+export interface WeeklyReport {
+  id: string;
+  project_id: string;
+  user_id: string;
+  user_name: string;
+  status: string;
+  issues: string;
+  requests: string;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -61,6 +72,7 @@ export interface Project {
   created_at: string;
   payments: Payment[];
   team: { role: string; name: string; id: string }[];
+  weekly_reports?: WeeklyReport[];
 }
 
 export interface Position {
