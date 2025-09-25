@@ -18,28 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Project, Personnel } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, Edit, Trash2, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceStatuses = {
-  'Làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
-  'Đã gởi': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  'Chờ xác nhận file': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  'Đã gởi bản cứng': { icon: Send, color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' },
   'Chờ nhận tiền': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
   'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
 };
@@ -52,8 +43,6 @@ const AcceptancePage = () => {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -144,21 +133,6 @@ const AcceptancePage = () => {
     }
   };
 
-  const handleOpenDeleteAlert = (project: Project) => {
-    setProjectToDelete(project);
-    setIsDeleteAlertOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!projectToDelete) return;
-    const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
-    if (error) showError("Lỗi khi xóa dự án.");
-    else showSuccess("Dự án đã được xóa.");
-    fetchData();
-    setIsDeleteAlertOpen(false);
-    setProjectToDelete(null);
-  };
-
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -201,14 +175,13 @@ const AcceptancePage = () => {
                   <TableHead>Link nghiệm thu</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Lịch sử</TableHead>
-                  <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={5} className="text-center h-24">Đang tải...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center h-24">Đang tải...</TableCell></TableRow>
                 ) : filteredProjects.map(project => {
-                  const statusInfo = acceptanceStatuses[(project.acceptance_status || 'Làm BBNT') as keyof typeof acceptanceStatuses];
+                  const statusInfo = acceptanceStatuses[(project.acceptance_status || 'Cần làm BBNT') as keyof typeof acceptanceStatuses];
                   return (
                     <TableRow key={project.id}>
                       <TableCell>
@@ -223,10 +196,10 @@ const AcceptancePage = () => {
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={project.acceptance_status || 'Làm BBNT'}
+                          value={project.acceptance_status || 'Cần làm BBNT'}
                           onValueChange={(value) => handleStatusChange(project.id, value)}
                         >
-                          <SelectTrigger className={cn("w-[180px] border", statusInfo.bgColor, statusInfo.borderColor)}>
+                          <SelectTrigger className={cn("w-[200px] border", statusInfo.bgColor, statusInfo.borderColor)}>
                             <SelectValue asChild>
                               <div className={cn("flex items-center gap-2", statusInfo.color)}>
                                 {statusInfo.icon && createElement(statusInfo.icon, { className: "h-4 w-4" })}
@@ -249,14 +222,6 @@ const AcceptancePage = () => {
                       <TableCell>
                         <Button variant="outline" size="sm" onClick={() => openDialog('history', project)}>
                           <History className="mr-2 h-4 w-4" /> Lịch sử ({project.acceptance_history?.length || 0})
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" disabled>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(project)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -284,18 +249,6 @@ const AcceptancePage = () => {
           />
         </>
       )}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-            <AlertDialogDescription>Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MainLayout>
   );
 };
