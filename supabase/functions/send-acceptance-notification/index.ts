@@ -66,7 +66,6 @@ serve(async (req) => {
     const message = `🔔 *Dự án cần nghiệm thu* 🔔\n\n` +
                     `*Dự án:* ${projectName}\n` +
                     `*Khách hàng:* ${clientName}\n\n` +
-                    `Đã có link nghiệm thu mới. Vui lòng kiểm tra và tiến hành các bước tiếp theo.\n` +
                     `🔗 [Link nghiệm thu](${acceptanceLink})`;
 
     const sendMessageUrl = `https://api.telegram.org/bot${bot_token}/sendMessage`;

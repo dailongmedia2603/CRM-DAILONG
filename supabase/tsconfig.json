@@ -3,10 +3,10 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": [
-      "esnext",
-      "dom"
-    ],
+    "lib": ["deno.ns", "dom"],
+    "strict": true,
+    "allowJs": true,
+    "esModuleInterop": true,
     "types": [
       "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
     ]
