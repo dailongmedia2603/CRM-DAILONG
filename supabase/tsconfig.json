@@ -2,13 +2,16 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": ["esnext"],
-    "types": ["https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"]
+    "moduleResolution": "bundler",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "types": [
+      "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+    ]
   },
   "include": [
-    "./**/*.ts"
+    "./functions/**/*"
   ]
 }

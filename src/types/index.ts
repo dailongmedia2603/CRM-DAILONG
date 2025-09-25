@@ -182,3 +182,11 @@ export interface Permission {
   name: string;
   description: string;
 }
+
+export interface TelegramBot {
+  id: string;
+  name: string;
+  bot_token: string;
+  chat_id: string;
+  created_at: string;
+}

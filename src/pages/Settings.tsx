@@ -1,7 +1,8 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ZaloBotSettings } from "@/components/settings/ZaloBotSettings";
-import { Bot } from "lucide-react";
+import { TelegramBotSettings } from "@/components/settings/TelegramBotSettings";
+import { Bot, Send } from "lucide-react";
 
 const SettingsPage = () => {
   return (
@@ -16,11 +17,18 @@ const SettingsPage = () => {
           <TabsList>
             <TabsTrigger value="integrations">
               <Bot className="mr-2 h-4 w-4" />
-              Tích hợp
+              Zalo Bot
+            </TabsTrigger>
+            <TabsTrigger value="telegram">
+              <Send className="mr-2 h-4 w-4" />
+              Telegram Bot
             </TabsTrigger>
           </TabsList>
           <TabsContent value="integrations" className="mt-4">
             <ZaloBotSettings />
+          </TabsContent>
+          <TabsContent value="telegram" className="mt-4">
+            <TelegramBotSettings />
           </TabsContent>
         </Tabs>
       </div>
