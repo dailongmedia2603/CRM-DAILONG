@@ -195,20 +195,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       {/* Main Content */}
       <div 
         className={cn(
-          "flex-1 flex flex-col transition-all duration-300 ease-in-out",
+          "flex-1 flex flex-col transition-all duration-300 ease-in-out relative",
           "lg:ml-64"
         )}
       >
-        {/* Header */}
-        <header className="bg-white shadow-sm z-10 border-b border-gray-200">
-          <div className="flex items-center justify-between p-4 h-[69px]">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-gray-500 hover:text-gray-700">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </header>
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-gray-500 hover:text-gray-700 absolute top-4 left-4 z-20 bg-white/50 backdrop-blur-sm">
+          <Menu className="h-5 w-5" />
+        </Button>
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
