@@ -22,11 +22,9 @@ import {
   BarChart2, 
   UserCog,
   X,
-  Bell,
   Settings,
   LogOut,
   User,
-  ChevronDown,
   Wrench,
   CalendarCheck,
   FileCheck
@@ -203,77 +201,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       >
         {/* Header */}
         <header className="bg-white shadow-sm z-10 border-b border-gray-200">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-4 h-[69px]">
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="icon" onClick={toggleSidebar} className="lg:hidden text-gray-500 hover:text-gray-700">
                 <Menu className="h-5 w-5" />
               </Button>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      3
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <div className="max-h-64 overflow-y-auto">
-                    <DropdownMenuItem className="flex-col items-start p-4">
-                      <div className="font-medium">New project assigned</div>
-                      <div className="text-sm text-gray-500">You have been assigned to the ABC Corp website project</div>
-                      <div className="text-xs text-gray-400 mt-1">2 minutes ago</div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex-col items-start p-4">
-                      <div className="font-medium">Client meeting reminder</div>
-                      <div className="text-sm text-gray-500">Meeting with XYZ Industries in 30 minutes</div>
-                      <div className="text-xs text-gray-400 mt-1">28 minutes ago</div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex-col items-start p-4">
-                      <div className="font-medium">Task deadline approaching</div>
-                      <div className="text-sm text-gray-500">Complete client presentation by end of day</div>
-                      <div className="text-xs text-gray-400 mt-1">1 hour ago</div>
-                    </DropdownMenuItem>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 px-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/api/placeholder/32/32" alt="Admin" />
-                      <AvatarFallback className="bg-blue-600 text-white">{session?.user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:block font-medium">{session?.user?.email}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>{session?.user?.email}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </header>
