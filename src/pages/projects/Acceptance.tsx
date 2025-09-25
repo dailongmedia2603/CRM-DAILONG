@@ -18,23 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Project, Personnel } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, Edit, Trash2, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceStatuses = {
@@ -53,8 +43,6 @@ const AcceptancePage = () => {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -71,7 +59,14 @@ const AcceptancePage = () => {
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
       const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const statusMatch = statusFilter === 'all' || project.acceptance_status === statusFilter;
+      
+      let statusMatch = false;
+      if (statusFilter === 'all') {
+        statusMatch = project.acceptance_status !== 'Đã nhận tiền';
+      } else {
+        statusMatch = project.acceptance_status === statusFilter;
+      }
+
       return searchMatch && statusMatch;
     });
   }, [projects, searchTerm, statusFilter]);
@@ -155,21 +150,6 @@ const AcceptancePage = () => {
       setProjects(prevProjects => prevProjects.map(updateProjectState));
       setActiveProject(prevActive => prevActive ? updateProjectState(prevActive) : null);
     }
-  };
-
-  const handleOpenDeleteAlert = (project: Project) => {
-    setProjectToDelete(project);
-    setIsDeleteAlertOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!projectToDelete) return;
-    const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
-    if (error) showError("Lỗi khi xóa dự án.");
-    else showSuccess("Dự án đã được xóa.");
-    fetchData();
-    setIsDeleteAlertOpen(false);
-    setProjectToDelete(null);
   };
 
   return (
@@ -259,7 +239,15 @@ const AcceptancePage = () => {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm" onClick={() => openDialog('history', project)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openDialog('history', project)}
+                          className={cn(
+                            project.acceptance_history && project.acceptance_history.length > 0 &&
+                            "border-red-500 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 animate-pulse"
+                          )}
+                        >
                           <History className="mr-2 h-4 w-4" /> Lịch sử ({project.acceptance_history?.length || 0})
                         </Button>
                       </TableCell>
