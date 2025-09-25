@@ -152,8 +152,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Can I="dashboard.view"><NavItem Icon={Home} href="/" label="Dashboard" active={pathname === "/"} isCollapsed={isCollapsed} /></Can>
             <Can I="clients.view"><NavItem Icon={Users} href="/clients" label="Clients" active={pathname.startsWith("/clients")} isCollapsed={isCollapsed} /></Can>
             <Can I="projects.view"><NavItem Icon={Briefcase} href="/projects" label="Dự án" active={pathname.startsWith("/projects") && !pathname.includes("weekly-report") && !pathname.includes("acceptance")} isCollapsed={isCollapsed} /></Can>
-            <Can I="projects.view"><NavItem Icon={CalendarCheck} href="/projects/weekly-report" label="Báo cáo tuần" active={pathname === "/projects/weekly-report"} isCollapsed={isCollapsed} /></Can>
-            <Can I="projects.view"><NavItem Icon={FileCheck} href="/projects/acceptance" label="Nghiệm Thu" active={pathname === "/projects/acceptance"} isCollapsed={isCollapsed} /></Can>
+            <Can I="projects.weekly_report.view"><NavItem Icon={CalendarCheck} href="/projects/weekly-report" label="Báo cáo tuần" active={pathname === "/projects/weekly-report"} isCollapsed={isCollapsed} /></Can>
+            <Can I="projects.acceptance.view"><NavItem Icon={FileCheck} href="/projects/acceptance" label="Nghiệm Thu" active={pathname === "/projects/acceptance"} isCollapsed={isCollapsed} /></Can>
             <Can I="leads.view"><NavItem Icon={DollarSign} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} isCollapsed={isCollapsed} /></Can>
             <Can I="intern_tasks.view"><NavItem Icon={GraduationCap} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} isCollapsed={isCollapsed} /></Can>
             <NavItem Icon={Wrench} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} isCollapsed={isCollapsed} />

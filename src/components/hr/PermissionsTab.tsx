@@ -27,6 +27,8 @@ const translationMap: { [key: string]: string } = {
   edit: "Chỉnh sửa",
   view: "Xem",
   manage: "Quản lý",
+  "weekly_report.view": "Báo cáo tuần",
+  "acceptance.view": "Nghiệm thu",
 
   // Report specific views
   "sales.view": "Báo cáo Sale",

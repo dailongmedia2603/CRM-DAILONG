@@ -7,6 +7,8 @@ const permissionRouteMap = [
     { permission: 'dashboard.view', path: '/' },
     { permission: 'clients.view', path: '/clients' },
     { permission: 'projects.view', path: '/projects' },
+    { permission: 'projects.weekly_report.view', path: '/projects/weekly-report' },
+    { permission: 'projects.acceptance.view', path: '/projects/acceptance' },
     { permission: 'leads.view', path: '/sales/leads' },
     { permission: 'intern_tasks.view', path: '/interns' },
     { permission: 'tasks.view', path: '/task-management' },
