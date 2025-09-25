@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, createElement } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import {
   Table,
@@ -18,13 +18,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Project, Personnel, AcceptanceHistory } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Project, Personnel } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, Edit, Trash2 } from "lucide-react";
+import { ExternalLink, History, Search, Edit, Trash2, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const acceptanceStatuses = {
+  'Làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  'Đã gởi': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+  'Chờ nhận tiền': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
+  'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+};
 
 const AcceptancePage = () => {
   const { session } = useAuth();
@@ -33,6 +51,9 @@ const AcceptancePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -47,9 +68,12 @@ const AcceptancePage = () => {
   }, [personnel, session]);
 
   const filteredProjects = useMemo(() => {
-    if (!searchTerm) return projects;
-    return projects.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [projects, searchTerm]);
+    return projects.filter(project => {
+      const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const statusMatch = statusFilter === 'all' || project.acceptance_status === statusFilter;
+      return searchMatch && statusMatch;
+    });
+  }, [projects, searchTerm, statusFilter]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -111,7 +135,6 @@ const AcceptancePage = () => {
     else {
       showSuccess("Đã thêm lịch sử.");
       fetchData();
-      // Keep dialog open, just refetch data
       const updatedProject = projects.find(p => p.id === activeProject.id);
       if (updatedProject) {
         const { data } = await supabase.from('acceptance_history').select('*').eq('project_id', activeProject.id);
@@ -119,6 +142,21 @@ const AcceptancePage = () => {
         setActiveProject(updatedProject);
       }
     }
+  };
+
+  const handleOpenDeleteAlert = (project: Project) => {
+    setProjectToDelete(project);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
+    if (error) showError("Lỗi khi xóa dự án.");
+    else showSuccess("Dự án đã được xóa.");
+    fetchData();
+    setIsDeleteAlertOpen(false);
+    setProjectToDelete(null);
   };
 
   return (
@@ -130,16 +168,29 @@ const AcceptancePage = () => {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Danh sách dự án cần nghiệm thu ({filteredProjects.length})</CardTitle>
-            <div className="relative w-full md:max-w-xs mt-2 md:mt-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm dự án..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+              <div className="relative w-full md:w-auto">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm dự án..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  {Object.keys(acceptanceStatuses).map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
@@ -156,45 +207,61 @@ const AcceptancePage = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow><TableCell colSpan={5} className="text-center h-24">Đang tải...</TableCell></TableRow>
-                ) : filteredProjects.map(project => (
-                  <TableRow key={project.id}>
-                    <TableCell>
-                      <Button variant="link" className="p-0 h-auto font-medium" onClick={() => openDialog('details', project)}>
-                        {project.name}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
-                        <ExternalLink className="h-4 w-4 mr-1" /> Xem
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={project.acceptance_status || 'Làm BBNT'}
-                        onValueChange={(value) => handleStatusChange(project.id, value)}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Làm BBNT">Làm BBNT</SelectItem>
-                          <SelectItem value="Đã gởi">Đã gởi</SelectItem>
-                          <SelectItem value="Chờ nhận tiền">Chờ nhận tiền</SelectItem>
-                          <SelectItem value="Đã nhận tiền">Đã nhận tiền</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => openDialog('history', project)}>
-                        <History className="mr-2 h-4 w-4" /> Lịch sử ({project.acceptance_history?.length || 0})
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-red-500" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                ) : filteredProjects.map(project => {
+                  const statusInfo = acceptanceStatuses[(project.acceptance_status || 'Làm BBNT') as keyof typeof acceptanceStatuses];
+                  return (
+                    <TableRow key={project.id}>
+                      <TableCell>
+                        <Button variant="link" className="p-0 h-auto font-medium" onClick={() => openDialog('details', project)}>
+                          {project.name}
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                          <ExternalLink className="h-4 w-4 mr-1" /> Xem
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={project.acceptance_status || 'Làm BBNT'}
+                          onValueChange={(value) => handleStatusChange(project.id, value)}
+                        >
+                          <SelectTrigger className={cn("w-[180px] border", statusInfo.bgColor, statusInfo.borderColor)}>
+                            <SelectValue asChild>
+                              <div className={cn("flex items-center gap-2", statusInfo.color)}>
+                                {statusInfo.icon && createElement(statusInfo.icon, { className: "h-4 w-4" })}
+                                <span>{project.acceptance_status}</span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(acceptanceStatuses).map(([status, { icon, color }]) => (
+                              <SelectItem key={status} value={status}>
+                                <div className={cn("flex items-center gap-2", color)}>
+                                  {createElement(icon, { className: "h-4 w-4" })}
+                                  <span>{status}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" onClick={() => openDialog('history', project)}>
+                          <History className="mr-2 h-4 w-4" /> Lịch sử ({project.acceptance_history?.length || 0})
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" disabled>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteAlert(project)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -217,6 +284,18 @@ const AcceptancePage = () => {
           />
         </>
       )}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>Hành động này không thể hoàn tác. Dự án "{projectToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };
