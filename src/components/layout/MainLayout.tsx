@@ -28,7 +28,8 @@ import {
   User,
   ChevronDown,
   Wrench,
-  CalendarCheck
+  CalendarCheck,
+  FileCheck
 } from "lucide-react";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,8 +138,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             <Can I="dashboard.view"><NavItem icon={<Home className="mr-3 h-5 w-5" />} href="/" label="Dashboard" active={pathname === "/"} /></Can>
             <Can I="clients.view"><NavItem icon={<Users className="mr-3 h-5 w-5" />} href="/clients" label="Clients" active={pathname.startsWith("/clients")} /></Can>
-            <Can I="projects.view"><NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Dự án" active={pathname.startsWith("/projects") && !pathname.includes("weekly-report")} /></Can>
+            <Can I="projects.view"><NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Dự án" active={pathname.startsWith("/projects") && !pathname.includes("weekly-report") && !pathname.includes("acceptance")} /></Can>
             <Can I="projects.view"><NavItem icon={<CalendarCheck className="mr-3 h-5 w-5" />} href="/projects/weekly-report" label="Báo cáo tuần" active={pathname === "/projects/weekly-report"} /></Can>
+            <Can I="projects.view"><NavItem icon={<FileCheck className="mr-3 h-5 w-5" />} href="/projects/acceptance" label="Nghiệm Thu" active={pathname === "/projects/acceptance"} /></Can>
             <Can I="leads.view"><NavItem icon={<DollarSign className="mr-3 h-5 w-5" />} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} /></Can>
             <Can I="intern_tasks.view"><NavItem icon={<GraduationCap className="mr-3 h-5 w-5" />} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} /></Can>
             <NavItem icon={<Wrench className="mr-3 h-5 w-5" />} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} />

@@ -56,6 +56,15 @@ export interface WeeklyReport {
   created_at: string;
 }
 
+export interface AcceptanceHistory {
+  id: string;
+  project_id: string;
+  user_id: string;
+  user_name: string;
+  content: string;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -68,11 +77,13 @@ export interface Project {
   contract_value: number;
   link: string;
   acceptance_link?: string;
+  acceptance_status?: 'Làm BBNT' | 'Đã gởi' | 'Chờ nhận tiền' | 'Đã nhận tiền';
   archived: boolean;
   created_at: string;
   payments: Payment[];
   team: { role: string; name: string; id: string }[];
   weekly_reports?: WeeklyReport[];
+  acceptance_history?: AcceptanceHistory[];
 }
 
 export interface Position {
