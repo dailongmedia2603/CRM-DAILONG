@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Project, Personnel } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
@@ -17,7 +18,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { WeeklyReportFormDialog } from "@/components/projects/WeeklyReportFormDialog";
 import { WeeklyReportHistoryDialog } from "@/components/projects/WeeklyReportHistoryDialog";
-import { FileText, History } from "lucide-react";
+import { FileText, History, Search } from "lucide-react";
 
 const WeeklyReportPage = () => {
   const { session } = useAuth();
@@ -25,6 +26,7 @@ const WeeklyReportPage = () => {
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -38,6 +40,15 @@ const WeeklyReportPage = () => {
     }
     return null;
   }, [personnel, session]);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchTerm) {
+      return projects;
+    }
+    return projects.filter(project =>
+      project.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [projects, searchTerm]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -114,8 +125,17 @@ const WeeklyReportPage = () => {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Danh sách dự án đang chạy</CardTitle>
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <CardTitle>Danh sách dự án đang chạy ({filteredProjects.length})</CardTitle>
+            <div className="relative w-full md:max-w-xs mt-2 md:mt-0">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm dự án..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -133,14 +153,14 @@ const WeeklyReportPage = () => {
                       Đang tải dữ liệu...
                     </TableCell>
                   </TableRow>
-                ) : projects.length === 0 ? (
+                ) : filteredProjects.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center h-24">
-                      Không có dự án nào đang chạy.
+                      Không có dự án nào phù hợp.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  projects.map(project => (
+                  filteredProjects.map(project => (
                     <TableRow key={project.id}>
                       <TableCell>
                         <Button

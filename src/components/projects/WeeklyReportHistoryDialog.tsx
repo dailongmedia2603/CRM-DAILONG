@@ -50,11 +50,11 @@ export const WeeklyReportHistoryDialog = ({
         <ScrollArea className="max-h-[60vh] pr-4">
           {sortedReports.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
-              {sortedReports.map((report) => (
+              {sortedReports.map((report, index) => (
                 <AccordionItem value={report.id} key={report.id}>
                   <AccordionTrigger>
                     <div className="flex justify-between w-full pr-4">
-                      <span className="font-medium">Báo cáo của {report.user_name}</span>
+                      <span className="font-medium">Lần {sortedReports.length - index}</span>
                       <span className="text-sm text-muted-foreground">
                         {format(new Date(report.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
                       </span>
