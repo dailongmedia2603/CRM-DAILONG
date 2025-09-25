@@ -71,7 +71,7 @@ export const ZaloBotSettings = () => {
 
   const handleSendMessage = async () => {
     if (!chatId || !messageText) {
-      showError('Vui lòng nhập Chat ID và nội dung tin nhắn.');
+      showError('Vui lòng nhập User ID và nội dung tin nhắn.');
       return;
     }
     setIsSending(true);
@@ -93,20 +93,20 @@ export const ZaloBotSettings = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tích hợp Zalo Bot</CardTitle>
+        <CardTitle>Tích hợp Zalo Official Account</CardTitle>
         <CardDescription>
-          Kết nối Zalo Bot của bạn để tự động hóa các tác vụ và tương tác.
+          Kết nối Zalo OA của bạn để tự động hóa các tác vụ và tương tác.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="zalo-token">Zalo Bot Token</Label>
+          <Label htmlFor="zalo-token">Zalo OA Access Token</Label>
           <Input
             id="zalo-token"
             type="password"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="123456789:abc-xyz"
+            placeholder="Dán Access Token của Zalo OA vào đây"
             disabled={isLoading}
           />
         </div>
@@ -135,18 +135,18 @@ export const ZaloBotSettings = () => {
         <div>
           <h3 className="text-lg font-medium">Gửi tin nhắn thử nghiệm</h3>
           <p className="text-sm text-muted-foreground">
-            Gửi một tin nhắn đến một Chat ID cụ thể để kiểm tra chức năng gửi tin.
+            Gửi một tin nhắn đến một User ID cụ thể để kiểm tra chức năng gửi tin.
           </p>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="chat-id">Chat ID</Label>
+            <Label htmlFor="chat-id">User ID (từ Zalo OA)</Label>
             <Input
               id="chat-id"
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
-              placeholder="Nhập Chat ID của người nhận"
+              placeholder="Nhập User ID của người nhận"
               disabled={isSending}
             />
           </div>

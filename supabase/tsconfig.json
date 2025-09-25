@@ -2,19 +2,13 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "lib": ["deno.ns"],
-    "types": [
-      "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-    ],
+    "esModuleInterop": true,
     "strict": true,
-    "noEmit": true,
-    "allowJs": true,
-    "checkJs": false,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "isolatedModules": true
+    "skipLibCheck": true,
+    "lib": ["esnext"],
+    "types": ["https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"]
   },
   "include": [
-    "./functions/**/*"
+    "./**/*.ts"
   ]
 }
