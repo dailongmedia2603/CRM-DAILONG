@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -90,6 +90,7 @@ const NavItem = ({
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useAuth();
   const { can } = useAbility();
@@ -137,11 +138,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Can I="dashboard.view"><NavItem icon={<Home className="mr-3 h-5 w-5" />} href="/" label="Dashboard" active={pathname === "/"} /></Can>
             <Can I="clients.view"><NavItem icon={<Users className="mr-3 h-5 w-5" />} href="/clients" label="Clients" active={pathname.startsWith("/clients")} /></Can>
             <Can I="projects.view"><NavItem icon={<Briefcase className="mr-3 h-5 w-5" />} href="/projects" label="Dự án" active={pathname.startsWith("/projects")} /></Can>
+            <Can I="reports.projects.view"><NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports?tab=projects" label="Báo cáo dự án" active={pathname === "/reports" && searchParams.get('tab') === 'projects'} /></Can>
             <Can I="leads.view"><NavItem icon={<DollarSign className="mr-3 h-5 w-5" />} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} /></Can>
             <Can I="intern_tasks.view"><NavItem icon={<GraduationCap className="mr-3 h-5 w-5" />} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} /></Can>
             <NavItem icon={<Wrench className="mr-3 h-5 w-5" />} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} />
             <Can I="tasks.view"><NavItem icon={<FolderKanban className="mr-3 h-5 w-5" />} href="/task-management" label="Quản lý công việc" active={pathname.startsWith("/task-management")} /></Can>
-            {canViewReports && <NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} />}
+            {canViewReports && <NavItem icon={<BarChart2 className="mr-3 h-5 w-5" />} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports") && searchParams.get('tab') !== 'projects'} />}
             <Can I="hr.view"><NavItem icon={<UserCog className="mr-3 h-5 w-5" />} href="/hr" label="Nhân sự" active={pathname.startsWith("/hr")} /></Can>
           </nav>
 
