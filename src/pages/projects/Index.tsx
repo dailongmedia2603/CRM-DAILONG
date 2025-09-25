@@ -179,8 +179,24 @@ const ProjectsPage = () => {
       .update({ status: 'completed', acceptance_link: link })
       .eq('id', projectToComplete.id);
 
-    if (error) showError("Lỗi khi hoàn thành dự án.");
-    else showSuccess("Dự án đã được hoàn thành!");
+    if (error) {
+      showError("Lỗi khi hoàn thành dự án.");
+    } else {
+      showSuccess("Dự án đã được hoàn thành!");
+      
+      // Invoke the notification function
+      supabase.functions.invoke('send-acceptance-notification', {
+        body: {
+          projectName: projectToComplete.name,
+          clientName: projectToComplete.client_name,
+          acceptanceLink: link,
+        },
+      }).then(({ error }) => {
+        if (error) {
+          console.error("Error sending notification:", error);
+        }
+      });
+    }
     
     invalidateProjects();
     setIsAcceptanceOpen(false);

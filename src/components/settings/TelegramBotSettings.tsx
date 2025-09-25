@@ -27,18 +27,21 @@ export const TelegramBotSettings = () => {
   const [botToEdit, setBotToEdit] = useState<TelegramBot | null>(null);
   const [botToDelete, setBotToDelete] = useState<TelegramBot | null>(null);
   const [notificationBotId, setNotificationBotId] = useState('');
+  const [acceptanceBotId, setAcceptanceBotId] = useState('');
 
   const fetchData = async () => {
     setIsLoading(true);
-    const [botsRes, settingRes] = await Promise.all([
+    const [botsRes, seedingSettingRes, acceptanceSettingRes] = await Promise.all([
       supabase.from('telegram_bots').select('*').order('created_at'),
       supabase.from('settings').select('value').eq('key', 'telegram_notification_bot_id').single(),
+      supabase.from('settings').select('value').eq('key', 'telegram_acceptance_bot_id').single(),
     ]);
 
     if (botsRes.error) showError('Lỗi khi tải danh sách bot.');
     else setBots(botsRes.data);
 
-    if (settingRes.data) setNotificationBotId(settingRes.data.value || '');
+    if (seedingSettingRes.data) setNotificationBotId(seedingSettingRes.data.value || '');
+    if (acceptanceSettingRes.data) setAcceptanceBotId(acceptanceSettingRes.data.value || '');
     
     setIsLoading(false);
   };
@@ -76,6 +79,17 @@ export const TelegramBotSettings = () => {
       showError('Lỗi khi lưu cài đặt thông báo.');
     } else {
       showSuccess('Đã lưu cài đặt thông báo thành công!');
+    }
+  };
+
+  const handleSaveAcceptanceSetting = async () => {
+    const { error } = await supabase
+      .from('settings')
+      .upsert({ key: 'telegram_acceptance_bot_id', value: acceptanceBotId });
+    if (error) {
+      showError('Lỗi khi lưu cài đặt thông báo nghiệm thu.');
+    } else {
+      showSuccess('Đã lưu cài đặt thông báo nghiệm thu thành công!');
     }
   };
 
@@ -136,6 +150,29 @@ export const TelegramBotSettings = () => {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Thông báo Nghiệm thu Dự án</CardTitle>
+          <CardDescription>Chọn bot Telegram để nhận thông báo khi một dự án có link nghiệm thu mới.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Gửi thông báo qua Bot</Label>
+            <Select value={acceptanceBotId} onValueChange={setAcceptanceBotId} disabled={isLoading || bots.length === 0}>
+              <SelectTrigger className="w-full sm:w-[320px] mt-1">
+                <SelectValue placeholder="Chọn một bot..." />
+              </SelectTrigger>
+              <SelectContent>
+                {bots.map(bot => (
+                  <SelectItem key={bot.id} value={bot.id}>{bot.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={handleSaveAcceptanceSetting} disabled={isLoading}>Lưu cài đặt</Button>
         </CardContent>
       </Card>
 
