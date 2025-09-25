@@ -8,11 +8,9 @@ import { ClientsReport } from "@/components/reports/ClientsReport";
 import { DollarSign, Briefcase, GraduationCap, Users } from "lucide-react";
 import { Can } from "@/components/auth/Can";
 import { useAbility } from "@/context/AbilityProvider";
-import { useSearchParams } from "react-router-dom";
 
 const ReportsPage = () => {
   const { can } = useAbility();
-  const [searchParams, setSearchParams] = useSearchParams();
   const triggerClasses = "rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md px-6 py-2 text-sm font-medium";
 
   const availableTabs = useMemo(() => {
@@ -24,18 +22,6 @@ const ReportsPage = () => {
     return tabs;
   }, [can]);
 
-  const activeTab = useMemo(() => {
-    const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && availableTabs.includes(tabFromUrl)) {
-      return tabFromUrl;
-    }
-    return availableTabs[0];
-  }, [searchParams, availableTabs]);
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
-
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -45,7 +31,7 @@ const ReportsPage = () => {
             Tổng quan về hiệu suất hoạt động của agency.
           </p>
         </div>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <Tabs defaultValue={availableTabs[0]} className="w-full">
           <TabsList className="inline-flex h-auto rounded-full bg-gray-100 p-1.5">
             <Can I="reports.sales.view">
               <TabsTrigger value="sales" className={triggerClasses}>
