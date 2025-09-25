@@ -18,19 +18,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Project, Personnel } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
+import { ExternalLink, History, Search, Edit, Trash2, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceStatuses = {
   'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
   'Chờ xác nhận file': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
-  'Đã gởi bản cứng': { icon: Send, color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' },
+  'Đã gởi bản cứng': { icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
   'Chờ nhận tiền': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
   'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
 };
@@ -43,6 +53,8 @@ const AcceptancePage = () => {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -113,24 +125,51 @@ const AcceptancePage = () => {
 
   const handleAddHistory = async (content: string) => {
     if (!activeProject || !currentUser) return;
-    const { error } = await supabase.from('acceptance_history').insert([{
+
+    const newHistoryEntry = {
       project_id: activeProject.id,
       user_id: currentUser.id,
       user_name: currentUser.name,
       content,
-    }]);
+    };
 
-    if (error) showError("Lỗi khi thêm lịch sử.");
-    else {
+    const { data: newHistory, error } = await supabase
+      .from('acceptance_history')
+      .insert([newHistoryEntry])
+      .select()
+      .single();
+
+    if (error) {
+      showError("Lỗi khi thêm lịch sử.");
+    } else {
       showSuccess("Đã thêm lịch sử.");
-      fetchData();
-      const updatedProject = projects.find(p => p.id === activeProject.id);
-      if (updatedProject) {
-        const { data } = await supabase.from('acceptance_history').select('*').eq('project_id', activeProject.id);
-        updatedProject.acceptance_history = data || [];
-        setActiveProject(updatedProject);
-      }
+      
+      const updateProjectState = (p: Project) => {
+        if (p.id === activeProject.id) {
+          const updatedHistory = [...(p.acceptance_history || []), newHistory];
+          return { ...p, acceptance_history: updatedHistory };
+        }
+        return p;
+      };
+
+      setProjects(prevProjects => prevProjects.map(updateProjectState));
+      setActiveProject(prevActive => prevActive ? updateProjectState(prevActive) : null);
     }
+  };
+
+  const handleOpenDeleteAlert = (project: Project) => {
+    setProjectToDelete(project);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
+    if (error) showError("Lỗi khi xóa dự án.");
+    else showSuccess("Dự án đã được xóa.");
+    fetchData();
+    setIsDeleteAlertOpen(false);
+    setProjectToDelete(null);
   };
 
   return (
