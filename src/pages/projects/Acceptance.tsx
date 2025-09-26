@@ -338,7 +338,7 @@ const AcceptancePage = () => {
         </div>
 
         <Tabs defaultValue="acceptance" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
+          <TabsList>
             <TabsTrigger value="acceptance" className="group data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
               <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-md bg-gray-200 group-data-[state=active]:bg-blue-500">
                 <FileSignature className="h-4 w-4 text-gray-600 group-data-[state=active]:text-white" />
