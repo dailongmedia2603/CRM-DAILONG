@@ -80,7 +80,9 @@ const AcceptancePage = () => {
   }, [personnel, session]);
 
   const filteredProjects = useMemo(() => {
+    if (!Array.isArray(projects)) return [];
     return projects.filter(project => {
+      if (!project || !project.name) return false;
       const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       let statusMatch = false;
@@ -100,7 +102,10 @@ const AcceptancePage = () => {
       return acc;
     }, {} as Record<string, number>);
 
+    if (!Array.isArray(projects)) return statusCounts;
+
     projects.forEach(project => {
+      if (!project) return;
       const status = project.acceptance_status || 'Cần làm BBNT';
       if (status in statusCounts) {
         statusCounts[status]++;
@@ -120,11 +125,19 @@ const AcceptancePage = () => {
       supabase.from('personnel').select('*')
     ]);
 
-    if (projectsRes.error) showError("Lỗi khi tải dự án.");
-    else setProjects(projectsRes.data as any[]);
+    if (projectsRes.error) {
+      showError("Lỗi khi tải dự án.");
+      setProjects([]);
+    } else {
+      setProjects(projectsRes.data as any[] || []);
+    }
 
-    if (personnelRes.error) showError("Lỗi khi tải nhân sự.");
-    else setPersonnel(personnelRes.data);
+    if (personnelRes.error) {
+      showError("Lỗi khi tải nhân sự.");
+      setPersonnel([]);
+    } else {
+      setPersonnel(personnelRes.data || []);
+    }
 
     setIsLoading(false);
   };
