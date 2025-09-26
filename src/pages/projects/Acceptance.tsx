@@ -24,15 +24,38 @@ import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceStatuses = {
-  'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
-  'Chờ xác nhận file': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
-  'Đã gởi bản cứng': { icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200' },
-  'Chờ nhận tiền': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-  'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' },
+  'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', iconBgColor: 'bg-blue-500' },
+  'Chờ xác nhận file': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', iconBgColor: 'bg-purple-500' },
+  'Đã gởi bản cứng': { icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', iconBgColor: 'bg-cyan-500' },
+  'Đang chờ thanh toán': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBgColor: 'bg-amber-500' },
+  'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200', iconBgColor: 'bg-green-500' },
+};
+
+const StatusCard = ({ icon, title, value, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, iconBgColor: string, onClick: () => void, isActive: boolean }) => {
+  const Icon = icon;
+  return (
+    <Card
+      onClick={onClick}
+      className={cn(
+        "cursor-pointer hover:shadow-md transition-shadow",
+        isActive && `ring-2 ring-blue-500`
+      )}
+    >
+      <CardContent className="p-4 flex items-center">
+        <div className={cn("p-3 rounded-lg mr-4", iconBgColor)}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 const AcceptancePage = () => {
@@ -64,12 +87,27 @@ const AcceptancePage = () => {
       if (statusFilter === 'all') {
         statusMatch = project.acceptance_status !== 'Đã nhận tiền';
       } else {
-        statusMatch = project.acceptance_status === statusFilter;
+        statusMatch = (project.acceptance_status || 'Cần làm BBNT') === statusFilter;
       }
 
       return searchMatch && statusMatch;
     });
   }, [projects, searchTerm, statusFilter]);
+
+  const stats = useMemo(() => {
+    const statusCounts = Object.keys(acceptanceStatuses).reduce((acc, status) => {
+      acc[status] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+
+    projects.forEach(project => {
+      const status = project.acceptance_status || 'Cần làm BBNT';
+      if (status in statusCounts) {
+        statusCounts[status]++;
+      }
+    });
+    return statusCounts;
+  }, [projects]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -160,6 +198,28 @@ const AcceptancePage = () => {
           <p className="text-muted-foreground">Theo dõi quá trình nghiệm thu và thanh toán cho các dự án đã hoàn thành.</p>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <StatusCard
+            title="Tất cả"
+            value={projects.filter(p => p.acceptance_status !== 'Đã nhận tiền').length.toString()}
+            icon={FileText}
+            iconBgColor="bg-gray-500"
+            onClick={() => setStatusFilter('all')}
+            isActive={statusFilter === 'all'}
+          />
+          {Object.entries(acceptanceStatuses).map(([status, { icon, iconBgColor }]) => (
+            <StatusCard
+              key={status}
+              title={status}
+              value={stats[status]?.toString() || '0'}
+              icon={icon}
+              iconBgColor={iconBgColor}
+              onClick={() => setStatusFilter(status)}
+              isActive={statusFilter === status}
+            />
+          ))}
+        </div>
+
         <Card>
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Danh sách dự án cần nghiệm thu ({filteredProjects.length})</CardTitle>
@@ -209,7 +269,7 @@ const AcceptancePage = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <a href={project.acceptance_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
+                        <a href={project.acceptance_link || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center">
                           <ExternalLink className="h-4 w-4 mr-1" /> Xem
                         </a>
                       </TableCell>
@@ -222,7 +282,7 @@ const AcceptancePage = () => {
                             <SelectValue asChild>
                               <div className={cn("flex items-center gap-2", statusInfo.color)}>
                                 {statusInfo.icon && createElement(statusInfo.icon, { className: "h-4 w-4" })}
-                                <span>{project.acceptance_status}</span>
+                                <span>{project.acceptance_status || 'Cần làm BBNT'}</span>
                               </div>
                             </SelectValue>
                           </SelectTrigger>

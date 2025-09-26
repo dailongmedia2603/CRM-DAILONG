@@ -76,8 +76,8 @@ export interface Project {
   status: 'planning' | 'in-progress' | 'completed' | 'overdue' | 'on-hold';
   contract_value: number;
   link: string;
-  acceptance_link?: string;
-  acceptance_status?: 'Cần làm BBNT' | 'Chờ xác nhận file' | 'Đã gởi bản cứng' | 'Chờ nhận tiền' | 'Đã nhận tiền';
+  acceptance_link?: string | null;
+  acceptance_status?: 'Cần làm BBNT' | 'Chờ xác nhận file' | 'Đã gởi bản cứng' | 'Đang chờ thanh toán' | 'Đã nhận tiền';
   archived: boolean;
   created_at: string;
   payments: Payment[];
