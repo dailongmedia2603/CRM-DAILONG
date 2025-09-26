@@ -25,7 +25,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, Briefcase, Banknote } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceTabStatuses = {
@@ -44,13 +44,18 @@ const allAcceptanceStatuses = {
   'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200', iconBgColor: 'bg-green-500' },
 };
 
-const StatusCard = ({ icon, title, value, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, iconBgColor: string, onClick: () => void, isActive: boolean }) => {
+const paymentSelectStatuses = {
+  'Đang chờ thanh toán': allAcceptanceStatuses['Đang chờ thanh toán'],
+  'Đã nhận tiền': allAcceptanceStatuses['Đã nhận tiền'],
+};
+
+const StatusCard = ({ icon, title, value, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
   const Icon = icon;
   return (
     <Card
       onClick={onClick}
       className={cn(
-        "cursor-pointer hover:shadow-md transition-shadow",
+        onClick && "cursor-pointer hover:shadow-md transition-shadow",
         isActive && `ring-2 ring-blue-500`
       )}
     >
@@ -142,6 +147,68 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
   );
 };
 
+const PaymentProjectsTable = ({ projects, openDialog, handleStatusChange }: { projects: Project[], openDialog: (name: 'details' | 'history', project: Project) => void, handleStatusChange: (projectId: string, status: string) => void }) => {
+  if (projects.length === 0) {
+    return <div className="text-center text-muted-foreground p-8">Không có dự án nào.</div>;
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Tên dự án</TableHead>
+          <TableHead>Giá trị hợp đồng</TableHead>
+          <TableHead>Công nợ</TableHead>
+          <TableHead>Trạng thái</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {projects.map(project => {
+          const statusInfo = allAcceptanceStatuses[(project.acceptance_status || 'Cần làm BBNT') as keyof typeof allAcceptanceStatuses] || allAcceptanceStatuses['Cần làm BBNT'];
+          const paidAmount = project.payments?.filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0) || 0;
+          const debt = (project.contract_value || 0) - paidAmount;
+
+          return (
+            <TableRow key={project.id}>
+              <TableCell>
+                <Button variant="link" className="p-0 h-auto font-medium" onClick={() => openDialog('details', project)}>
+                  {project.name}
+                </Button>
+              </TableCell>
+              <TableCell>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(project.contract_value || 0)}</TableCell>
+              <TableCell className="font-medium text-red-600">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(debt)}</TableCell>
+              <TableCell>
+                <Select
+                  value={project.acceptance_status || 'Đang chờ thanh toán'}
+                  onValueChange={(value) => handleStatusChange(project.id, value)}
+                >
+                  <SelectTrigger className={cn("w-[200px] border", statusInfo.bgColor, statusInfo.borderColor)}>
+                    <SelectValue asChild>
+                      <div className={cn("flex items-center gap-2", statusInfo.color)}>
+                        {statusInfo.icon && createElement(statusInfo.icon, { className: "h-4 w-4" })}
+                        <span>{project.acceptance_status}</span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(paymentSelectStatuses).map(([status, { icon, color }]) => (
+                      <SelectItem key={status} value={status}>
+                        <div className={cn("flex items-center gap-2", color)}>
+                          {createElement(icon, { className: "h-4 w-4" })}
+                          <span>{status}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+};
+
 const AcceptancePage = () => {
   const { session } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -207,6 +274,16 @@ const AcceptancePage = () => {
     });
     return statusCounts;
   }, [acceptanceProjects]);
+
+  const paymentStats = useMemo(() => {
+    const totalValue = filteredPaymentProjects.reduce((sum, p) => sum + (p.contract_value || 0), 0);
+    const totalDebt = filteredPaymentProjects.reduce((sum, p) => {
+        const paidAmount = p.payments?.filter(pay => pay.paid).reduce((s, pay) => s + pay.amount, 0) || 0;
+        const debt = (p.contract_value || 0) - paidAmount;
+        return sum + debt;
+    }, 0);
+    return { totalValue, totalDebt };
+  }, [filteredPaymentProjects]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -367,7 +444,27 @@ const AcceptancePage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="payment">
+          <TabsContent value="payment" className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <StatusCard
+                title="Dự án chờ thanh toán"
+                value={filteredPaymentProjects.length.toString()}
+                icon={Clock}
+                iconBgColor="bg-amber-500"
+              />
+              <StatusCard
+                title="Tổng giá trị hợp đồng"
+                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(paymentStats.totalValue)}
+                icon={Briefcase}
+                iconBgColor="bg-sky-500"
+              />
+              <StatusCard
+                title="Tổng công nợ"
+                value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(paymentStats.totalDebt)}
+                icon={Banknote}
+                iconBgColor="bg-red-500"
+              />
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>Danh sách dự án ({filteredPaymentProjects.length})</CardTitle>
@@ -382,7 +479,7 @@ const AcceptancePage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <ProjectAcceptanceTable projects={filteredPaymentProjects} openDialog={openDialog} handleStatusChange={handleStatusChange} />}
+                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <PaymentProjectsTable projects={filteredPaymentProjects} openDialog={openDialog} handleStatusChange={handleStatusChange} />}
               </CardContent>
             </Card>
           </TabsContent>
