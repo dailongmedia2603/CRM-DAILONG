@@ -24,9 +24,10 @@ import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NewAwaitingPaymentProjectDialog } from "@/components/projects/NewAwaitingPaymentProjectDialog";
 
 const acceptanceStatuses = {
   'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', iconBgColor: 'bg-blue-500' },
@@ -193,6 +194,7 @@ const AcceptancePage = () => {
     details: false,
     history: false,
   });
+  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
 
   const currentUser = useMemo(() => {
     if (session?.user && personnel.length > 0) {
@@ -329,6 +331,30 @@ const AcceptancePage = () => {
     }
   };
 
+  const handleSaveNewAwaitingPaymentProject = async (data: { name: string; client_name: string; contract_value: number; payment1_amount: number }) => {
+    const newProjectData = {
+        name: data.name,
+        client_name: data.client_name,
+        contract_value: data.contract_value,
+        status: 'planning',
+        payments: [{
+            amount: data.payment1_amount,
+            paid: false,
+            note: 'Đợt 1'
+        }],
+    };
+
+    const { error } = await supabase.from('projects').insert([newProjectData]);
+
+    if (error) {
+        showError("Lỗi khi thêm dự án mới: " + error.message);
+    } else {
+        showSuccess("Đã thêm dự án mới thành công!");
+        fetchData();
+    }
+    setIsNewProjectDialogOpen(false);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -413,14 +439,20 @@ const AcceptancePage = () => {
             <Card>
               <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <CardTitle>Dự án mới đang chờ thanh toán đợt 1 ({filteredNewAwaitingPaymentProjects.length})</CardTitle>
-                <div className="relative w-full md:max-w-xs">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Tìm kiếm dự án..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="relative w-full md:max-w-xs">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Tìm kiếm dự án..."
+                      className="pl-8"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={() => setIsNewProjectDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Thêm mới
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -447,6 +479,11 @@ const AcceptancePage = () => {
           />
         </>
       )}
+      <NewAwaitingPaymentProjectDialog
+        open={isNewProjectDialogOpen}
+        onOpenChange={setIsNewProjectDialogOpen}
+        onSave={handleSaveNewAwaitingPaymentProject}
+      />
     </MainLayout>
   );
 };
