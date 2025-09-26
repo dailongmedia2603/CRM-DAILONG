@@ -149,7 +149,7 @@ const AcceptancePage = () => {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all_except_paid");
 
   const [dialogs, setDialogs] = useState({
     details: false,
@@ -167,10 +167,10 @@ const AcceptancePage = () => {
     return projects.filter(project => {
       const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
       
-      let statusMatch = false;
-      if (statusFilter === 'all') {
+      let statusMatch = true;
+      if (statusFilter === 'all_except_paid') {
         statusMatch = project.acceptance_status !== 'Đã nhận tiền';
-      } else {
+      } else if (statusFilter !== 'all') {
         statusMatch = (project.acceptance_status || 'Cần làm BBNT') === statusFilter;
       }
 
@@ -282,17 +282,7 @@ const AcceptancePage = () => {
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <StatusCard
-              title="Tất cả"
-              value={projects.filter(p => p.acceptance_status !== 'Đã nhận tiền').length.toString()}
-              icon={FileText}
-              iconBgColor="bg-gray-500"
-              onClick={() => setStatusFilter('all')}
-              isActive={statusFilter === 'all'}
-            />
-            {Object.entries(acceptanceStatuses)
-              .filter(([status]) => status !== 'Đã nhận tiền')
-              .map(([status, { icon, iconBgColor }]) => (
+            {Object.entries(acceptanceStatuses).map(([status, { icon, iconBgColor }]) => (
               <StatusCard
                 key={status}
                 title={status}
@@ -303,7 +293,7 @@ const AcceptancePage = () => {
                 isActive={statusFilter === status}
               />
             ))}
-             <StatusCard
+            <StatusCard
               title="Công nợ"
               value={formatCurrency(stats.totalDebt)}
               icon={DollarSign}
@@ -329,10 +319,9 @@ const AcceptancePage = () => {
                     <SelectValue placeholder="Lọc theo trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả (trừ Đã nhận tiền)</SelectItem>
-                    {Object.keys(acceptanceStatuses)
-                      .filter(status => status !== 'Đã nhận tiền')
-                      .map(status => (
+                    <SelectItem value="all_except_paid">Tất cả (chưa xong)</SelectItem>
+                    <SelectItem value="all">Tất cả dự án</SelectItem>
+                    {Object.keys(acceptanceStatuses).map(status => (
                       <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
                   </SelectContent>
