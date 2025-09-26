@@ -31,7 +31,7 @@ const acceptanceStatuses = {
   'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', iconBgColor: 'bg-blue-500' },
   'Chờ xác nhận file': { icon: Send, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', iconBgColor: 'bg-purple-500' },
   'Đã gởi bản cứng': { icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', iconBgColor: 'bg-cyan-500' },
-  'Đang chờ thanh toán': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBgColor: 'bg-amber-500' },
+  'Chờ thanh toán': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBgColor: 'bg-amber-500' },
   'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200', iconBgColor: 'bg-green-500' },
 };
 
