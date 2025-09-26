@@ -80,7 +80,9 @@ const AcceptancePage = () => {
   }, [personnel, session]);
 
   const filteredProjects = useMemo(() => {
+    if (!Array.isArray(projects)) return [];
     return projects.filter(project => {
+      if (!project || !project.name) return false;
       const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       let statusMatch = false;
@@ -100,7 +102,10 @@ const AcceptancePage = () => {
       return acc;
     }, {} as Record<string, number>);
 
+    if (!Array.isArray(projects)) return statusCounts;
+
     projects.forEach(project => {
+      if (!project) return;
       const status = project.acceptance_status || 'Cần làm BBNT';
       if (status in statusCounts) {
         statusCounts[status]++;
