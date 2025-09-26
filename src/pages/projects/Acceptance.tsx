@@ -24,7 +24,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const acceptanceStatuses = {
@@ -58,6 +58,8 @@ const StatusCard = ({ icon, title, value, iconBgColor, onClick, isActive }: { ic
   );
 };
 
+const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
 const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { projects: Project[], openDialog: (name: 'details' | 'history', project: Project) => void, handleStatusChange: (projectId: string, status: string) => void }) => {
   if (projects.length === 0) {
     return <div className="text-center text-muted-foreground p-8">Không có dự án nào.</div>;
@@ -68,6 +70,8 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
         <TableRow>
           <TableHead>Tên dự án</TableHead>
           <TableHead>Link nghiệm thu</TableHead>
+          <TableHead>Giá trị HĐ</TableHead>
+          <TableHead>Công nợ</TableHead>
           <TableHead>Trạng thái</TableHead>
           <TableHead>Lịch sử</TableHead>
         </TableRow>
@@ -75,6 +79,8 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
       <TableBody>
         {projects.map(project => {
           const statusInfo = acceptanceStatuses[(project.acceptance_status || 'Cần làm BBNT') as keyof typeof acceptanceStatuses] || acceptanceStatuses['Cần làm BBNT'];
+          const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+          const debt = (project.contract_value || 0) - totalPaid;
           return (
             <TableRow key={project.id}>
               <TableCell>
@@ -87,6 +93,8 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
                   <ExternalLink className="h-4 w-4 mr-1" /> Xem
                 </a>
               </TableCell>
+              <TableCell>{formatCurrency(project.contract_value || 0)}</TableCell>
+              <TableCell className={cn(debt > 0 ? "text-red-600 font-medium" : "")}>{formatCurrency(debt)}</TableCell>
               <TableCell>
                 <Select
                   value={project.acceptance_status || 'Cần làm BBNT'}
@@ -176,13 +184,20 @@ const AcceptancePage = () => {
       return acc;
     }, {} as Record<string, number>);
 
+    let totalDebt = 0;
+
     projects.forEach(project => {
       const status = project.acceptance_status || 'Cần làm BBNT';
       if (status in statusCounts) {
         statusCounts[status]++;
       }
+      const totalPaid = (project.payments || []).filter(p => p.paid).reduce((sum, p) => sum + p.amount, 0);
+      const debt = (project.contract_value || 0) - totalPaid;
+      if (debt > 0 && project.acceptance_status !== 'Đã nhận tiền') {
+        totalDebt += debt;
+      }
     });
-    return statusCounts;
+    return { ...statusCounts, totalDebt };
   }, [projects]);
 
   const fetchData = async () => {
@@ -266,7 +281,7 @@ const AcceptancePage = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <StatusCard
               title="Tất cả"
               value={projects.filter(p => p.acceptance_status !== 'Đã nhận tiền').length.toString()}
@@ -288,6 +303,12 @@ const AcceptancePage = () => {
                 isActive={statusFilter === status}
               />
             ))}
+             <StatusCard
+              title="Công nợ"
+              value={formatCurrency(stats.totalDebt)}
+              icon={DollarSign}
+              iconBgColor="bg-red-500"
+            />
           </div>
 
           <Card>
