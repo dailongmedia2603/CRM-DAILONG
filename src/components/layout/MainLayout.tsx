@@ -156,7 +156,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <Can I="projects.acceptance.view"><NavItem Icon={FileCheck} href="/projects/acceptance" label="Nghiệm Thu" active={pathname === "/projects/acceptance"} isCollapsed={isCollapsed} /></Can>
             <Can I="leads.view"><NavItem Icon={DollarSign} href="/sales/leads" label="Quản lý sale" active={pathname.startsWith("/sales/leads")} isCollapsed={isCollapsed} /></Can>
             <Can I="intern_tasks.view"><NavItem Icon={GraduationCap} href="/interns" label="Thực tập sinh" active={pathname.startsWith("/interns")} isCollapsed={isCollapsed} /></Can>
-            <NavItem Icon={Wrench} href="https://vsautomation.dailongmedia.io.vn/" label="Tool hỗ trợ" external={true} isCollapsed={isCollapsed} />
             <Can I="tasks.view"><NavItem Icon={FolderKanban} href="/task-management" label="Quản lý công việc" active={pathname.startsWith("/task-management")} isCollapsed={isCollapsed} /></Can>
             {canViewReports && <NavItem Icon={BarChart2} href="/reports" label="Analytics & Reports" active={pathname.startsWith("/reports")} isCollapsed={isCollapsed} />}
             <Can I="hr.view"><NavItem Icon={UserCog} href="/hr" label="Nhân sự" active={pathname.startsWith("/hr")} isCollapsed={isCollapsed} /></Can>
