@@ -289,9 +289,25 @@ const AcceptancePage = () => {
         </div>
 
         <Tabs defaultValue="acceptance" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="acceptance">Dự án cần nghiệm thu ({acceptanceProjects.length})</TabsTrigger>
-            <TabsTrigger value="payment">Dự án đang chờ thanh toán ({paymentProjects.length})</TabsTrigger>
+          <TabsList className="inline-flex h-auto rounded-full bg-gray-100 p-1.5">
+            <TabsTrigger
+              value="acceptance"
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm"
+            >
+              <div className="bg-blue-500 rounded p-1">
+                <FileSignature className="h-4 w-4 text-white" />
+              </div>
+              <span>Dự án cần nghiệm thu ({acceptanceProjects.length})</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="payment"
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700 data-[state=active]:shadow-sm"
+            >
+              <div className="bg-amber-500 rounded p-1">
+                <Clock className="h-4 w-4 text-white" />
+              </div>
+              <span>Dự án đang chờ thanh toán ({paymentProjects.length})</span>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="acceptance">
