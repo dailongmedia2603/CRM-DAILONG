@@ -120,11 +120,19 @@ const AcceptancePage = () => {
       supabase.from('personnel').select('*')
     ]);
 
-    if (projectsRes.error) showError("Lỗi khi tải dự án.");
-    else setProjects(projectsRes.data as any[]);
+    if (projectsRes.error) {
+      showError("Lỗi khi tải dự án.");
+      setProjects([]);
+    } else {
+      setProjects(projectsRes.data as any[] || []);
+    }
 
-    if (personnelRes.error) showError("Lỗi khi tải nhân sự.");
-    else setPersonnel(personnelRes.data);
+    if (personnelRes.error) {
+      showError("Lỗi khi tải nhân sự.");
+      setPersonnel([]);
+    } else {
+      setPersonnel(personnelRes.data || []);
+    }
 
     setIsLoading(false);
   };
