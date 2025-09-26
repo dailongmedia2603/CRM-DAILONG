@@ -338,9 +338,19 @@ const AcceptancePage = () => {
         </div>
 
         <Tabs defaultValue="acceptance" className="w-full">
-          <TabsList>
-            <TabsTrigger value="acceptance">Nghiệm thu dự án</TabsTrigger>
-            <TabsTrigger value="new_awaiting_payment">Dự án mới chờ thanh toán</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
+            <TabsTrigger value="acceptance" className="group data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+              <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-md bg-gray-200 group-data-[state=active]:bg-blue-500">
+                <FileSignature className="h-4 w-4 text-gray-600 group-data-[state=active]:text-white" />
+              </span>
+              Nghiệm thu dự án
+            </TabsTrigger>
+            <TabsTrigger value="new_awaiting_payment" className="group data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
+              <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-md bg-gray-200 group-data-[state=active]:bg-amber-500">
+                <DollarSign className="h-4 w-4 text-gray-600 group-data-[state=active]:text-white" />
+              </span>
+              Dự án mới chờ thanh toán
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="acceptance" className="mt-4">
