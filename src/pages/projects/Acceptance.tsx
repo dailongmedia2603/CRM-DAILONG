@@ -341,7 +341,6 @@ const AcceptancePage = () => {
             open={dialogs.details}
             onOpenChange={() => closeDialog('details')}
             project={activeProject}
-            onUpdate={fetchData}
           />
           <AcceptanceHistoryDialog
             open={dialogs.history}
