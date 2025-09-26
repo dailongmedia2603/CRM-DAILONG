@@ -26,6 +26,7 @@ import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
 import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const acceptanceStatuses = {
   'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', iconBgColor: 'bg-blue-500' },
@@ -141,9 +142,46 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
   );
 };
 
+const NewProjectsAwaitingPaymentTable = ({ projects, openDetailsDialog }: { projects: Project[], openDetailsDialog: (project: Project) => void }) => {
+    if (projects.length === 0) {
+      return <div className="text-center text-muted-foreground p-8">Không có dự án mới nào chờ thanh toán.</div>;
+    }
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Tên dự án</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Giá trị HĐ</TableHead>
+            <TableHead>Đợt 1</TableHead>
+            <TableHead>Nhân sự</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {projects.map(project => (
+            <TableRow key={project.id}>
+              <TableCell>
+                <Button variant="link" className="p-0 h-auto font-medium" onClick={() => openDetailsDialog(project)}>
+                  {project.name}
+                </Button>
+              </TableCell>
+              <TableCell>{project.client_name}</TableCell>
+              <TableCell>{formatCurrency(project.contract_value || 0)}</TableCell>
+              <TableCell>{formatCurrency(project.payments[0]?.amount || 0)}</TableCell>
+              <TableCell>
+                {(project.team || []).map(member => member.name).join(', ')}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
 const AcceptancePage = () => {
   const { session } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [newAwaitingPaymentProjects, setNewAwaitingPaymentProjects] = useState<Project[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -163,7 +201,7 @@ const AcceptancePage = () => {
     return null;
   }, [personnel, session]);
 
-  const filteredProjects = useMemo(() => {
+  const filteredAcceptanceProjects = useMemo(() => {
     return projects.filter(project => {
       const searchMatch = project.name.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -178,7 +216,13 @@ const AcceptancePage = () => {
     });
   }, [projects, searchTerm, statusFilter]);
 
-  const stats = useMemo(() => {
+  const filteredNewAwaitingPaymentProjects = useMemo(() => {
+    return newAwaitingPaymentProjects.filter(project => 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [newAwaitingPaymentProjects, searchTerm]);
+
+  const acceptanceStats = useMemo(() => {
     const statusCounts = Object.keys(acceptanceStatuses).reduce((acc, status) => {
       acc[status] = 0;
       return acc;
@@ -202,17 +246,30 @@ const AcceptancePage = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
-    const [projectsRes, personnelRes] = await Promise.all([
+    const [acceptanceProjectsRes, newProjectsRes, personnelRes] = await Promise.all([
       supabase
         .from('projects')
         .select('*, acceptance_history(*)')
         .not('acceptance_link', 'is', null)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { foreignTable: 'acceptance_history', ascending: false }),
+      supabase
+        .from('projects')
+        .select('*')
+        .eq('status', 'planning'),
       supabase.from('personnel').select('*')
     ]);
 
-    if (projectsRes.error) showError("Lỗi khi tải dự án.");
-    else setProjects(projectsRes.data as any[]);
+    if (acceptanceProjectsRes.error) showError("Lỗi khi tải dự án nghiệm thu.");
+    else setProjects(acceptanceProjectsRes.data as any[]);
+
+    if (newProjectsRes.error) {
+      showError("Lỗi khi tải dự án mới.");
+    } else {
+      const awaitingPayment = (newProjectsRes.data as Project[]).filter(p => 
+        p.payments && p.payments.length > 0 && !p.payments[0].paid
+      );
+      setNewAwaitingPaymentProjects(awaitingPayment);
+    }
 
     if (personnelRes.error) showError("Lỗi khi tải nhân sự.");
     else setPersonnel(personnelRes.data);
@@ -257,7 +314,7 @@ const AcceptancePage = () => {
       content,
     };
 
-    const { data: newHistory, error } = await supabase
+    const { error } = await supabase
       .from('acceptance_history')
       .insert([newHistoryEntry])
       .select()
@@ -276,36 +333,77 @@ const AcceptancePage = () => {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Nghiệm Thu Dự án</h1>
-          <p className="text-muted-foreground">Theo dõi quá trình nghiệm thu và thanh toán cho các dự án đã hoàn thành.</p>
+          <h1 className="text-2xl font-bold">Nghiệm Thu & Thanh Toán</h1>
+          <p className="text-muted-foreground">Theo dõi quá trình nghiệm thu và các dự án mới đang chờ thanh toán.</p>
         </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(acceptanceStatuses).map(([status, { icon, iconBgColor }]) => (
-              <StatusCard
-                key={status}
-                title={status}
-                value={stats[status]?.toString() || '0'}
-                icon={icon}
-                iconBgColor={iconBgColor}
-                onClick={() => setStatusFilter(status)}
-                isActive={statusFilter === status}
-              />
-            ))}
-            <StatusCard
-              title="Công nợ"
-              value={formatCurrency(stats.totalDebt)}
-              icon={DollarSign}
-              iconBgColor="bg-red-500"
-            />
-          </div>
+        <Tabs defaultValue="acceptance" className="w-full">
+          <TabsList>
+            <TabsTrigger value="acceptance">Nghiệm thu dự án</TabsTrigger>
+            <TabsTrigger value="new_awaiting_payment">Dự án mới chờ thanh toán</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="acceptance" className="mt-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(acceptanceStatuses).map(([status, { icon, iconBgColor }]) => (
+                  <StatusCard
+                    key={status}
+                    title={status}
+                    value={acceptanceStats[status]?.toString() || '0'}
+                    icon={icon}
+                    iconBgColor={iconBgColor}
+                    onClick={() => setStatusFilter(status)}
+                    isActive={statusFilter === status}
+                  />
+                ))}
+                <StatusCard
+                  title="Công nợ"
+                  value={formatCurrency(acceptanceStats.totalDebt)}
+                  icon={DollarSign}
+                  iconBgColor="bg-red-500"
+                />
+              </div>
 
-          <Card>
-            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <CardTitle>Danh sách dự án ({filteredProjects.length})</CardTitle>
-              <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                <div className="relative w-full md:w-auto">
+              <Card>
+                <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <CardTitle>Danh sách dự án ({filteredAcceptanceProjects.length})</CardTitle>
+                  <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                    <div className="relative w-full md:w-auto">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm kiếm dự án..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[200px]">
+                        <SelectValue placeholder="Lọc theo trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all_except_paid">Tất cả (chưa xong)</SelectItem>
+                        <SelectItem value="all">Tất cả dự án</SelectItem>
+                        {Object.keys(acceptanceStatuses).map(status => (
+                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? <div className="text-center p-8">Đang tải...</div> : <ProjectAcceptanceTable projects={filteredAcceptanceProjects} openDialog={openDialog} handleStatusChange={handleStatusChange} />}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="new_awaiting_payment" className="mt-4">
+            <Card>
+              <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <CardTitle>Dự án mới đang chờ thanh toán đợt 1 ({filteredNewAwaitingPaymentProjects.length})</CardTitle>
+                <div className="relative w-full md:max-w-xs">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Tìm kiếm dự án..."
@@ -314,25 +412,13 @@ const AcceptancePage = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Lọc theo trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all_except_paid">Tất cả (chưa xong)</SelectItem>
-                    <SelectItem value="all">Tất cả dự án</SelectItem>
-                    {Object.keys(acceptanceStatuses).map(status => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <div className="text-center p-8">Đang tải...</div> : <ProjectAcceptanceTable projects={filteredProjects} openDialog={openDialog} handleStatusChange={handleStatusChange} />}
-            </CardContent>
-          </Card>
-        </div>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <NewProjectsAwaitingPaymentTable projects={filteredNewAwaitingPaymentProjects} openDetailsDialog={(project) => openDialog('details', project)} />}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {activeProject && (
