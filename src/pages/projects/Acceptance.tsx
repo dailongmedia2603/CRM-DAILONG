@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Project, Personnel } from "@/types";
+import { Project, Personnel, AwaitingPaymentProject } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
@@ -143,7 +143,7 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
   );
 };
 
-const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: Project[] }) => {
+const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: AwaitingPaymentProject[] }) => {
     if (projects.length === 0) {
       return <div className="text-center text-muted-foreground p-8">Không có dự án mới nào chờ thanh toán.</div>;
     }
@@ -155,7 +155,6 @@ const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: Project[] }) 
             <TableHead>Client</TableHead>
             <TableHead>Giá trị HĐ</TableHead>
             <TableHead>Đợt 1</TableHead>
-            <TableHead>Nhân sự</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -166,10 +165,7 @@ const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: Project[] }) 
               </TableCell>
               <TableCell>{project.client_name}</TableCell>
               <TableCell>{formatCurrency(project.contract_value || 0)}</TableCell>
-              <TableCell>{formatCurrency(project.payments[0]?.amount || 0)}</TableCell>
-              <TableCell>
-                {(project.team || []).map(member => member.name).join(', ')}
-              </TableCell>
+              <TableCell>{formatCurrency(project.payment1_amount || 0)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -180,7 +176,7 @@ const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: Project[] }) 
 const AcceptancePage = () => {
   const { session } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [newAwaitingPaymentProjects, setNewAwaitingPaymentProjects] = useState<Project[]>([]);
+  const [newAwaitingPaymentProjects, setNewAwaitingPaymentProjects] = useState<AwaitingPaymentProject[]>([]);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -218,7 +214,8 @@ const AcceptancePage = () => {
 
   const filteredNewAwaitingPaymentProjects = useMemo(() => {
     return newAwaitingPaymentProjects.filter(project => 
-      project.name.toLowerCase().includes(searchTerm.toLowerCase())
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.client_name && project.client_name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [newAwaitingPaymentProjects, searchTerm]);
 
@@ -253,9 +250,9 @@ const AcceptancePage = () => {
         .not('acceptance_link', 'is', null)
         .order('created_at', { foreignTable: 'acceptance_history', ascending: false }),
       supabase
-        .from('projects')
+        .from('awaiting_payment_projects')
         .select('*')
-        .eq('status', 'planning'),
+        .order('created_at', { ascending: false }),
       supabase.from('personnel').select('*')
     ]);
 
@@ -263,12 +260,9 @@ const AcceptancePage = () => {
     else setProjects(acceptanceProjectsRes.data as any[]);
 
     if (newProjectsRes.error) {
-      showError("Lỗi khi tải dự án mới.");
+      showError("Lỗi khi tải dự án mới chờ thanh toán.");
     } else {
-      const awaitingPayment = (newProjectsRes.data as Project[]).filter(p => 
-        p.payments && p.payments.length > 0 && !p.payments[0].paid
-      );
-      setNewAwaitingPaymentProjects(awaitingPayment);
+      setNewAwaitingPaymentProjects(newProjectsRes.data as AwaitingPaymentProject[]);
     }
 
     if (personnelRes.error) showError("Lỗi khi tải nhân sự.");
@@ -330,19 +324,14 @@ const AcceptancePage = () => {
   };
 
   const handleSaveNewAwaitingPaymentProject = async (data: { name: string; client_name: string; contract_value: number; payment1_amount: number }) => {
-    const newProjectData = {
-        name: data.name,
-        client_name: data.client_name,
-        contract_value: data.contract_value,
-        status: 'planning',
-        payments: [{
-            amount: data.payment1_amount,
-            paid: false,
-            note: 'Đợt 1'
-        }],
-    };
-
-    const { error } = await supabase.from('projects').insert([newProjectData]);
+    const { error } = await supabase.from('awaiting_payment_projects').insert([
+        {
+            name: data.name,
+            client_name: data.client_name,
+            contract_value: data.contract_value,
+            payment1_amount: data.payment1_amount,
+        }
+    ]);
 
     if (error) {
         showError("Lỗi khi thêm dự án mới: " + error.message);

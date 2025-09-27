@@ -86,6 +86,15 @@ export interface Project {
   acceptance_history?: AcceptanceHistory[];
 }
 
+export interface AwaitingPaymentProject {
+  id: string;
+  name: string;
+  client_name: string;
+  contract_value: number;
+  payment1_amount: number;
+  created_at: string;
+}
+
 export interface Position {
   id: string;
   name: string;
