@@ -93,6 +93,7 @@ export interface AwaitingPaymentProject {
   contract_value: number;
   payment1_amount: number;
   created_at: string;
+  status?: 'Đang làm hợp đồng' | 'Chờ ký & thanh toán';
 }
 
 export interface Position {

@@ -24,10 +24,12 @@ import { useAuth } from "@/context/AuthProvider";
 import { showSuccess, showError } from "@/utils/toast";
 import { ProjectDetailsDialog } from "@/components/projects/ProjectDetailsDialog";
 import { AcceptanceHistoryDialog } from "@/components/projects/AcceptanceHistoryDialog";
-import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign, PlusCircle } from "lucide-react";
+import { ExternalLink, History, Search, FileSignature, Send, Clock, CheckCircle, FileText, DollarSign, PlusCircle, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NewAwaitingPaymentProjectDialog } from "@/components/projects/NewAwaitingPaymentProjectDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const acceptanceStatuses = {
   'Cần làm BBNT': { icon: FileSignature, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', iconBgColor: 'bg-blue-500' },
@@ -35,6 +37,11 @@ const acceptanceStatuses = {
   'Đã gởi bản cứng': { icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', iconBgColor: 'bg-cyan-500' },
   'Chờ thanh toán': { icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200', iconBgColor: 'bg-amber-500' },
   'Đã nhận tiền': { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200', iconBgColor: 'bg-green-500' },
+};
+
+const awaitingPaymentStatuses = {
+    'Đang làm hợp đồng': { icon: FileText, color: 'text-blue-600' },
+    'Chờ ký & thanh toán': { icon: Clock, color: 'text-amber-600' },
 };
 
 const StatusCard = ({ icon, title, value, iconBgColor, onClick, isActive }: { icon: React.ElementType, title: string, value: string, iconBgColor: string, onClick?: () => void, isActive?: boolean }) => {
@@ -143,7 +150,15 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
   );
 };
 
-const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: AwaitingPaymentProject[] }) => {
+const NewProjectsAwaitingPaymentTable = ({ projects, onEdit, onDelete, onStatusChange, selectedProjects, onSelectAll, onSelectRow }: { 
+    projects: AwaitingPaymentProject[], 
+    onEdit: (project: AwaitingPaymentProject) => void,
+    onDelete: (project: AwaitingPaymentProject) => void,
+    onStatusChange: (projectId: string, status: AwaitingPaymentProject['status']) => void,
+    selectedProjects: string[],
+    onSelectAll: (checked: boolean) => void,
+    onSelectRow: (id: string, checked: boolean) => void,
+}) => {
     if (projects.length === 0) {
       return <div className="text-center text-muted-foreground p-8">Không có dự án mới nào chờ thanh toán.</div>;
     }
@@ -151,23 +166,53 @@ const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: AwaitingPayme
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12"><Checkbox checked={selectedProjects.length === projects.length && projects.length > 0} onCheckedChange={(checked) => onSelectAll(!!checked)} /></TableHead>
             <TableHead>Tên dự án</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Giá trị HĐ</TableHead>
             <TableHead>Đợt 1</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead className="text-right">Hành động</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {projects.map(project => (
+          {projects.map(project => {
+            const statusInfo = awaitingPaymentStatuses[project.status || 'Đang làm hợp đồng'];
+            return (
             <TableRow key={project.id}>
-              <TableCell className="font-medium">
-                {project.name}
-              </TableCell>
+              <TableCell><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(checked) => onSelectRow(project.id, !!checked)} /></TableCell>
+              <TableCell className="font-medium">{project.name}</TableCell>
               <TableCell>{project.client_name}</TableCell>
               <TableCell>{formatCurrency(project.contract_value || 0)}</TableCell>
               <TableCell>{formatCurrency(project.payment1_amount || 0)}</TableCell>
+              <TableCell>
+                <Select value={project.status} onValueChange={(value) => onStatusChange(project.id, value as AwaitingPaymentProject['status'])}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue asChild>
+                            <div className={cn("flex items-center gap-2", statusInfo.color)}>
+                                {createElement(statusInfo.icon, { className: "h-4 w-4" })}
+                                <span>{project.status}</span>
+                            </div>
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(awaitingPaymentStatuses).map(([status, { icon, color }]) => (
+                            <SelectItem key={status} value={status}>
+                                <div className={cn("flex items-center gap-2", color)}>
+                                    {createElement(icon, { className: "h-4 w-4" })}
+                                    <span>{status}</span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button variant="ghost" size="icon" onClick={() => onEdit(project)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => onDelete(project)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+              </TableCell>
             </TableRow>
-          ))}
+          )})}
         </TableBody>
       </Table>
     );
@@ -189,6 +234,9 @@ const AcceptancePage = () => {
     history: false,
   });
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<AwaitingPaymentProject | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<AwaitingPaymentProject | null>(null);
+  const [selectedAwaitingProjects, setSelectedAwaitingProjects] = useState<string[]>([]);
 
   const currentUser = useMemo(() => {
     if (session?.user && personnel.length > 0) {
@@ -323,23 +371,54 @@ const AcceptancePage = () => {
     }
   };
 
-  const handleSaveNewAwaitingPaymentProject = async (data: { name: string; client_name: string; contract_value: number; payment1_amount: number }) => {
-    const { error } = await supabase.from('awaiting_payment_projects').insert([
-        {
-            name: data.name,
-            client_name: data.client_name,
-            contract_value: data.contract_value,
-            payment1_amount: data.payment1_amount,
-        }
-    ]);
+  const handleSaveNewAwaitingPaymentProject = async (data: Partial<AwaitingPaymentProject>) => {
+    const { id, ...saveData } = data;
+    let error;
+    if (id) {
+      ({ error } = await supabase.from('awaiting_payment_projects').update(saveData).eq('id', id));
+    } else {
+      ({ error } = await supabase.from('awaiting_payment_projects').insert([saveData]));
+    }
 
     if (error) {
-        showError("Lỗi khi thêm dự án mới: " + error.message);
+        showError("Lỗi khi lưu dự án: " + error.message);
     } else {
-        showSuccess("Đã thêm dự án mới thành công!");
+        showSuccess("Đã lưu dự án thành công!");
         fetchData();
     }
     setIsNewProjectDialogOpen(false);
+    setProjectToEdit(null);
+  };
+
+  const handleAwaitingStatusChange = async (projectId: string, status: AwaitingPaymentProject['status']) => {
+    const { error } = await supabase.from('awaiting_payment_projects').update({ status }).eq('id', projectId);
+    if (error) showError("Lỗi khi cập nhật trạng thái.");
+    else {
+        showSuccess("Đã cập nhật trạng thái.");
+        fetchData();
+    }
+  };
+
+  const handleDeleteAwaitingProject = async () => {
+    if (!projectToDelete) return;
+    const { error } = await supabase.from('awaiting_payment_projects').delete().eq('id', projectToDelete.id);
+    if (error) showError("Lỗi khi xóa dự án.");
+    else {
+        showSuccess("Đã xóa dự án.");
+        fetchData();
+    }
+    setProjectToDelete(null);
+  };
+
+  const handleBulkDeleteAwaitingProjects = async () => {
+    const { error } = await supabase.from('awaiting_payment_projects').delete().in('id', selectedAwaitingProjects);
+    if (error) showError("Lỗi khi xóa hàng loạt.");
+    else {
+        showSuccess(`Đã xóa ${selectedAwaitingProjects.length} dự án.`);
+        fetchData();
+    }
+    setSelectedAwaitingProjects([]);
+    setProjectToDelete(null); // Close dialog if open
   };
 
   return (
@@ -436,14 +515,30 @@ const AcceptancePage = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Button onClick={() => setIsNewProjectDialogOpen(true)}>
+                  <Button onClick={() => { setProjectToEdit(null); setIsNewProjectDialogOpen(true); }}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Thêm mới
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <NewProjectsAwaitingPaymentTable projects={filteredNewAwaitingPaymentProjects} />}
+                {selectedAwaitingProjects.length > 0 && (
+                    <div className="mb-4">
+                        <Button variant="destructive" onClick={() => setProjectToDelete({ id: 'bulk' } as any)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa ({selectedAwaitingProjects.length})
+                        </Button>
+                    </div>
+                )}
+                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <NewProjectsAwaitingPaymentTable 
+                    projects={filteredNewAwaitingPaymentProjects} 
+                    onEdit={(p) => { setProjectToEdit(p); setIsNewProjectDialogOpen(true); }}
+                    onDelete={(p) => setProjectToDelete(p)}
+                    onStatusChange={handleAwaitingStatusChange}
+                    selectedProjects={selectedAwaitingProjects}
+                    onSelectAll={(checked) => setSelectedAwaitingProjects(checked ? filteredNewAwaitingPaymentProjects.map(p => p.id) : [])}
+                    onSelectRow={(id, checked) => setSelectedAwaitingProjects(prev => checked ? [...prev, id] : prev.filter(pId => pId !== id))}
+                />}
               </CardContent>
             </Card>
           </TabsContent>
@@ -470,7 +565,24 @@ const AcceptancePage = () => {
         open={isNewProjectDialogOpen}
         onOpenChange={setIsNewProjectDialogOpen}
         onSave={handleSaveNewAwaitingPaymentProject}
+        project={projectToEdit}
       />
+      <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {projectToDelete?.id === 'bulk' 
+                        ? `Hành động này sẽ xóa vĩnh viễn ${selectedAwaitingProjects.length} dự án đã chọn.`
+                        : `Hành động này sẽ xóa vĩnh viễn dự án "${projectToDelete?.name}".`}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                <AlertDialogAction onClick={projectToDelete?.id === 'bulk' ? handleBulkDeleteAwaitingProjects : handleDeleteAwaitingProject} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 };

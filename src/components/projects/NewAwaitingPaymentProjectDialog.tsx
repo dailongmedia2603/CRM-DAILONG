@@ -11,11 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { showError } from "@/utils/toast";
+import { AwaitingPaymentProject } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface NewAwaitingPaymentProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { name: string; client_name: string; contract_value: number; payment1_amount: number }) => void;
+  onSave: (data: Partial<AwaitingPaymentProject>) => void;
+  project?: AwaitingPaymentProject | null;
 }
 
 const formatCurrency = (value: string | number) => {
@@ -28,32 +31,59 @@ const parseCurrency = (value: string): number => {
     return Number(value.replace(/[^0-9]/g, ""));
 }
 
-export const NewAwaitingPaymentProjectDialog = ({ open, onOpenChange, onSave }: NewAwaitingPaymentProjectDialogProps) => {
-  const [name, setName] = useState("");
-  const [clientName, setClientName] = useState("");
-  const [contractValue, setContractValue] = useState("");
-  const [payment1Amount, setPayment1Amount] = useState("");
+export const NewAwaitingPaymentProjectDialog = ({ open, onOpenChange, onSave, project }: NewAwaitingPaymentProjectDialogProps) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    client_name: "",
+    contract_value: "",
+    payment1_amount: "",
+    status: 'Đang làm hợp đồng' as AwaitingPaymentProject['status'],
+  });
+
+  const isEditing = !!project;
 
   useEffect(() => {
-    if (!open) {
-      // Reset form on close
-      setName("");
-      setClientName("");
-      setContractValue("");
-      setPayment1Amount("");
+    if (open) {
+      if (project) {
+        setFormData({
+          name: project.name || "",
+          client_name: project.client_name || "",
+          contract_value: project.contract_value?.toString() || "",
+          payment1_amount: project.payment1_amount?.toString() || "",
+          status: project.status || 'Đang làm hợp đồng',
+        });
+      } else {
+        setFormData({
+          name: "",
+          client_name: "",
+          contract_value: "",
+          payment1_amount: "",
+          status: 'Đang làm hợp đồng',
+        });
+      }
     }
-  }, [open]);
+  }, [project, open]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSelectChange = (value: AwaitingPaymentProject['status']) => {
+    setFormData(prev => ({ ...prev, status: value }));
+  };
 
   const handleSubmit = () => {
-    if (!name.trim()) {
+    if (!formData.name.trim()) {
         showError("Vui lòng nhập Tên dự án để dễ dàng nhận biết.");
         return;
     }
     onSave({
-      name: name,
-      client_name: clientName,
-      contract_value: parseCurrency(contractValue),
-      payment1_amount: parseCurrency(payment1Amount),
+      id: project?.id,
+      name: formData.name,
+      client_name: formData.client_name,
+      contract_value: parseCurrency(formData.contract_value),
+      payment1_amount: parseCurrency(formData.payment1_amount),
+      status: formData.status,
     });
   };
 
@@ -61,7 +91,7 @@ export const NewAwaitingPaymentProjectDialog = ({ open, onOpenChange, onSave }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Thêm dự án mới chờ thanh toán</DialogTitle>
+          <DialogTitle>{isEditing ? 'Chỉnh sửa dự án' : 'Thêm dự án mới chờ thanh toán'}</DialogTitle>
           <DialogDescription>
             Nhập thông tin cơ bản cho dự án mới. Các trường đều không bắt buộc.
           </DialogDescription>
@@ -69,19 +99,31 @@ export const NewAwaitingPaymentProjectDialog = ({ open, onOpenChange, onSave }: 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="name">Tên dự án</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="name" name="name" value={formData.name} onChange={handleChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="client_name">Khách hàng</Label>
-            <Input id="client_name" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <Input id="client_name" name="client_name" value={formData.client_name} onChange={handleChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="contract_value">Giá trị hợp đồng</Label>
-            <Input id="contract_value" value={formatCurrency(contractValue)} onChange={(e) => setContractValue(e.target.value)} />
+            <Input id="contract_value" name="contract_value" value={formatCurrency(formData.contract_value)} onChange={handleChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="payment1_amount">Thanh toán đợt 1</Label>
-            <Input id="payment1_amount" value={formatCurrency(payment1Amount)} onChange={(e) => setPayment1Amount(e.target.value)} />
+            <Input id="payment1_amount" name="payment1_amount" value={formatCurrency(formData.payment1_amount)} onChange={handleChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Trạng thái</Label>
+            <Select value={formData.status} onValueChange={handleSelectChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Đang làm hợp đồng">Đang làm hợp đồng</SelectItem>
+                <SelectItem value="Chờ ký & thanh toán">Chờ ký & thanh toán</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
