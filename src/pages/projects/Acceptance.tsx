@@ -143,7 +143,7 @@ const ProjectAcceptanceTable = ({ projects, openDialog, handleStatusChange }: { 
   );
 };
 
-const NewProjectsAwaitingPaymentTable = ({ projects, openDetailsDialog }: { projects: Project[], openDetailsDialog: (project: Project) => void }) => {
+const NewProjectsAwaitingPaymentTable = ({ projects }: { projects: Project[] }) => {
     if (projects.length === 0) {
       return <div className="text-center text-muted-foreground p-8">Không có dự án mới nào chờ thanh toán.</div>;
     }
@@ -161,10 +161,8 @@ const NewProjectsAwaitingPaymentTable = ({ projects, openDetailsDialog }: { proj
         <TableBody>
           {projects.map(project => (
             <TableRow key={project.id}>
-              <TableCell>
-                <Button variant="link" className="p-0 h-auto font-medium" onClick={() => openDetailsDialog(project)}>
-                  {project.name}
-                </Button>
+              <TableCell className="font-medium">
+                {project.name}
               </TableCell>
               <TableCell>{project.client_name}</TableCell>
               <TableCell>{formatCurrency(project.contract_value || 0)}</TableCell>
@@ -456,7 +454,7 @@ const AcceptancePage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <NewProjectsAwaitingPaymentTable projects={filteredNewAwaitingPaymentProjects} openDetailsDialog={(project) => openDialog('details', project)} />}
+                {isLoading ? <div className="text-center p-8">Đang tải...</div> : <NewProjectsAwaitingPaymentTable projects={filteredNewAwaitingPaymentProjects} />}
               </CardContent>
             </Card>
           </TabsContent>
