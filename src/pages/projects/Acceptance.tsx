@@ -504,7 +504,7 @@ const AcceptancePage = () => {
           <TabsContent value="new_awaiting_payment" className="mt-4">
             <Card>
               <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <CardTitle>Dự án mới đang chờ thanh toán đợt 1 ({filteredNewAwaitingPaymentProjects.length})</CardTitle>
+                <CardTitle>Dự án mới đang chờ thanh toán ({filteredNewAwaitingPaymentProjects.length})</CardTitle>
                 <div className="flex items-center gap-2">
                   <div className="relative w-full md:max-w-xs">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
