@@ -133,16 +133,17 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="flex flex-col h-full">
           {/* Logo Section */}
           <div className={cn("flex items-center justify-between p-6 border-b border-gray-100 transition-all", isCollapsed && "p-0 py-6 justify-center")}>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <div className={cn("transition-opacity whitespace-nowrap", isCollapsed ? "sr-only" : "")}>
-                <div className="text-xl font-bold text-gray-900">Agency CRM</div>
-                <div className="text-xs text-gray-500">Professional Edition</div>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className={cn("lg:hidden text-gray-500 hover:text-gray-700", !isCollapsed && "hidden")}>
+            <Link to="/" className={cn("flex items-center justify-center", isCollapsed ? "w-full" : "")}>
+                <img 
+                    src="/logodailong-ngang.png" 
+                    alt="Dai Long Logo" 
+                    className={cn(
+                        "h-auto transition-all duration-300",
+                        isCollapsed ? "max-w-[48px]" : "max-w-[160px]"
+                    )}
+                />
+            </Link>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className={cn("lg:hidden text-gray-500 hover:text-gray-700", isCollapsed && "hidden")}>
               <X className="h-5 w-5" />
             </Button>
           </div>
