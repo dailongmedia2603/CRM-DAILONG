@@ -25,7 +25,7 @@ interface LeadFormDialogProps {
   onSave: (leadData: any) => void;
   salesPersons: Personnel[];
   lead?: any;
-  currentUser: { id: string; name: string; isSale: boolean };
+  currentUser: { id: string; name: string; isSale: boolean; role: Personnel['role'] | null };
 }
 
 const FORM_DATA_KEY = 'leadFormData';
@@ -49,14 +49,13 @@ export const LeadFormDialog = ({
     result: "chưa quyết định",
   });
 
-  const salesOnly = useMemo(() => 
-    salesPersons.filter(p => p.position.toLowerCase() === 'sale'), 
-    [salesPersons]
-  );
+  const assignableUsers = useMemo(() => salesPersons, [salesPersons]);
 
   useEffect(() => {
     if (open) {
       const savedData = sessionStorage.getItem(FORM_DATA_KEY);
+      const canSelfAssign = currentUser.isSale || currentUser.role === 'BOD' || currentUser.role === 'Quản lý';
+
       if (savedData) {
         setFormData(JSON.parse(savedData));
       } else if (lead) {
@@ -77,8 +76,8 @@ export const LeadFormDialog = ({
           name: "",
           phone: "",
           product: "",
-          created_by_id: currentUser.isSale ? currentUser.id : "",
-          created_by_name: currentUser.isSale ? currentUser.name : "",
+          created_by_id: canSelfAssign ? currentUser.id : "",
+          created_by_name: canSelfAssign ? currentUser.name : "",
           potential: "chưa xác định",
           status: "đang làm việc",
           result: "chưa quyết định",
@@ -102,7 +101,7 @@ export const LeadFormDialog = ({
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === "created_by_id") {
-      const selectedPerson = salesOnly.find((person) => person.id === value);
+      const selectedPerson = assignableUsers.find((person) => person.id === value);
       if (selectedPerson) {
         updateFormData({ 
           created_by_id: selectedPerson.id,
@@ -150,7 +149,7 @@ export const LeadFormDialog = ({
             <Select value={formData.created_by_id} onValueChange={(value) => handleSelectChange("created_by_id", value)}>
               <SelectTrigger><SelectValue placeholder="Chọn nhân viên sale" /></SelectTrigger>
               <SelectContent>
-                {salesOnly.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
+                {assignableUsers.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}
               </SelectContent>
             </Select>
           </div>

@@ -122,20 +122,33 @@ const LeadsPage = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const isMobile = useIsMobile();
 
-  const salesPersonsOnly = useMemo(() => 
-    personnel.filter(p => p.position.toLowerCase() === 'sale'), 
-    [personnel]
-  );
-
   const currentUserInfo = useMemo(() => {
     if (session?.user && personnel.length > 0) {
         const user = personnel.find(p => p.id === session.user.id);
         if (user) {
-            return { id: user.id, name: user.name, isSale: user.position.toLowerCase() === 'sale' };
+            return { 
+              id: user.id, 
+              name: user.name, 
+              isSale: user.position.toLowerCase() === 'sale',
+              role: user.role 
+            };
         }
     }
-    return { id: '', name: '', isSale: false };
+    return { id: '', name: '', isSale: false, role: null };
   }, [personnel, session]);
+
+  const assignableUsers = useMemo(() => {
+    const sales = personnel.filter(p => p.position.toLowerCase() === 'sale');
+    const salesIds = new Set(sales.map(p => p.id));
+
+    if (currentUserInfo.id && (currentUserInfo.role === 'BOD' || currentUserInfo.role === 'Quản lý') && !salesIds.has(currentUserInfo.id)) {
+        const adminUser = personnel.find(p => p.id === currentUserInfo.id);
+        if (adminUser) {
+            return [...sales, adminUser];
+        }
+    }
+    return sales;
+  }, [personnel, currentUserInfo]);
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -329,7 +342,7 @@ const LeadsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
           <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <div className="flex w-full md:w-auto space-x-4">
-            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{salesPersonsOnly.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
+            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{assignableUsers.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -498,7 +511,7 @@ const LeadsPage = () => {
       
       {selectedLead && <LeadHistoryDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen} leadName={selectedLead.name} leadId={selectedLead.id} history={selectedLead.lead_history} onAddHistory={handleAddHistory} />}
       {selectedLead && <LeadDetailsDialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen} lead={selectedLead} />}
-      <LeadFormDialog open={formDialogOpen} onOpenChange={handleSetFormOpen} onSave={handleSaveLead} salesPersons={salesPersonsOnly} lead={leadToEdit} currentUser={currentUserInfo} />
+      <LeadFormDialog open={formDialogOpen} onOpenChange={handleSetFormOpen} onSave={handleSaveLead} salesPersons={assignableUsers} lead={leadToEdit} currentUser={currentUserInfo} />
       <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle><AlertDialogDescription>Hành động này không thể hoàn tác. Lead "{leadToDelete?.name}" sẽ bị xóa vĩnh viễn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Hủy</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">Xóa</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
