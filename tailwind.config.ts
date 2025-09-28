@@ -20,7 +20,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", ...fontFamily.sans],
+        sans: ["Be Vietnam Pro", ...fontFamily.sans],
       },
       colors: {
         border: "hsl(var(--border))",
