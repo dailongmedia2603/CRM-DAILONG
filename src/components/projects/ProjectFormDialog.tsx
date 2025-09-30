@@ -125,34 +125,37 @@ export const ProjectFormDialog = ({
   const handleRemovePayment = (index: number) => setFormData(prev => ({ ...prev, payments: prev.payments.filter((_, i) => i !== index) }));
   
   const handlePaymentFieldChange = (index: number, field: 'amount' | 'note', value: string | number) => {
-    const newPayments = [...formData.payments];
-    let currentPayment = { ...newPayments[index] };
-
-    if (field === 'amount') {
-        const numericValue = Number(String(value).replace(/[^0-9]/g, ""));
-        currentPayment.amount = numericValue;
-    } else if (field === 'note') {
-        currentPayment.note = value as string;
-    }
-    
-    newPayments[index] = currentPayment;
+    const newPayments = formData.payments.map((payment, i) => {
+      if (i === index) {
+        const updatedPayment = { ...payment };
+        if (field === 'amount') {
+          updatedPayment.amount = Number(String(value).replace(/[^0-9]/g, ""));
+        } else if (field === 'note') {
+          updatedPayment.note = value as string;
+        }
+        return updatedPayment;
+      }
+      return payment;
+    });
     setFormData(prev => ({ ...prev, payments: newPayments }));
   };
 
   const handlePaymentPersonnelChange = (paymentIndex: number, person: { id: string; name: string }) => {
-    const newPayments = [...formData.payments];
-    const currentPayment = { ...newPayments[paymentIndex] };
-    const currentPersonnel = currentPayment.personnel || [];
-    
-    const isSelected = currentPersonnel.some(p => p.id === person.id);
-    
-    if (isSelected) {
-        currentPayment.personnel = currentPersonnel.filter(p => p.id !== person.id);
-    } else {
-        currentPayment.personnel = [...currentPersonnel, person];
-    }
-    
-    newPayments[paymentIndex] = currentPayment;
+    const newPayments = formData.payments.map((payment, i) => {
+      if (i === paymentIndex) {
+        const updatedPayment = { ...payment };
+        const currentPersonnel = updatedPayment.personnel || [];
+        const isSelected = currentPersonnel.some(p => p.id === person.id);
+        
+        if (isSelected) {
+            updatedPayment.personnel = currentPersonnel.filter(p => p.id !== person.id);
+        } else {
+            updatedPayment.personnel = [...currentPersonnel, person];
+        }
+        return updatedPayment;
+      }
+      return payment;
+    });
     setFormData(prev => ({ ...prev, payments: newPayments }));
   };
 
