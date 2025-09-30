@@ -239,6 +239,9 @@ const AcceptancePage = () => {
   const [projectToDelete, setProjectToDelete] = useState<AwaitingPaymentProject | null>(null);
   const [selectedAwaitingProjects, setSelectedAwaitingProjects] = useState<string[]>([]);
 
+  const row1Keys = ['Cần làm BBNT', 'Chờ xác nhận file', 'Đang in bản cứng', 'Đã gởi bản cứng'];
+  const row2Keys = ['Chờ thanh toán', 'Đã nhận tiền'];
+
   const currentUser = useMemo(() => {
     if (session?.user && personnel.length > 0) {
       return personnel.find(p => p.id === session.user.id);
@@ -448,18 +451,37 @@ const AcceptancePage = () => {
           
           <TabsContent value="acceptance" className="mt-4">
             <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {row1Keys.map(status => {
+                  const statusInfo = acceptanceStatuses[status as keyof typeof acceptanceStatuses];
+                  return (
+                    <StatusCard
+                      key={status}
+                      title={status}
+                      value={acceptanceStats[status]?.toString() || '0'}
+                      icon={statusInfo.icon}
+                      iconBgColor={statusInfo.iconBgColor}
+                      onClick={() => setStatusFilter(status)}
+                      isActive={statusFilter === status}
+                    />
+                  );
+                })}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(acceptanceStatuses).map(([status, { icon, iconBgColor }]) => (
-                  <StatusCard
-                    key={status}
-                    title={status}
-                    value={acceptanceStats[status]?.toString() || '0'}
-                    icon={icon}
-                    iconBgColor={iconBgColor}
-                    onClick={() => setStatusFilter(status)}
-                    isActive={statusFilter === status}
-                  />
-                ))}
+                {row2Keys.map(status => {
+                  const statusInfo = acceptanceStatuses[status as keyof typeof acceptanceStatuses];
+                  return (
+                    <StatusCard
+                      key={status}
+                      title={status}
+                      value={acceptanceStats[status]?.toString() || '0'}
+                      icon={statusInfo.icon}
+                      iconBgColor={statusInfo.iconBgColor}
+                      onClick={() => setStatusFilter(status)}
+                      isActive={statusFilter === status}
+                    />
+                  );
+                })}
                 <StatusCard
                   title="Công nợ"
                   value={formatCurrency(acceptanceStats.totalDebt)}
