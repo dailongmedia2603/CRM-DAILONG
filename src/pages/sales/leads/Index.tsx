@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { 
   Card, 
@@ -81,9 +82,9 @@ import { LeadHistoryDialog } from "@/components/sales/leads/LeadHistoryDialog";
 import { LeadFormDialog } from "@/components/sales/leads/LeadFormDialog";
 import { LeadDetailsDialog } from "@/components/sales/leads/LeadDetailsDialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { Lead, LeadHistory, Personnel } from "@/types";
+import { Lead, Personnel } from "@/types";
 import { cn } from "@/lib/utils";
-import { format, startOfDay, isEqual } from "date-fns";
+import { format, startOfDay, isEqual, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -93,15 +94,16 @@ import { useLeads } from "@/hooks/useLeads";
 const LeadsPage = () => {
   const { session } = useAuth();
   const { leads, personnel, isLoading, invalidateLeads } = useLeads();
-  
-  const [searchTerm, setSearchTerm] = useState("");
-  const [salesFilter, setSalesFilter] = useState("all");
-  const [potentialFilter, setPotentialFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [resultFilter, setResultFilter] = useState("all");
-  const [archivedFilter, setArchivedFilter] = useState("active");
-  const [followUpFilter, setFollowUpFilter] = useState("all");
-  const [specificDateFilter, setSpecificDateFilter] = useState<Date | undefined>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchTerm = searchParams.get("search") || "";
+  const salesFilter = searchParams.get("sales") || "all";
+  const statusFilter = searchParams.get("status") || "all";
+  const archivedFilter = searchParams.get("archived") || "active";
+  const followUpFilter = searchParams.get("followUp") || "all";
+  const specificDateFilter = searchParams.get("date") ? parseISO(searchParams.get("date")!) : undefined;
+  const pageIndex = parseInt(searchParams.get("page") || "0", 10);
+  const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
 
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -119,8 +121,31 @@ const LeadsPage = () => {
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
 
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const isMobile = useIsMobile();
+
+  const updateSearchParam = (key: string, value: string | boolean | number) => {
+    setSearchParams(prev => {
+      const defaults: Record<string, any> = {
+        search: '',
+        sales: 'all',
+        status: 'all',
+        archived: 'active',
+        followUp: 'all',
+        date: undefined,
+        page: 0,
+        pageSize: 20,
+      };
+      if (value === defaults[key] || !value) {
+        prev.delete(key);
+      } else {
+        prev.set(key, String(value));
+      }
+      if (key !== 'page') {
+        prev.delete('page');
+      }
+      return prev;
+    }, { replace: true });
+  };
 
   const currentUserInfo = useMemo(() => {
     if (session?.user && personnel.length > 0) {
@@ -184,17 +209,16 @@ const LeadsPage = () => {
   }, [leads, searchTerm, salesFilter, statusFilter, archivedFilter, followUpFilter, specificDateFilter]);
 
   const paginatedLeads = useMemo(() => {
-    const { pageIndex, pageSize } = pagination;
     if (pageSize === 0) return filteredLeads;
     const start = pageIndex * pageSize;
     const end = start + pageSize;
     return filteredLeads.slice(start, end);
-  }, [filteredLeads, pagination]);
+  }, [filteredLeads, pageIndex, pageSize]);
 
   const pageCount = useMemo(() => {
-    if (pagination.pageSize === 0) return 1;
-    return Math.ceil(filteredLeads.length / pagination.pageSize);
-  }, [filteredLeads, pagination.pageSize]);
+    if (pageSize === 0) return 1;
+    return Math.ceil(filteredLeads.length / pageSize);
+  }, [filteredLeads, pageSize]);
 
   const stats = useMemo(() => ({
     totalLeads: filteredLeads.length,
@@ -312,13 +336,27 @@ const LeadsPage = () => {
   };
 
   const handleFollowUpFilterChange = (value: string) => {
-    setSpecificDateFilter(undefined);
-    setFollowUpFilter(value);
+    setSearchParams(prev => {
+      if (value === 'all') {
+        prev.delete('followUp');
+      } else {
+        prev.set('followUp', value);
+      }
+      prev.delete('date');
+      return prev;
+    }, { replace: true });
   };
 
   const handleSpecificDateSelect = (date?: Date) => {
-    setFollowUpFilter("all");
-    setSpecificDateFilter(date);
+    setSearchParams(prev => {
+      prev.delete('followUp');
+      if (date) {
+        prev.set('date', format(date, 'yyyy-MM-dd'));
+      } else {
+        prev.delete('date');
+      }
+      return prev;
+    }, { replace: true });
   };
 
   return (
@@ -340,10 +378,10 @@ const LeadsPage = () => {
         </div>
         
         <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
-          <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+          <div className="relative flex-grow"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm..." className="pl-8" value={searchTerm} onChange={(e) => updateSearchParam('search', e.target.value)} /></div>
           <div className="flex w-full md:w-auto space-x-4">
-            <Select value={salesFilter} onValueChange={setSalesFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{assignableUsers.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
+            <Select value={salesFilter} onValueChange={(value) => updateSearchParam('sales', value)}><SelectTrigger className="w-full"><SelectValue placeholder="Nhân viên sale" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhân viên</SelectItem>{assignableUsers.map((person) => (<SelectItem key={person.id} value={person.id}>{person.name}</SelectItem>))}</SelectContent></Select>
+            <Select value={statusFilter} onValueChange={(value) => updateSearchParam('status', value)}><SelectTrigger className="w-full"><SelectValue placeholder="Trạng thái chăm sóc" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem><SelectItem value="đang làm việc">Đang làm việc</SelectItem><SelectItem value="đang suy nghĩ">Đang suy nghĩ</SelectItem><SelectItem value="im ru">Im ru</SelectItem><SelectItem value="từ chối">Từ chối</SelectItem></SelectContent></Select>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full">
@@ -444,18 +482,16 @@ const LeadsPage = () => {
                 <div className="flex items-center space-x-2">
                   <p className="text-sm font-medium">Số dòng mỗi trang</p>
                   <Select
-                    value={`${pagination.pageSize}`}
-                    onValueChange={(value) => {
-                      setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
-                    }}
+                    value={`${pageSize}`}
+                    onValueChange={(value) => updateSearchParam('pageSize', Number(value))}
                   >
                     <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                      <SelectValue placeholder={pageSize === 0 ? "Tất cả" : pageSize} />
                     </SelectTrigger>
                     <SelectContent side="top">
-                      {[20, 50, 100].map((pageSize) => (
-                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                          {pageSize}
+                      {[20, 50, 100].map((size) => (
+                        <SelectItem key={size} value={`${size}`}>
+                          {size}
                         </SelectItem>
                       ))}
                       <SelectItem value="0">Tất cả</SelectItem>
@@ -463,14 +499,14 @@ const LeadsPage = () => {
                   </Select>
                 </div>
                 <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                  Trang {pagination.pageIndex + 1} của {pageCount}
+                  Trang {pageIndex + 1} của {pageCount}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-                    disabled={pagination.pageIndex === 0}
+                    onClick={() => updateSearchParam('page', 0)}
+                    disabled={pageIndex === 0}
                   >
                     <span className="sr-only">Go to first page</span>
                     <ChevronsLeft className="h-4 w-4" />
@@ -478,8 +514,8 @@ const LeadsPage = () => {
                   <Button
                     variant="outline"
                     className="h-8 w-8 p-0"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                    disabled={pagination.pageIndex === 0}
+                    onClick={() => updateSearchParam('page', pageIndex - 1)}
+                    disabled={pageIndex === 0}
                   >
                     <span className="sr-only">Go to previous page</span>
                     <ChevronLeft className="h-4 w-4" />
@@ -487,8 +523,8 @@ const LeadsPage = () => {
                   <Button
                     variant="outline"
                     className="h-8 w-8 p-0"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                    disabled={pagination.pageIndex >= pageCount - 1}
+                    onClick={() => updateSearchParam('page', pageIndex + 1)}
+                    disabled={pageIndex >= pageCount - 1}
                   >
                     <span className="sr-only">Go to next page</span>
                     <ChevronRight className="h-4 w-4" />
@@ -496,8 +532,8 @@ const LeadsPage = () => {
                   <Button
                     variant="outline"
                     className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-                    disabled={pagination.pageIndex >= pageCount - 1}
+                    onClick={() => updateSearchParam('page', pageCount - 1)}
+                    disabled={pageIndex >= pageCount - 1}
                   >
                     <span className="sr-only">Go to last page</span>
                     <ChevronsRight className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -76,9 +76,14 @@ const ProjectsPage = () => {
   const { session } = useAuth();
   const { projects: projectsFromHook, clients, isLoading, invalidateProjects } = useProjects();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | "all">("all");
-  const [showArchived, setShowArchived] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchTerm = searchParams.get("search") || "";
+  const statusFilter = searchParams.get("status") || "all";
+  const showArchived = searchParams.get("archived") === "true";
+  const pageIndex = parseInt(searchParams.get("page") || "0", 10);
+  const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
+
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   
   const [isFormOpen, setIsFormOpen] = usePersistentState('projectFormOpen', false);
@@ -89,8 +94,6 @@ const ProjectsPage = () => {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   
   const isMobile = useIsMobile();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -99,6 +102,27 @@ const ProjectsPage = () => {
   useEffect(() => {
     setProjects(projectsFromHook);
   }, [projectsFromHook]);
+
+  const updateSearchParam = (key: string, value: string | boolean | number) => {
+    setSearchParams(prev => {
+      const defaults: Record<string, any> = {
+        search: '',
+        status: 'all',
+        archived: false,
+        page: 0,
+        pageSize: 20,
+      };
+      if (value === defaults[key]) {
+        prev.delete(key);
+      } else {
+        prev.set(key, String(value));
+      }
+      if (key !== 'page') {
+        prev.delete('page');
+      }
+      return prev;
+    }, { replace: true });
+  };
 
   const statusTextMap: { [key: string]: string } = {
     planning: "Pending",
@@ -117,17 +141,16 @@ const ProjectsPage = () => {
   }, [projects, searchTerm, statusFilter, showArchived]);
 
   const paginatedProjects = useMemo(() => {
-    const { pageIndex, pageSize } = pagination;
-    if (pageSize === 0) return filteredProjects; // Show all
+    if (pageSize === 0) return filteredProjects;
     const start = pageIndex * pageSize;
     const end = start + pageSize;
     return filteredProjects.slice(start, end);
-  }, [filteredProjects, pagination]);
+  }, [filteredProjects, pageIndex, pageSize]);
 
   const pageCount = useMemo(() => {
-    if (pagination.pageSize === 0) return 1;
-    return Math.ceil(filteredProjects.length / pagination.pageSize);
-  }, [filteredProjects, pagination.pageSize]);
+    if (pageSize === 0) return 1;
+    return Math.ceil(filteredProjects.length / pageSize);
+  }, [filteredProjects, pageSize]);
 
   const stats = useMemo(() => {
     const activeProjects = projects.filter(p => !p.archived);
@@ -184,7 +207,6 @@ const ProjectsPage = () => {
     } else {
       showSuccess("Dự án đã được hoàn thành!");
       
-      // Invoke the notification function
       supabase.functions.invoke('send-acceptance-notification', {
         body: {
           projectName: projectToComplete.name,
@@ -312,7 +334,7 @@ const ProjectsPage = () => {
     setIsBulkDeleteAlertOpen(false);
   };
 
-  const handleStatusFilterClick = (status: string) => setStatusFilter(prev => prev === status ? "all" : status);
+  const handleStatusFilterClick = (status: string) => updateSearchParam("status", statusFilter === status ? "all" : status);
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   const formatDate = (dateString: string) => dateString ? new Date(dateString).toLocaleDateString('vi-VN') : 'N/A';
@@ -337,9 +359,9 @@ const ProjectsPage = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4 flex-1 w-full">
-            <div className="relative w-full md:w-auto md:flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm dự án..." className="pl-8 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiến độ" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả tiến độ</SelectItem><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent></Select>
-            <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Dự án hoạt động" : "Dự án lưu trữ"}</Button>
+            <div className="relative w-full md:w-auto md:flex-1"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Tìm kiếm dự án..." className="pl-8 w-full" value={searchTerm} onChange={(e) => updateSearchParam('search', e.target.value)} /></div>
+            <Select value={statusFilter} onValueChange={(value) => updateSearchParam('status', value)}><SelectTrigger className="w-full md:w-[180px]"><SelectValue placeholder="Tiến độ" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả tiến độ</SelectItem><SelectItem value="planning">Pending</SelectItem><SelectItem value="in-progress">Đang chạy</SelectItem><SelectItem value="completed">Hoàn thành</SelectItem><SelectItem value="overdue">Quá hạn</SelectItem></SelectContent></Select>
+            <Button variant="outline" onClick={() => updateSearchParam('archived', !showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Dự án hoạt động" : "Dự án lưu trữ"}</Button>
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
             {selectedProjects.length > 0 && (
@@ -460,18 +482,16 @@ const ProjectsPage = () => {
                 <div className="flex items-center space-x-2">
                   <p className="text-sm font-medium">Số dòng mỗi trang</p>
                   <Select
-                    value={`${pagination.pageSize}`}
-                    onValueChange={(value) => {
-                      setPagination(prev => ({ ...prev, pageSize: Number(value) }));
-                    }}
+                    value={`${pageSize}`}
+                    onValueChange={(value) => updateSearchParam('pageSize', Number(value))}
                   >
                     <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                      <SelectValue placeholder={pageSize === 0 ? "Tất cả" : pageSize} />
                     </SelectTrigger>
                     <SelectContent side="top">
-                      {[20, 50, 100].map((pageSize) => (
-                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                          {pageSize}
+                      {[20, 50, 100].map((size) => (
+                        <SelectItem key={size} value={`${size}`}>
+                          {size}
                         </SelectItem>
                       ))}
                       <SelectItem value="0">Tất cả</SelectItem>
@@ -479,14 +499,14 @@ const ProjectsPage = () => {
                   </Select>
                 </div>
                 <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                  Trang {pagination.pageIndex + 1} của {pageCount}
+                  Trang {pageIndex + 1} của {pageCount}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-                    disabled={pagination.pageIndex === 0}
+                    onClick={() => updateSearchParam('page', 0)}
+                    disabled={pageIndex === 0}
                   >
                     <span className="sr-only">Go to first page</span>
                     <ChevronsLeft className="h-4 w-4" />
@@ -494,8 +514,8 @@ const ProjectsPage = () => {
                   <Button
                     variant="outline"
                     className="h-8 w-8 p-0"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                    disabled={pagination.pageIndex === 0}
+                    onClick={() => updateSearchParam('page', pageIndex - 1)}
+                    disabled={pageIndex === 0}
                   >
                     <span className="sr-only">Go to previous page</span>
                     <ChevronLeft className="h-4 w-4" />
@@ -503,8 +523,8 @@ const ProjectsPage = () => {
                   <Button
                     variant="outline"
                     className="h-8 w-8 p-0"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                    disabled={pagination.pageIndex >= pageCount - 1}
+                    onClick={() => updateSearchParam('page', pageIndex + 1)}
+                    disabled={pageIndex >= pageCount - 1}
                   >
                     <span className="sr-only">Go to next page</span>
                     <ChevronRight className="h-4 w-4" />
@@ -512,8 +532,8 @@ const ProjectsPage = () => {
                   <Button
                     variant="outline"
                     className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-                    disabled={pagination.pageIndex >= pageCount - 1}
+                    onClick={() => updateSearchParam('page', pageCount - 1)}
+                    disabled={pageIndex >= pageCount - 1}
                   >
                     <span className="sr-only">Go to last page</span>
                     <ChevronsRight className="h-4 w-4" />

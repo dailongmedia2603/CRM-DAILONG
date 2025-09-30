@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ import { ReportDialog } from '@/components/interns/ReportDialog';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, startOfToday, startOfWeek, subDays, differenceInDays, endOfDay, addDays, isEqual } from 'date-fns';
+import { startOfDay, startOfToday, startOfWeek, subDays, differenceInDays, endOfDay, addDays, isEqual, parseISO } from 'date-fns';
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -52,15 +53,27 @@ const StatCard = ({ icon, title, value, subtitle, iconBgColor, onClick, isActive
 const InternsPage = () => {
   const { session } = useAuth();
   const { tasks, personnel, isLoading, invalidateTasks } = useInternTasks();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [internFilter, setInternFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [activeDateFilter, setActiveDateFilter] = useState('today');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchTerm = searchParams.get('search') || '';
+  const internFilter = searchParams.get('intern') || 'all';
+  const statusFilter = searchParams.get('status') || 'all';
+  const showArchived = searchParams.get('archived') === 'true';
+  const pageIndex = parseInt(searchParams.get('page') || '0', 10);
+  const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+  const activeDateFilter = searchParams.get('dateFilter') || 'today';
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
+
+  const dateRange: DateRange | undefined = useMemo(() => {
+    if (fromParam) {
+      return { from: parseISO(fromParam), to: toParam ? parseISO(toParam) : parseISO(fromParam) };
+    }
+    return undefined;
+  }, [fromParam, toParam]);
+
   const [isTimeFilterOpen, setIsTimeFilterOpen] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const [isFormOpen, setIsFormOpen] = useState(() => sessionStorage.getItem('internTaskFormOpen') === 'true');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -74,18 +87,51 @@ const InternsPage = () => {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const today = new Date();
-    if (activeDateFilter === 'today') {
-      setDateRange({ from: startOfToday(), to: endOfDay(today) });
-    } else if (activeDateFilter === 'yesterday') {
-      const yesterday = subDays(today, 1);
-      setDateRange({ from: startOfDay(yesterday), to: endOfDay(yesterday) });
-    } else if (activeDateFilter === 'thisWeek') {
-      const start = startOfWeek(today, { weekStartsOn: 1 }); // Monday
-      const end = endOfDay(addDays(start, 5)); // Saturday
-      setDateRange({ from: start, to: end });
+    if (!fromParam) {
+      const today = new Date();
+      let range: DateRange | undefined;
+      if (activeDateFilter === 'today') {
+        range = { from: startOfToday(), to: endOfDay(today) };
+      } else if (activeDateFilter === 'yesterday') {
+        const yesterday = subDays(today, 1);
+        range = { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+      } else if (activeDateFilter === 'thisWeek') {
+        const start = startOfWeek(today, { weekStartsOn: 1 });
+        const end = endOfDay(addDays(start, 5));
+        range = { from: start, to: end };
+      }
+      
+      if (range?.from) {
+        setSearchParams(prev => {
+          prev.set('from', format(range!.from!, 'yyyy-MM-dd'));
+          prev.set('to', format(range!.to!, 'yyyy-MM-dd'));
+          return prev;
+        }, { replace: true });
+      }
     }
-  }, [activeDateFilter]);
+  }, [activeDateFilter, fromParam, setSearchParams]);
+
+  const updateSearchParam = (key: string, value: string | boolean | number) => {
+    setSearchParams(prev => {
+      const defaults: Record<string, any> = {
+        search: '',
+        intern: 'all',
+        status: 'all',
+        archived: false,
+        page: 0,
+        pageSize: 20,
+      };
+      if (value === defaults[key]) {
+        prev.delete(key);
+      } else {
+        prev.set(key, String(value));
+      }
+      if (key !== 'page') {
+        prev.delete('page');
+      }
+      return prev;
+    }, { replace: true });
+  };
 
   const interns = useMemo(() => personnel.filter(p => p.role === 'Thực tập'), [personnel]);
 
@@ -121,17 +167,16 @@ const InternsPage = () => {
   }, [tasks, searchTerm, internFilter, statusFilter, dateRange, showArchived]);
 
   const paginatedTasks = useMemo(() => {
-    const { pageIndex, pageSize } = pagination;
-    if (pageSize === 0) return filteredTasks; // Show all
+    if (pageSize === 0) return filteredTasks;
     const start = pageIndex * pageSize;
     const end = start + pageSize;
     return filteredTasks.slice(start, end);
-  }, [filteredTasks, pagination]);
+  }, [filteredTasks, pageIndex, pageSize]);
 
   const pageCount = useMemo(() => {
-    if (pagination.pageSize === 0) return 1;
-    return Math.ceil(filteredTasks.length / pagination.pageSize);
-  }, [filteredTasks, pagination.pageSize]);
+    if (pageSize === 0) return 1;
+    return Math.ceil(filteredTasks.length / pageSize);
+  }, [filteredTasks, pageSize]);
 
   const stats = useMemo(() => ({
     total: filteredTasks.length,
@@ -276,11 +321,30 @@ const InternsPage = () => {
   };
 
   const handleDateRangeSelect = (range: DateRange | undefined) => {
-    setDateRange(range);
-    setActiveDateFilter('custom');
-    if (range?.from) {
-      setIsTimeFilterOpen(false);
-    }
+    setSearchParams(prev => {
+      prev.set('dateFilter', 'custom');
+      if (range?.from) {
+        prev.set('from', format(range.from, 'yyyy-MM-dd'));
+      } else {
+        prev.delete('from');
+      }
+      if (range?.to) {
+        prev.set('to', format(range.to, 'yyyy-MM-dd'));
+      } else {
+        prev.delete('to');
+      }
+      return prev;
+    }, { replace: true });
+    setIsTimeFilterOpen(false);
+  };
+
+  const handleTimePresetSelect = (preset: 'today' | 'yesterday' | 'thisWeek') => {
+    updateSearchParam('dateFilter', preset);
+    setSearchParams(prev => {
+      prev.delete('from');
+      prev.delete('to');
+      return prev;
+    }, { replace: true });
   };
 
   const getTimeFilterLabel = () => {
@@ -314,15 +378,15 @@ const InternsPage = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" onClick={() => setStatusFilter('all')} isActive={statusFilter === 'all'} />
-          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" onClick={() => setStatusFilter('Đang làm')} isActive={statusFilter === 'Đang làm'} />
-          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" onClick={() => setStatusFilter('Hoàn thành')} isActive={statusFilter === 'Hoàn thành'} />
-          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" onClick={() => setStatusFilter('Quá hạn')} isActive={statusFilter === 'Quá hạn'} />
+          <StatCard icon={List} title="Tổng số việc" value={stats.total} subtitle="Tất cả công việc" iconBgColor="bg-blue-500" onClick={() => updateSearchParam('status', 'all')} isActive={statusFilter === 'all'} />
+          <StatCard icon={Clock} title="Đang thực hiện" value={stats.inProgress} subtitle="Công việc đang chạy" iconBgColor="bg-cyan-500" onClick={() => updateSearchParam('status', 'Đang làm')} isActive={statusFilter === 'Đang làm'} />
+          <StatCard icon={CheckCircle} title="Hoàn thành" value={stats.completed} subtitle="Công việc đã xong" iconBgColor="bg-green-500" onClick={() => updateSearchParam('status', 'Hoàn thành')} isActive={statusFilter === 'Hoàn thành'} />
+          <StatCard icon={AlertTriangle} title="Quá hạn" value={stats.overdue} subtitle="Công việc trễ deadline" iconBgColor="bg-red-500" onClick={() => updateSearchParam('status', 'Quá hạn')} isActive={statusFilter === 'Quá hạn'} />
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-2 flex-wrap">
-          <div className="relative flex-1 w-full sm:w-auto"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-          <Select value={internFilter} onValueChange={setInternFilter}><SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
+          <div className="relative flex-1 w-full sm:w-auto"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" /><Input placeholder="Tìm kiếm công việc..." className="pl-10" value={searchTerm} onChange={(e) => updateSearchParam('search', e.target.value)} /></div>
+          <Select value={internFilter} onValueChange={(value) => updateSearchParam('intern', value)}><SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="Lọc theo thực tập sinh" /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả thực tập sinh</SelectItem>{interns.map(intern => <SelectItem key={intern.id} value={intern.name}>{intern.name}</SelectItem>)}</SelectContent></Select>
           
           <DropdownMenu open={isTimeFilterOpen} onOpenChange={setIsTimeFilterOpen}>
             <DropdownMenuTrigger asChild>
@@ -332,9 +396,9 @@ const InternsPage = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setActiveDateFilter('today')}>Hôm nay</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveDateFilter('yesterday')}>Hôm qua</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveDateFilter('thisWeek')}>Tuần này</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleTimePresetSelect('today')}>Hôm nay</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleTimePresetSelect('yesterday')}>Hôm qua</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleTimePresetSelect('thisWeek')}>Tuần này</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -357,7 +421,7 @@ const InternsPage = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowArchived(!showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => updateSearchParam('archived', !showArchived)}>{showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}{showArchived ? "Công việc hoạt động" : "Công việc đã lưu trữ"}</Button>
         </div>
         
         {selectedTasks.length > 0 && (
@@ -488,18 +552,16 @@ const InternsPage = () => {
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Số dòng mỗi trang</p>
             <Select
-              value={`${pagination.pageSize}`}
-              onValueChange={(value) => {
-                setPagination(prev => ({ ...prev, pageIndex: 0, pageSize: Number(value) }));
-              }}
+              value={`${pageSize}`}
+              onValueChange={(value) => updateSearchParam('pageSize', Number(value))}
             >
               <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={pagination.pageSize === 0 ? "Tất cả" : pagination.pageSize} />
+                <SelectValue placeholder={pageSize === 0 ? "Tất cả" : pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[20, 50, 100].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
+                {[20, 50, 100].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>
+                    {size}
                   </SelectItem>
                 ))}
                 <SelectItem value="0">Tất cả</SelectItem>
@@ -507,14 +569,14 @@ const InternsPage = () => {
             </Select>
           </div>
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Trang {pagination.pageIndex + 1} của {pageCount}
+            Trang {pageIndex + 1} của {pageCount}
           </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
-              disabled={pagination.pageIndex === 0}
+              onClick={() => updateSearchParam('page', 0)}
+              disabled={pageIndex === 0}
             >
               <span className="sr-only">Go to first page</span>
               <ChevronsLeft className="h-4 w-4" />
@@ -522,8 +584,8 @@ const InternsPage = () => {
             <Button
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-              disabled={pagination.pageIndex === 0}
+              onClick={() => updateSearchParam('page', pageIndex - 1)}
+              disabled={pageIndex === 0}
             >
               <span className="sr-only">Go to previous page</span>
               <ChevronLeft className="h-4 w-4" />
@@ -531,8 +593,8 @@ const InternsPage = () => {
             <Button
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-              disabled={pagination.pageIndex >= pageCount - 1}
+              onClick={() => updateSearchParam('page', pageIndex + 1)}
+              disabled={pageIndex >= pageCount - 1}
             >
               <span className="sr-only">Go to next page</span>
               <ChevronRight className="h-4 w-4" />
@@ -540,8 +602,8 @@ const InternsPage = () => {
             <Button
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageCount - 1 }))}
-              disabled={pagination.pageIndex >= pageCount - 1}
+              onClick={() => updateSearchParam('page', pageCount - 1)}
+              disabled={pageIndex >= pageCount - 1}
             >
               <span className="sr-only">Go to last page</span>
               <ChevronsRight className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -83,12 +83,15 @@ const ClientStatsCard = ({ icon, title, value, subtitle, iconBgColor, onClick, i
 
 const ClientsPage = () => {
   const { clients, projects, isLoading, invalidateClients } = useClients();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [creatorFilter, setCreatorFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState<'all' | 'thisMonth'>('all');
-  const [selectedClients, setSelectedClients] = useState<string[]>([]);
-  const [showArchived, setShowArchived] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const searchTerm = searchParams.get("search") || "";
+  const creatorFilter = searchParams.get("creator") || "all";
+  const dateFilter = (searchParams.get("date") as 'all' | 'thisMonth' | null) || 'all';
+  const showArchived = searchParams.get("archived") === "true";
+
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  
   const [isFormOpen, setIsFormOpen] = usePersistentState('clientFormOpen', false);
   const [clientToEdit, setClientToEdit] = usePersistentState<Client | null>('clientToEdit', null);
   
@@ -99,6 +102,23 @@ const ClientsPage = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [clientForDetails, setClientForDetails] = useState<Client | null>(null);
   const isMobile = useIsMobile();
+
+  const updateSearchParams = (key: string, value: string | boolean) => {
+    setSearchParams(prev => {
+      const defaults: Record<string, any> = {
+        search: "",
+        creator: "all",
+        date: "all",
+        archived: false,
+      };
+      if (value === defaults[key]) {
+        prev.delete(key);
+      } else {
+        prev.set(key, String(value));
+      }
+      return prev;
+    }, { replace: true });
+  };
 
   const clientContractValues = useMemo(() => {
     const valueMap = new Map<string, number>();
@@ -270,9 +290,9 @@ const ClientsPage = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <ClientStatsCard icon={FileText} title="Tổng Client" value={stats.totalClients.toString()} subtitle="Tổng khách hàng" iconBgColor="bg-blue-500" onClick={() => setDateFilter('all')} isActive={dateFilter === 'all'} />
+          <ClientStatsCard icon={FileText} title="Tổng Client" value={stats.totalClients.toString()} subtitle="Tổng khách hàng" iconBgColor="bg-blue-500" onClick={() => updateSearchParams('date', 'all')} isActive={dateFilter === 'all'} />
           <ClientStatsCard icon={DollarSign} title="Giá trị hợp đồng" value={stats.totalContractValue} subtitle="Tổng giá trị" iconBgColor="bg-green-500" />
-          <ClientStatsCard icon={Calendar} title="Client trong tháng" value={stats.clientsThisMonth.toString()} subtitle="Tháng này" iconBgColor="bg-purple-500" onClick={() => setDateFilter('thisMonth')} isActive={dateFilter === 'thisMonth'} />
+          <ClientStatsCard icon={Calendar} title="Client trong tháng" value={stats.clientsThisMonth.toString()} subtitle="Tháng này" iconBgColor="bg-purple-500" onClick={() => updateSearchParams('date', 'thisMonth')} isActive={dateFilter === 'thisMonth'} />
           <ClientStatsCard icon={FileText} title="Giá trị HĐ tháng" value={stats.valueThisMonth} subtitle="Tháng này" iconBgColor="bg-orange-500" />
         </div>
 
@@ -285,10 +305,10 @@ const ClientsPage = () => {
                     placeholder="Tìm kiếm client..."
                     className="pl-8 w-full"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => updateSearchParams('search', e.target.value)}
                   />
                 </div>
-                <Select value={creatorFilter} onValueChange={setCreatorFilter}>
+                <Select value={creatorFilter} onValueChange={(value) => updateSearchParams('creator', value)}>
                   <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Tất cả người tạo" />
                   </SelectTrigger>
@@ -299,7 +319,7 @@ const ClientsPage = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" onClick={() => setShowArchived(!showArchived)} className="w-full md:w-auto whitespace-nowrap">
+                <Button variant="outline" onClick={() => updateSearchParams('archived', !showArchived)} className="w-full md:w-auto whitespace-nowrap">
                   {showArchived ? <List className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
                   {showArchived ? "Client hoạt động" : "Client lưu trữ"}
                 </Button>

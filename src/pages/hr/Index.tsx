@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,12 +59,26 @@ const HRStatsCard = ({ icon, title, value, subtitle, iconBgColor }: { icon: Reac
 
 const HRPage = () => {
   const { personnel, positions, isLoading, invalidatePersonnel, invalidatePositions } = usePersonnel();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchTerm = searchParams.get("search") || "";
+
   const [isFormOpen, setIsFormOpen] = usePersistentState('personnelFormOpen', false);
   const [personnelToEdit, setPersonnelToEdit] = usePersistentState<Personnel | null>('personnelToEdit', null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel | null>(null);
   const isMobile = useIsMobile();
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchParams(prev => {
+      if (value) {
+        prev.set('search', value);
+      } else {
+        prev.delete('search');
+      }
+      return prev;
+    }, { replace: true });
+  };
 
   const handlePositionsChange = async (newPositions: string[]) => {
     const { error: deleteError } = await supabase.from('positions').delete().neq('name', 'dummy_value_to_delete_all');
@@ -166,7 +181,7 @@ const HRPage = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="relative w-full md:max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Tìm kiếm theo tên, email, vị trí..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder="Tìm kiếm theo tên, email, vị trí..." className="pl-8" value={searchTerm} onChange={handleSearchChange} />
               </div>
               <Can I="hr.create">
                 <Button onClick={handleOpenAddDialog} className="w-full md:w-auto">
